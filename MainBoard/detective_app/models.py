@@ -3,6 +3,8 @@ from django.db import models
 
 # Create your models here.
 class Stocks(models.Model):
+    class Meta:
+        unique_together = (('code', 'name'),)
     code = models.CharField(max_length=20, unique=True, primary_key=True)
     name = models.TextField()
     category_code = models.CharField(max_length=20)
@@ -13,6 +15,22 @@ class Stocks(models.Model):
     curr = models.CharField(max_length=3)
     tel = models.CharField(max_length=20)
     address = models.TextField()
+    listing = models.CharField(max_length=1, default='Y')
+    create_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class TargetStocks(models.Model):
+    code = models.CharField(max_length=20, unique=True, primary_key=True)
+    name = models.TextField()
+    curr = models.CharField(max_length=3)
+    last_price = models.FloatField(null=True)
+    target_price = models.FloatField(null=True)
+    ratio = models.FloatField(null=True)
+    valuation = models.CharField(max_length=1, default='B')
+    permanence = models.CharField(max_length=1, default='B')
+    audit = models.CharField(max_length=1, default='B')
+    required_yield = models.FloatField(null=True)
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -38,6 +56,25 @@ class DartRequestResult(models.Model):
     rmk = models.TextField(null=True)
 
 
+class FnGuideDailySnapShot(models.Model):
+    class Meta:
+        unique_together = (('id', 'rpt_nm', 'rpt_tp', 'crp_cd', 'disc_date', 'column_nm', 'key'),)
+        index_together = (
+            ('rpt_nm', 'rpt_tp', 'crp_cd', 'disc_date', 'column_nm', 'key'),)
+    id = models.BigAutoField(primary_key=True)
+    rpt_nm = models.TextField(default='')
+    rpt_tp = models.TextField(default='')
+    crp_cd = models.CharField(max_length=20)
+    crp_nm = models.TextField()
+    disc_date = models.DateField()
+    column_nm = models.CharField(max_length=100)
+    key = models.TextField(max_length=100)
+    value = models.FloatField(null=True)
+    value_rmk = models.TextField(null=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
 class FnGuideSnapShot(models.Model):
     class Meta:
         unique_together = (('id', 'rpt_nm', 'rpt_tp', 'crp_cd', 'disc_year', 'disc_month', 'disc_quarter',
@@ -61,6 +98,7 @@ class FnGuideSnapShot(models.Model):
     rmk = models.TextField(null=True)
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
 
 class FnGuideFinancialReport(models.Model):
     class Meta:
