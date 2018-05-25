@@ -6,6 +6,7 @@ import requests
 from io import BytesIO
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
+import pprint
 import csv
 import xmltodict
 import os
@@ -120,8 +121,8 @@ def getFinanceData():
             # file.write(xml)
             # file.close()
         ''' # FinanceReport 성공
-        stockInfo = detective_db.Stocks.objects.all()
-        # stockInfo = detective_db.Stocks.objects.filter(code='005930')
+        stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+        # stockInfo = detective_db.Stocks.objects.filter(code='163430', listing='Y')
         for key in reportType.keys():
             workDir = r'E:\Github\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
             if not os.path.exists(workDir):
@@ -149,15 +150,18 @@ def getFinanceData():
                         if 'id' in d.attrs.keys():
                             # if ('div' in d.attrs['id'] or 'highlight' in d.attrs['id']) and 'um_table' in d.attrs['class']:
                             if 'div' in d.attrs['id'] and 'um_table' in d.attrs['class']:
-                                print(d.attrs['id'], d.attrs['class'])
+                                # print(d.attrs['id'], d.attrs['class'])
                                 # if d.attrs['id'] == 'divSonikY':
                                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
-                                print('\n\n\n\n\n')
+                                # print('\n\n\n\n\n')
                             # 20180418
                             elif 'highlight_D' in d.attrs['id'] and 'um_table' in d.attrs['class']:
                                 if 'highlight_D_A' == d.attrs['id']:
                                     continue
-                                print(d.attrs['id'], d.attrs['class'])
+                                # print(d.attrs['id'], d.attrs['class'])
+                                dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
+                            elif 'svdMainGrid' in d.attrs['id'] and 'um_table' in d.attrs['class']:
+                                # print(d.attrs['id'], d.attrs['class'])
                                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
                     # DB 처리 끝
                 else:
@@ -180,6 +184,7 @@ def getFinanceData():
                 file.write(xml)
                 file.close()
         '''
+        print("FnGuideDataCollection job finished")
     except Exception as e:
         print(e)
 
@@ -224,8 +229,12 @@ def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hie
             report_name = '현금흐름표'
         elif table_id.find('highlight') > -1:
             report_name = 'FinancialHighlight'
+
     else:
-        pass
+        if table_id.find('svdMainGrid') > -1:
+            report_name = table_id
+        else:
+            pass
     table_hierarchy = {
         'HorizonHeader': 'thead-tr-th',
         'VerticalHeader': 'tbody-tr-th-div-span',
@@ -270,52 +279,49 @@ def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hie
                     column_names.append(tmpTag)
                 else:
                     column_names.append(tag3.text)
-                # print('[', tag3.name, tag3.text, ']')
-    # print('*'*40)
-    # print(column_names)
-    # print('*' * 40)
+
     tmpHierarchy = table_hierarchy['VerticalHeader'].split('-')
     dataHierarchy = table_hierarchy['Data'].split('-')
-    '''
-    for tag1 in table.find_all(tmpHierarchy[0]):  # tbody
-        isUpper = False
-        if tag1.text == '' or tag1.text == '\n':
-            pass
-        for tag2 in tag1.find_all(tmpHierarchy[1]):  # tr
-            if len(tag2.find_all(tmpHierarchy[2])):
-                pass
-            else:
-                break
-            for tag3 in tag2.find_all(tmpHierarchy[2]):  # th
-                if len(tag3.find_all(tmpHierarchy[3])):
-                    pass
-                else:
-                    break
-                for tag4 in tag3.find_all(tmpHierarchy[3]):  # div
-                    if len(tag4.find_all(tmpHierarchy[4])):
-                        pass
-                    else:
-                        data_information[tag4.text] = []
-                        break
-                    for tag5 in tag4.find_all(tmpHierarchy[4]):  # span
-                        data_information[tag5.text] = []
-    '''
+
     get_table_row_header(table, tmpHierarchy, dataHierarchy, content_hierarchy, data_information, prev_column, data_pipe)
-    for di in data_information.keys():
-        # print(categorizing, column_names)
-        # print(di, data_information[di])
-        if report_name == 'FinancialHighlight':
-            # print("FinancialHighlight")
-            SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, di, data_information[di])
+    if report_name.startswith('svdMainGrid'):
+        # print(report_name)
+        caption = report_name.replace('svdMainGrid', get_table_contents(table, 'caption')[0])
+        column_names, keys, values = setting(get_table_contents(table, 'thead tr th'),
+                                             get_table_contents(table, 'tbody tr th'),
+                                             get_table_contents(table, 'tbody tr td'))
+        if len(keys) == 0:
+            print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
+            DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, '', values)
         else:
-            # print("FinancialReportDataStore")
-            FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, di, data_information[di])
-        # for idx, column_name in enumerate(column_names[1:]):
-        #     period_info = column_name.split('/')
-        #     if len(period_info) < 2:
-        #         continue
-        #     print(report_name, crp_cd, crp_nm, categorizing, period_info[0], period_info[1],
-        #           str(int(period_info[1])/3)[0]+'Q', di, data_information[di][idx])
+            print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
+            for idx1, key in enumerate(keys):
+                DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, key, values[idx1])
+    else:
+        print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
+        for di in data_information.keys():
+            # print(categorizing, column_names)
+            # print(di, data_information[di])
+            ## 20180504
+            if report_name == 'FinancialHighlight':
+                # print(table.text)
+                # get_table_contents(table, 'tbody tr th')
+                # get_table_contents(table, 'tbody tr td')
+                # print("FinancialHighlight")
+                SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, di, data_information[di])
+            else:
+                # print(report_name)
+                # get_table_contents(table, 'tbody tr th')
+                # get_table_contents(table, 'tbody tr td')
+                # print("FinancialReportDataStore")
+                FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, di, data_information[di])
+            ## 20180504
+            # for idx, column_name in enumerate(column_names[1:]):
+            #     period_info = column_name.split('/')
+            #     if len(period_info) < 2:
+            #         continue
+            #     print(report_name, crp_cd, crp_nm, categorizing, period_info[0], period_info[1],
+            #           str(int(period_info[1])/3)[0]+'Q', di, data_information[di][idx])
 
 
 def get_table_row_header(rs, hierarchy, hierarchy2, c_hierarchy, data_information, prev_column, data_pipe, level=0):
@@ -415,6 +421,42 @@ def is_exist_more_information(rs, hierarchy, level):
     return len(rs.find_all(hierarchy[level]))
 
 
+def DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, key, data_list):
+    import sys
+    import os
+    import django
+    from datetime import datetime
+    sys.path.append(r'E:\Github\Waver\MainBoard')
+    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        for idx, column_name in enumerate(column_names):
+            info = detective_db.FnGuideDailySnapShot.objects.update_or_create(rpt_nm=caption,
+                                                                              rpt_tp='',
+                                                                              crp_cd=crp_cd,
+                                                                              crp_nm=crp_nm,
+                                                                              disc_date=datetime.now().strftime('%Y-%m-%d'),
+                                                                              column_nm=column_name,
+                                                                              key=key,
+                                                                              defaults={
+                                                                                 'value': None
+                                                                                 if not is_float(data_list[idx])
+                                                                                 else float(
+                                                                                    data_list[idx].replace(',', '')),
+                                                                                 'value_rmk': ''
+                                                                                 if is_float(data_list[idx])
+                                                                                 else data_list[idx],
+                                                                              }
+                                                                         )
+
+        # print("[%s][%s][%s] %s information stored successfully" % (caption, crp_cd, crp_nm, key))
+        # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
+    except Exception as e:
+        print('[Error on DailySnapShotDataStore]\n', '*' * 50, e)
+
+
 def SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, key, data_list):
     import sys
     import os
@@ -439,7 +481,7 @@ def SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, k
                     f_p_e = 'P'
                     period_info[1] = period_info[1].replace('(P)', '')
                 # print(period_info[1])
-            # print(report_name, crp_cd, crp_nm, categorizing, period_info[0], period_info[1],
+            # print(report_name, crp_cd, crp_nm, categorizing, period_info[0], period_info[1])
             #       str(int(period_info[1])/3)[0]+'Q', key, data_list[idx])
             info = detective_db.FnGuideSnapShot.objects.update_or_create(rpt_nm=report_name,
                                                                          rpt_tp=column_names[0],
@@ -463,7 +505,7 @@ def SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, k
                                                                             }
                                                                          )
 
-        print("[%s][%s][%s] %s information stored successfully" % (report_name, crp_cd, crp_nm, key))
+        # print("[%s][%s][%s] %s information stored successfully" % (report_name, crp_cd, crp_nm, key))
         # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
     except Exception as e:
         print('[Error on SnapShotDataStore]\n', '*' * 50, e)
@@ -516,7 +558,7 @@ def FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_n
                                                                                 }
                                                                                 )
 
-        print("[%s][%s][%s] %s information stored successfully" % (report_name, crp_cd, crp_nm, key))
+        # print("[%s][%s][%s] %s information stored successfully" % (report_name, crp_cd, crp_nm, key))
         # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
     except Exception as e:
         print('[Error on FinancialReportDataStore]\n', '*' * 50, e)
@@ -576,6 +618,72 @@ def is_float(s):
         return True
     except ValueError:
         return False
+
+
+def get_table_contents(soup, structure):
+    retList = []
+    for tag in soup.select(structure):
+        if tag.div and tag.div.dl and tag.div.dl.dd:
+            continue
+        retList.append(tag.text.replace(u'\xa0', '').replace('\n', ''))
+    return retList
+
+
+def setting(header, items, datas):
+    retHeader = []
+    retKey = []
+    retValue = []
+    try:
+        if len(datas) < len(header) or len(datas) < len(items):
+            # print("입력할 데이터 없음!!!")
+            pass
+        elif len(header) == 0:
+            # print(
+            #     "::::::::::::::::::::::::::::::::::::::len(header) == 0::::::::::::::::::::::::::::::::::::::::::::::::")
+            for idx, item in enumerate(items):
+                prev_column = ''
+                tmpHeader = []
+                tmpData = []
+                if item.find('/') > -1: # 한 컬럼에 여러개의 값이 있는 경우
+                    if item.find('(') > -1: # 여러개의 컬럼의 괄호로 묶인 공통인자가 있는 경우
+                        prev_column = item[:item.find('(')]
+                        tmpHeader = [(prev_column + '-' + i.replace(' ', '')) for i in
+                                     item[item.find('(')+1:item.find(')')].split('/')]
+                    elif item.find('.') > -1: # 여러개의 컬럼의 마침표로 분리된 공통인자가 있는 경우
+                        prev_column = item[:item.find('.')]
+                        tmpHeader = [(prev_column + '-' + i.replace(' ', '')) for i in
+                                     item[item.find('.')+1:].split('/')]
+                    else: # 공통인자 없이 서로 다른 두개의 값이 / 로 묶인 컬럼인 경우
+                        tmpHeader = item.split('/')
+                    tmpData = datas[idx].split('/')
+                    retHeader.extend(tmpHeader)
+                    retValue.extend(tmpData)
+                else:
+                    retHeader.append(item)
+                    retValue.append(datas[idx])
+        elif len(items) == 0:
+            # print(
+            #     ":::::::::::::::::::::::::::::::::::::::len(items) == 0::::::::::::::::::::::::::::::::::::::::::::::::")
+            for idx, head in enumerate(header):
+                retHeader.append(head.replace(' ', ''))
+                retValue.append(datas[idx].replace(' ', ''))
+        else:
+            # print("::::::::::::::::::::::::::::::::::::::::::::else:::::::::::::::::::::::::::::::::::::::::::::::::")
+            for idx, head in enumerate(header[1:]):
+                retHeader.append(head.replace(' ', ''))
+            retKey = items
+
+            for i in range(len(retKey)):
+                tmpData = []
+                for j in range(len(retHeader)):
+                    # print(i, j, len(retHeader)*i+j)
+                    tmpData.append(datas[len(retHeader)*i+j].replace(' ', ''))
+                retValue.append(tmpData)
+    except Exception as e:
+        print(e)
+        # print(header, items, datas)
+
+    return retHeader, retKey, retValue
 
 
 def FinancialRatioDataStore(report_name, report_type, crp_cd, crp_nm, categorizing, column_names, key, data_list):

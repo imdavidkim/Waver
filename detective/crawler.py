@@ -15,7 +15,7 @@ def getStockInfo():
         'name': 'fileDown',
         'filetype': 'csv',
         'url': 'MKD/04/0406/04060100/mkd04060100_01',
-        'market_gubun': 'ALL',
+        'market_gubun': 'STK',
         'isu_cdnm': '전체',
         'isu_cd': '',
         'isu_nm': '',
@@ -49,6 +49,7 @@ def getStockInfo():
     # r = requests.post(down_url, down_data)
     response = httpRequest(down_url, down_data)
     dic = dataCleansing(response)
+    dataInit()
     dataStore(dic)
     # df = pd.read_csv(BytesIO(r.content), header=0, thousands=',')
     # print(df)
@@ -103,11 +104,27 @@ def dataCleansing(content):
             '상장주식수': da[5],
             '자본금': da[6],
             '액면가': da[7],
+            '통화': da[8][da[8].find('(')+1:da[8].find(')')],
             '전화번호': da[9],
             '주소': da[10]
         }
 
     return retDict
+
+
+def dataInit():
+    import sys
+    import os
+    import django
+    sys.path.append(r'E:\Github\\Waver\MainBoard')
+    sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        detective_db.Stocks.objects.update(listing='N')
+    except Exception as e:
+        print("Stock data initialization Failed with", e)
 
 
 def dataStore(retDict):
@@ -120,10 +137,12 @@ def dataStore(retDict):
     django.setup()
     import detective_app.models as detective_db
     try:
+        count = 0
+        print("Stock Information crawling started")
         for key in retDict.keys():
             info = detective_db.Stocks.objects.update_or_create(code=key,
+                                                                name=retDict[key]['종목명'],
                                                                 defaults={
-                                                                    'name': retDict[key]['종목명'],
                                                                     'category_code': retDict[key]['업종코드'],
                                                                     'category_name': retDict[key]['업종명'],
                                                                     'issued_shares': float(
@@ -133,7 +152,9 @@ def dataStore(retDict):
                                                                     'par_value': float(
                                                                         retDict[key]['액면가'].replace(',', '')),
                                                                     'tel': retDict[key]['전화번호'].replace(' ', ''),
-                                                                    'address': retDict[key]['주소']
+                                                                    'address': retDict[key]['주소'],
+                                                                    'curr': retDict[key]['통화'],
+                                                                    'listing': 'Y'
                                                                 }
                                                                 )
             # 기존에 했다가 에러난 코드
@@ -148,7 +169,11 @@ def dataStore(retDict):
             #                                                     tel=retDict[key]['전화번호'],
             #                                                     address=retDict[key]['주소'])
             # info.save()
-            print("[%s][%s] Successfully saved!!" % (key, retDict[key]['종목명']))
+            # print("[%s][%s] Successfully saved!!" % (key, retDict[key]['종목명']))
+            count += 1
+            if count % 100 == 0:
+                print("%d Stock Information on processing..." % count)
+        print("Total %d" % count)
     except:
         print(key, retDict[key])
 
