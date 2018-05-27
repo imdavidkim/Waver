@@ -42,29 +42,58 @@ def revenue_check(crp_cd, market, disc_categorizing):
                                                                  disc_categorizing=disc_categorizing,
                                                                  crp_cd=crp_cd
                                                                  ).order_by('-disc_year', '-disc_month')[:4].values()
-            if market == 'KOSPI': # 50억 미만
-                if disc_categorizing == 'YEARLY':
-                    if result['value'] < 50:
-                        retGrade = 'D'
+            # result2 = detective_db.FnGuideSnapShot.objects.filter(rpt_nm=rpt_nm,
+            #                                                       rpt_tp=rpt_tp,
+            #                                                       accnt_nm=accnt_nm,
+            #                                                       disc_categorizing=disc_categorizing,
+            #                                                       crp_cd=crp_cd
+            #                                                       ).order_by('-disc_year', '-disc_month')[4:].values()
+        if market == 'KOSPI': # 50억 미만
+            # print('KOSPI', result)
+            if disc_categorizing == 'YEARLY':
+                if result[0]['value'] < 50:
+                    retGrade = 'D'
+                else:
+                    if 100 > result[0]['value'] >= 50:
+                        retGrade = 'C'
                     else:
-
+                        retGrade = 'A'
+            else:
+                # print('KOSPI', result2)
+                value = 0
+                for r in result[0]:
+                    value += r['value']
+                if value < 50:
+                    retGrade = 'D'
                 else:
-                    value = 0
-                    for r in result:
-                        value += r['value']
-                    if result['value'] < 50:
-
-            elif market == 'KOSDAQ': # 30억 미만
-                if disc_categorizing == 'YEARLY':
-                    pass
+                    if 100 > value >= 50:
+                        retGrade = 'C'
+                    else:
+                        retGrade = 'A'
+        elif market == 'KOSDAQ': # 30억 미만
+            # print('KOSDAQ', result)
+            if disc_categorizing == 'YEARLY':
+                if result['value'] < 30:
+                    retGrade = 'D'
                 else:
-                    pass
-
-
+                    if 40 > result['value'] >= 30:
+                        retGrade = 'C'
+                    else:
+                        retGrade = 'A'
+            else:
+                value = 0
+                for r in result:
+                    value += r['value']
+                if value < 30:
+                    retGrade = 'D'
+                else:
+                    if 40 > value >= 30:
+                        retGrade = 'C'
+                    else:
+                        retGrade = 'A'
     except Exception as e:
         print(e)
-        result = None
-    return result
+    return retGrade
 
 
 def kospi_risky_stock_filter():
