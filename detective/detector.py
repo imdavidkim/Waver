@@ -12,6 +12,23 @@
 # import os
 
 
+def getConfig():
+    import configparser
+    global path, filename
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    path = config['COMMON']['PATH']
+    filename = r'\financeData_%s_%s_%s.html'
+    # print(path, filename)
+
+
+def get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd):
+    getConfig()
+    full_path = path + r'\%s\%s' % (report_type, yyyymmdd) + filename % (crp_nm, crp_cd, report_type)
+    with open(full_path, 'rb') as html:
+        soup = BeautifulSoup(html, 'lxml')
+    return soup
+
 
 def dictfetchall(cursor):
     # "Return all rows from a cursor as a dict"
@@ -398,4 +415,10 @@ def TargetStockDataStore(crp_cd, data):
 if __name__ == '__main__':
     # find_hidden_pearl()
     # messeage_to_telegram()
-    find_hidden_pearl()
+    # find_hidden_pearl()
+    report_type = 'financeRatio'
+    yyyymmdd = '2018-04-28'
+    crp_nm = '삼성전자'
+    crp_cd = '005930'
+    aa = get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd)
+    print(len(aa.find_all('div')))
