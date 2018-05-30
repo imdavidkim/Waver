@@ -15,6 +15,7 @@ class Stocks(models.Model):
     curr = models.CharField(max_length=3)
     tel = models.CharField(max_length=20)
     address = models.TextField()
+    market_text = models.TextField(null=True)
     listing = models.CharField(max_length=1, default='Y')
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
