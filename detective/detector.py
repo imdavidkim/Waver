@@ -77,7 +77,7 @@ def messeage_to_telegram():
     #     print(u.message)
 
 
-def get_dailysnapshot_objects(rpt_nm, rpt_tp, column_nm, crp_cd, dateDict):
+def get_dailysnapshot_objects(rpt_nm, rpt_tp, column_nm, crp_cd, dateDict, key=None):
     import sys
     import os
     import django
@@ -86,21 +86,40 @@ def get_dailysnapshot_objects(rpt_nm, rpt_tp, column_nm, crp_cd, dateDict):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
-    result = detective_db.FnGuideDailySnapShot.objects.filter(rpt_nm=rpt_nm,
-                                                              rpt_tp=rpt_tp,
-                                                              column_nm=column_nm,
-                                                              disc_date=dateDict['yyyymmdd'],
-                                                              crp_cd=crp_cd,
-                                                              ).values()
-    if len(result) == 0:
-        yyyymmdd = get_max_date_on_dailysnapshot(crp_cd)
-        # print(yyyymmdd)
+    if key:
         result = detective_db.FnGuideDailySnapShot.objects.filter(rpt_nm=rpt_nm,
                                                                   rpt_tp=rpt_tp,
                                                                   column_nm=column_nm,
-                                                                  disc_date=yyyymmdd['disc_date'],
+                                                                  key=key,
+                                                                  disc_date=dateDict['yyyymmdd'],
                                                                   crp_cd=crp_cd,
                                                                   ).values()
+        if len(result) == 0:
+            yyyymmdd = get_max_date_on_dailysnapshot(crp_cd)
+            # print(yyyymmdd)
+            result = detective_db.FnGuideDailySnapShot.objects.filter(rpt_nm=rpt_nm,
+                                                                      rpt_tp=rpt_tp,
+                                                                      column_nm=column_nm,
+                                                                      key=key,
+                                                                      disc_date=yyyymmdd['disc_date'],
+                                                                      crp_cd=crp_cd,
+                                                                      ).values()
+    else:
+        result = detective_db.FnGuideDailySnapShot.objects.filter(rpt_nm=rpt_nm,
+                                                                  rpt_tp=rpt_tp,
+                                                                  column_nm=column_nm,
+                                                                  disc_date=dateDict['yyyymmdd'],
+                                                                  crp_cd=crp_cd,
+                                                                  ).values()
+        if len(result) == 0:
+            yyyymmdd = get_max_date_on_dailysnapshot(crp_cd)
+            # print(yyyymmdd)
+            result = detective_db.FnGuideDailySnapShot.objects.filter(rpt_nm=rpt_nm,
+                                                                      rpt_tp=rpt_tp,
+                                                                      column_nm=column_nm,
+                                                                      disc_date=yyyymmdd['disc_date'],
+                                                                      crp_cd=crp_cd,
+                                                                      ).values()
     return result
 
 
@@ -157,6 +176,58 @@ def get_snapshot_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix_or_pro
     return result
 
 
+def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix_or_prov_or_estm, crp_cd, dateDict):
+    import sys
+    import os
+    import django
+    sys.path.append(r'E:\Github\Waver\MainBoard')
+    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    result = detective_db.FnGuideFinancialReport.objects.filter(rpt_nm=rpt_nm,
+                                                                rpt_tp=rpt_tp,
+                                                                accnt_nm=accnt_nm,
+                                                                disc_categorizing=disc_categorizing,
+                                                                fix_or_prov_or_estm=fix_or_prov_or_estm,
+                                                                crp_cd=crp_cd,
+                                                                disc_year=dateDict['yyyy']
+                                                                ).exclude(rmk='None').exclude(rmk='완전잠식').values()
+    if len(result) == 0:
+        yyyy = str(int(dateDict['yyyy'])-1)
+        result = detective_db.FnGuideFinancialReport.objects.filter(rpt_nm=rpt_nm,
+                                                                    rpt_tp=rpt_tp,
+                                                                    accnt_nm=accnt_nm,
+                                                                    disc_categorizing=disc_categorizing,
+                                                                    fix_or_prov_or_estm=fix_or_prov_or_estm,
+                                                                    crp_cd=crp_cd,
+                                                                    disc_year=yyyy,
+                                                                    disc_month='12'
+                                                                    ).exclude(rmk='None').exclude(rmk='완전잠식').values()
+        if len(result) == 0:
+            fix_or_prov_or_estm = 'P'
+            result = detective_db.FnGuideFinancialReport.objects.filter(rpt_nm=rpt_nm,
+                                                                        rpt_tp=rpt_tp,
+                                                                        accnt_nm=accnt_nm,
+                                                                        disc_categorizing=disc_categorizing,
+                                                                        fix_or_prov_or_estm=fix_or_prov_or_estm,
+                                                                        crp_cd=crp_cd,
+                                                                        disc_year=yyyy,
+                                                                        disc_month='12'
+                                                                        ).exclude(rmk='None').exclude(rmk='완전잠식').values()
+            if len(result) == 0:
+                fix_or_prov_or_estm = 'F'
+                result = detective_db.FnGuideFinancialReport.objects.filter(rpt_nm=rpt_nm,
+                                                                            rpt_tp=rpt_tp,
+                                                                            accnt_nm=accnt_nm,
+                                                                            disc_categorizing=disc_categorizing,
+                                                                            fix_or_prov_or_estm=fix_or_prov_or_estm,
+                                                                            crp_cd=crp_cd,
+                                                                            disc_year=yyyy,
+                                                                            disc_month='12'
+                                                                            ).exclude(rmk='None').exclude(rmk='완전잠식').values()
+    return result
+
 def find_hidden_pearl():
     import sys
     import os
@@ -171,8 +242,9 @@ def find_hidden_pearl():
     # 날짜 정보 셋팅
     dateDict = get_dateDict()
     # 종목 정보 셋팅
-    stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+    stockInfo = detective_db.Stocks.objects.filter(code='027410', listing='Y') # 제일파마홀딩스
+    # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
     print(align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
           align_string('R', 'Issued Shares', 20),
@@ -224,10 +296,32 @@ def find_hidden_pearl():
                                              fix_or_prov_or_estm,
                                              stock.code,
                                              dateDict)
+            rpt_nm4 = '포괄손익계산서'
+            accnt_nm = '중단영업이익'
+            report = get_financialreport_objects(rpt_nm4,
+                                                 rpt_tp,
+                                                 accnt_nm,
+                                                 disc_categorizing,
+                                                 fix_or_prov_or_estm,
+                                                 stock.code,
+                                                 dateDict)
+            if report: print(report)
             rpt_nm2 = '시세현황1'
             rpt_tp2 = ''
             column_nm = '종가'
             daily = get_dailysnapshot_objects(rpt_nm2, rpt_tp2, column_nm, stock.code, dateDict)
+            if stock.market_text:
+                rpt_nm3 = '업종 비교10D'
+                rpt_tp3 = ''
+                column_nm = stock.market_text.replace(' ', '')
+                key = 'ROE'
+                industry = get_dailysnapshot_objects(rpt_nm3, rpt_tp3, column_nm, stock.code, dateDict, key)
+                if len(industry) > 0:
+                    industryROE = industry[0]['value']
+                else:
+                    industryROE = 10.0
+            else:
+                industryROE = 10.0
             # print(snapshot)
             # print(snapshot2)
             # print(snapshot3)
@@ -240,16 +334,24 @@ def find_hidden_pearl():
                 data[snapshot[0]['accnt_nm']] = snapshot[0]['value'] * 100000000
                 data[snapshot2[0]['accnt_nm']] = snapshot2[0]['value'] * 100000000
                 data[snapshot3[0]['accnt_nm']] = snapshot3[0]['value']
-                data['RAW_ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
-                data['ADJ_ROE'] = (data['ROE'] + data['RAW_ROE']) / 2
-                data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['ADJ_ROE'] - 10.0) / 10.0)
+                if len(report) > 0:
+                    data[report[0]['accnt_nm']] = report[0]['value'] * 100000000
+                    data['RAW_ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+                else:
+                    data['중단영업이익'] = 0
+                    data['RAW_ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
+                # data['ADJ_ROE'] = (data['ROE'] + data['RAW_ROE']) / 2
+                # data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['ADJ_ROE'] - industryROE) / industryROE)
+                data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['RAW_ROE'] - industryROE) / industryROE)
                 data['NPV'] = data['주주가치'] / data['발행주식수']
                 data['종가'] = daily[0]['value']
+                data['요구수익률'] = industryROE
                 treasure[stock.code] = data
             # print(data)
         # print(treasure)
         print('='*50, '마이너스', '='*50)
         for d in treasure.keys():
+            # print(d)
             if treasure[d]['NPV'] < 0:
                 print(align_string('R', d, 10),
                       align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
@@ -278,11 +380,14 @@ def TargetStockDataStore(crp_cd, data):
     import detective_app.models as detective_db
     try:
         info = detective_db.TargetStocks.objects.update_or_create(code=crp_cd,
-                                                                  name=data['회사명'],
-                                                                  curr=data['통화'],
-                                                                  last_price=data['종가'],
-                                                                  target_price=data['NPV'],
-                                                                  ratio=data['NPV']/data['종가']*100
+                                                                  defaults={
+                                                                      'name': data['회사명'],
+                                                                      'curr': data['통화'],
+                                                                      'last_price': data['종가'],
+                                                                      'target_price': data['NPV'],
+                                                                      'required_yield': data['요구수익률'],
+                                                                      'ratio': data['NPV']/data['종가']*100
+                                                                  }
                                                                   )
 
         # print("[TargetStocks][%s][%s] information stored successfully" % (crp_cd, data['회사명']))

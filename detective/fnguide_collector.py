@@ -11,6 +11,7 @@ import csv
 import xmltodict
 import os
 
+marketTxt = None
 
 def getFinanceData():
     import sys
@@ -21,6 +22,7 @@ def getFinanceData():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
+    global marketTxt
 
     yyyymmdd = str(datetime.now())[:10]
     url = "http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp"
@@ -36,10 +38,12 @@ def getFinanceData():
     }
 
     reportType = {
-        101: 'snapshot'
+        # 101: 'snapshot',
+        103: 'financeReport'
     }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
     urlInfo = {
-        101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp'
+        # 101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
+        103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp'
     }
 
     data = {
@@ -122,7 +126,7 @@ def getFinanceData():
             # file.close()
         ''' # FinanceReport 성공
         stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-        # stockInfo = detective_db.Stocks.objects.filter(code='163430', listing='Y')
+        # stockInfo = detective_db.Stocks.objects.filter(code='002620', listing='Y')
         for key in reportType.keys():
             workDir = r'E:\Github\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
             if not os.path.exists(workDir):
@@ -144,6 +148,10 @@ def getFinanceData():
                 file.close()
                 # File 처리 끝
                 # DB 처리
+                marketTxt = select_by_attr(soup, 'span', 'id', 'strMarketTxt').text
+                if marketTxt and key == 'snapshot':
+                    StockMarketTextUpdate(s.code, marketTxt)
+                    marketTxt = None
                 divs = soup.find_all('div')
                 if reportType[key] in ['snapshot', 'financeReport']:
                     for d in divs:
@@ -292,13 +300,21 @@ def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hie
                                              get_table_contents(table, 'tbody tr td'))
         if len(keys) == 0:
             print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
+            # if report_name == 'svdMainGrid10D':
+                # print(column_names)
+                # print(keys)
+                # print(values)
             DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, '', values)
         else:
+            # if report_name == 'svdMainGrid10D':
+                # print(column_names)
+                # print(keys)
+                # print(values)
             print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
             for idx1, key in enumerate(keys):
                 DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, key, values[idx1])
     else:
-        print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
+        print("[%s][%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name, categorizing))
         for di in data_information.keys():
             # print(categorizing, column_names)
             # print(di, data_information[di])
@@ -421,6 +437,22 @@ def is_exist_more_information(rs, hierarchy, level):
     return len(rs.find_all(hierarchy[level]))
 
 
+def StockMarketTextUpdate(crp_cd, market_text):
+    import sys
+    import os
+    import django
+    from datetime import datetime
+    sys.path.append(r'E:\Github\Waver\MainBoard')
+    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        detective_db.Stocks.objects.filter(code=crp_cd).update(market_text=market_text)
+    except Exception as e:
+        print('[Error on StockDataUpdate]\n', '*' * 50, e)
+
+
 def DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, key, data_list):
     import sys
     import os
@@ -450,7 +482,7 @@ def DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, k
                                                                                  else data_list[idx],
                                                                               }
                                                                          )
-
+            # print(key, column_name, data_list[idx])
         # print("[%s][%s][%s] %s information stored successfully" % (caption, crp_cd, crp_nm, key))
         # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
     except Exception as e:
@@ -481,6 +513,7 @@ def SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, k
                     f_p_e = 'P'
                     period_info[1] = period_info[1].replace('(P)', '')
                 # print(period_info[1])
+            # print(key, column_name, data_list[idx])
             # print(report_name, crp_cd, crp_nm, categorizing, period_info[0], period_info[1])
             #       str(int(period_info[1])/3)[0]+'Q', key, data_list[idx])
             info = detective_db.FnGuideSnapShot.objects.update_or_create(rpt_nm=report_name,
@@ -623,10 +656,30 @@ def is_float(s):
 def get_table_contents(soup, structure):
     retList = []
     for tag in soup.select(structure):
+        if tag.div and tag.div.dl and tag.div.dl.dt:
+            retList.append(tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', ''))
         if tag.div and tag.div.dl and tag.div.dl.dd:
             continue
         retList.append(tag.text.replace(u'\xa0', '').replace('\n', ''))
     return retList
+
+
+def select_by_attr(soup, tagname, attr, condition):
+    retTag = None
+    if attr == 'id':
+        retTag = soup.find(tagname, {"id": condition})
+    elif attr == 'class':
+        retTag = soup.find(tagname, {"class": condition})
+    elif attr == 'style':
+        retTag = soup.find(tagname, {"style": condition})
+    elif attr == 'scope':
+        retTag = soup.find(tagname, {"scope": condition})
+    elif attr == 'href':
+        retTag = soup.find(tagname, {"href": condition})
+    else:
+        pass
+
+    return retTag
 
 
 def setting(header, items, datas):
@@ -732,7 +785,7 @@ def FinancialRatioDataStore(report_name, report_type, crp_cd, crp_nm, categorizi
                                                                                }
                                                                                )
 
-        print("[%s][%s][%s] %s information stored successfully" % (report_name, crp_cd, crp_nm, key))
+        # print("[%s][%s][%s] %s information stored successfully" % (report_name, crp_cd, crp_nm, key))
         # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
     except Exception as e:
         print('[Error on FinancialRatioDataStore]\n', '*' * 50, e)

@@ -12,7 +12,7 @@
 # import os
 
 
-def revenue_check(crp_cd, market, disc_categorizing):
+def sales_check(crp_cd, market, disc_categorizing):
     import sys
     import os
     import django
@@ -48,7 +48,7 @@ def revenue_check(crp_cd, market, disc_categorizing):
             #                                                       disc_categorizing=disc_categorizing,
             #                                                       crp_cd=crp_cd
             #                                                       ).order_by('-disc_year', '-disc_month')[4:].values()
-        if market == 'KOSPI': # 50억 미만
+        if market == 'KOSPI':  # 50억 미만
             # print('KOSPI', result)
             if disc_categorizing == 'YEARLY':
                 if result[0]['value'] < 50:
@@ -70,7 +70,7 @@ def revenue_check(crp_cd, market, disc_categorizing):
                         retGrade = 'C'
                     else:
                         retGrade = 'A'
-        elif market == 'KOSDAQ': # 30억 미만
+        elif market == 'KOSDAQ':  # 30억 미만
             # print('KOSDAQ', result)
             if disc_categorizing == 'YEARLY':
                 if result['value'] < 30:
@@ -95,6 +95,34 @@ def revenue_check(crp_cd, market, disc_categorizing):
         print(e)
     return retGrade
 
+
+def operation_profit_check(crp_cd, market):
+    import sys
+    import os
+    import django
+    sys.path.append(r'E:\Github\Waver\MainBoard')
+    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    rpt_nm = 'FinancialHighlight'
+    rpt_tp = 'IFRS(연결)'
+    accnt_nm = '영업이익'
+    fix_or_prov_or_estm = 'F'
+    retGrade = 'F'
+    point = 0
+    try:
+        if market:
+            result = detective_db.FnGuideSnapShot.objects.filter(rpt_nm=rpt_nm,
+                                                                 rpt_tp=rpt_tp,
+                                                                 accnt_nm=accnt_nm,
+                                                                 crp_cd=crp_cd
+                                                                 ).order_by('-disc_year', '-disc_month')[:4].values()
+        for r in result[0]:
+            if r['value'] > 0:
+    except Exception as e:
+        print(e)
+    return retGrade
 
 def kospi_risky_stock_filter():
     '''
@@ -146,7 +174,8 @@ def kosdaq_unlisting_filter():
 
 
 if __name__ == '__main__':
+    mkt = 'KOSPI'
     # condition = 'QUARTERLY'
     condition = 'YEARLY'
-    for a in revenue_check('005930', condition):
+    for a in sales_check('005930', mkt, condition):
         print(a)
