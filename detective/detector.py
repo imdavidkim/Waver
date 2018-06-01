@@ -10,15 +10,23 @@ from bs4 import BeautifulSoup
 # import csv
 # import xmltodict
 # import os
+import detective.fnguide_collector as fnguide
+
+DEBUG = True
 
 
 def getConfig():
     import configparser
-    global path, filename
+    global path, filename, yyyymmdd, django_path, main_path
     config = configparser.ConfigParser()
     config.read('config.ini')
-    path = config['COMMON']['PATH']
+    path = config['COMMON']['REPORT_PATH']
+    proj_path = config['COMMON']['PROJECT_PATH']
+    django_path = proj_path + r'\MainBoard'
+    main_path = django_path + r'\MainBoard'
     filename = r'\financeData_%s_%s_%s.html'
+    yyyymmdd = str(datetime.now())[:10]
+    # yyyymmdd = '2018-05-31'
     # print(path, filename)
 
 
@@ -43,8 +51,11 @@ def get_dateDict():
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     from django.db import connection
@@ -54,12 +65,24 @@ def get_dateDict():
     return dictfetchall(cursor)[0]
 
 
+def new_get_dateDict():
+    retDict = {}
+    yyyymmdd = str(datetime.now())[:10]
+    retDict['yyyy'] = yyyymmdd[:4]
+    retDict['mm'] = yyyymmdd[5:7]
+    retDict['dd'] = yyyymmdd[-2:]
+    # print(retDict)
+    return retDict
+
 def get_max_date_on_dailysnapshot(crp_cd):
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     from django.db import connection
@@ -98,8 +121,11 @@ def get_dailysnapshot_objects(rpt_nm, rpt_tp, column_nm, crp_cd, dateDict, key=N
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -144,8 +170,11 @@ def get_snapshot_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix_or_pro
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -197,8 +226,11 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -245,144 +277,500 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
                                                                             ).exclude(rmk='None').exclude(rmk='완전잠식').values()
     return result
 
-def find_hidden_pearl():
+# def find_hidden_pearl():
+#     import sys
+#     import os
+#     import django
+#     # sys.path.append(r'E:\Github\Waver\MainBoard')
+#     # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+#     getConfig()
+#     sys.path.append(django_path)
+#     sys.path.append(main_path)
+#     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+#     django.setup()
+#     import detective_app.models as detective_db
+#     treasure = {}
+#     data = {}
+#     # 날짜 정보 셋팅
+#     dateDict = get_dateDict()
+#     # 종목 정보 셋팅
+#     stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+#     # stockInfo = detective_db.Stocks.objects.filter(code='027410', listing='Y') # 제일파마홀딩스
+#     # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
+#     print(align_string('R', 'Code', 10),
+#           align_string('R', 'Name', 20),
+#           align_string('R', 'Issued Shares', 20),
+#           align_string('R', 'Capital', 20),
+#           align_string('R', 'ParValue', 10),
+#           '\n')
+#     # 예상되는 당기순이익 조회 조건 셋팅
+#     rpt_nm = 'FinancialHighlight'
+#     rpt_tp = 'IFRS(연결)'
+#     disc_categorizing = 'YEARLY'
+#     # disc_categorizing = 'QUARTERLY'
+#     fix_or_prov_or_estm = 'E'
+#     # ----------------------------------
+#     try:
+#         for stock in stockInfo:
+#             data = {}
+#             # print(dir(stock))
+#             print(align_string('R', stock.code, 10),
+#                   align_string('R', stock.name, 20-len(stock.name)),
+#                   align_string(',', stock.issued_shares, 20),
+#                   align_string(',', stock.capital, 20),
+#                   align_string('R', stock.par_value, 10),
+#                   )
+#             # data['회사명'] = stock.name
+#             # data['발행주식수'] = stock.issued_shares
+#             # data['자본금'] = stock.capital
+#             # data['액면가'] = stock.par_value
+#             accnt_nm = '지배주주순이익'
+#             snapshot = get_snapshot_objects(rpt_nm,
+#                                             rpt_tp,
+#                                             accnt_nm,
+#                                             disc_categorizing,
+#                                             fix_or_prov_or_estm,
+#                                             stock.code,
+#                                             dateDict)
+#             accnt_nm = '지배주주지분'
+#             snapshot2 = get_snapshot_objects(rpt_nm,
+#                                              rpt_tp,
+#                                              accnt_nm,
+#                                              disc_categorizing,
+#                                              fix_or_prov_or_estm,
+#                                              stock.code,
+#                                              dateDict)
+#             accnt_nm = 'ROE'
+#             snapshot3 = get_snapshot_objects(rpt_nm,
+#                                              rpt_tp,
+#                                              accnt_nm,
+#                                              disc_categorizing,
+#                                              fix_or_prov_or_estm,
+#                                              stock.code,
+#                                              dateDict)
+#             rpt_nm4 = '포괄손익계산서'
+#             accnt_nm = '중단영업이익'
+#             report = get_financialreport_objects(rpt_nm4,
+#                                                  rpt_tp,
+#                                                  accnt_nm,
+#                                                  disc_categorizing,
+#                                                  fix_or_prov_or_estm,
+#                                                  stock.code,
+#                                                  dateDict)
+#             if report: print(report)
+#             rpt_nm2 = '시세현황1'
+#             rpt_tp2 = ''
+#             column_nm = '종가'
+#             daily = get_dailysnapshot_objects(rpt_nm2, rpt_tp2, column_nm, stock.code, dateDict)
+#             if stock.market_text:
+#                 rpt_nm3 = '업종 비교10D'
+#                 rpt_tp3 = ''
+#                 column_nm = stock.market_text.replace(' ', '')
+#                 key = 'ROE'
+#                 industry = get_dailysnapshot_objects(rpt_nm3, rpt_tp3, column_nm, stock.code, dateDict, key)
+#                 if len(industry) > 0:
+#                     industryROE = industry[0]['value']
+#                 else:
+#                     industryROE = 10.0
+#             else:
+#                 industryROE = 10.0
+#             # print(snapshot)
+#             # print(snapshot2)
+#             # print(snapshot3)
+#             if len(snapshot) > 0 and len(snapshot2) > 0 and len(snapshot3) > 0:
+#                 data['회사명'] = stock.name
+#                 data['발행주식수'] = stock.issued_shares
+#                 data['자본금'] = stock.capital
+#                 data['액면가'] = stock.par_value
+#                 data['통화'] = stock.curr
+#                 data[snapshot[0]['accnt_nm']] = snapshot[0]['value'] * 100000000
+#                 data[snapshot2[0]['accnt_nm']] = snapshot2[0]['value'] * 100000000
+#                 data[snapshot3[0]['accnt_nm']] = snapshot3[0]['value']
+#                 if len(report) > 0:
+#                     data[report[0]['accnt_nm']] = report[0]['value'] * 100000000
+#                     data['RAW_ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+#                 else:
+#                     data['중단영업이익'] = 0
+#                     data['RAW_ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
+#                 # data['ADJ_ROE'] = (data['ROE'] + data['RAW_ROE']) / 2
+#                 # data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['ADJ_ROE'] - industryROE) / industryROE)
+#                 data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['RAW_ROE'] - industryROE) / industryROE)
+#                 data['NPV'] = data['주주가치'] / data['발행주식수']
+#                 data['종가'] = daily[0]['value']
+#                 data['요구수익률'] = industryROE
+#                 treasure[stock.code] = data
+#             # print(data)
+#         # print(treasure)
+#         print('='*50, '마이너스', '='*50)
+#         for d in treasure.keys():
+#             # print(d)
+#             if treasure[d]['NPV'] > 0 and treasure[d]['NPV']/treasure[d]['종가']*100 > 100:
+#                 print(align_string('R', d, 10),
+#                       align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
+#                       align_string(',', treasure[d]['RAW_ROE'], 20),
+#                       align_string(',', treasure[d]['지배주주지분'], 20),
+#                       align_string(',', treasure[d]['주주가치'], 20),
+#                       align_string(',', treasure[d]['NPV'], 20),
+#                       align_string(',', treasure[d]['종가'], 10),
+#                       )
+#                 continue
+#             # print(d, treasure[d]['회사명'])
+#             # TargetStockDataStore(d, treasure[d])
+#     except Exception as e:
+#         print('error', e)
+
+
+def new_find_hidden_pearl():
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # DEBUG = True
+    DEBUG = False
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
     treasure = {}
     data = {}
     # 날짜 정보 셋팅
-    dateDict = get_dateDict()
+    dateDict = new_get_dateDict()
     # 종목 정보 셋팅
-    # stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-    stockInfo = detective_db.Stocks.objects.filter(code='027410', listing='Y') # 제일파마홀딩스
+    stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(code='025530', listing='Y') # 제일파마홀딩스
     # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
-    print(align_string('R', 'Code', 10),
+    print(align_string('L', 'No.', 10),
+          align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
           align_string('R', 'Issued Shares', 20),
           align_string('R', 'Capital', 20),
           align_string('R', 'ParValue', 10),
+          align_string('R', 'Currency', 10),
           '\n')
     # 예상되는 당기순이익 조회 조건 셋팅
-    rpt_nm = 'FinancialHighlight'
-    rpt_tp = 'IFRS(연결)'
-    disc_categorizing = 'YEARLY'
-    # disc_categorizing = 'QUARTERLY'
-    fix_or_prov_or_estm = 'E'
-    # ----------------------------------
+    # rpt_nm = 'FinancialHighlight'
+    # rpt_tp = 'IFRS(연결)'
+    # disc_categorizing = 'YEARLY'
+    # # disc_categorizing = 'QUARTERLY'
+    # fix_or_prov_or_estm = 'E'
+    # # ----------------------------------dd
     try:
-        for stock in stockInfo:
+        for ii, stock in enumerate(stockInfo):
             data = {}
             # print(dir(stock))
-            print(align_string('R', stock.code, 10),
+            print(align_string('L', ii+1, 10),
+                  align_string('R', stock.code, 10),
                   align_string('R', stock.name, 20-len(stock.name)),
                   align_string(',', stock.issued_shares, 20),
                   align_string(',', stock.capital, 20),
                   align_string('R', stock.par_value, 10),
+                  align_string('R', stock.curr, 10),
                   )
-            # data['회사명'] = stock.name
-            # data['발행주식수'] = stock.issued_shares
-            # data['자본금'] = stock.capital
-            # data['액면가'] = stock.par_value
-            accnt_nm = '지배주주순이익'
-            snapshot = get_snapshot_objects(rpt_nm,
-                                            rpt_tp,
-                                            accnt_nm,
-                                            disc_categorizing,
-                                            fix_or_prov_or_estm,
-                                            stock.code,
-                                            dateDict)
-            accnt_nm = '지배주주지분'
-            snapshot2 = get_snapshot_objects(rpt_nm,
-                                             rpt_tp,
-                                             accnt_nm,
-                                             disc_categorizing,
-                                             fix_or_prov_or_estm,
-                                             stock.code,
-                                             dateDict)
-            accnt_nm = 'ROE'
-            snapshot3 = get_snapshot_objects(rpt_nm,
-                                             rpt_tp,
-                                             accnt_nm,
-                                             disc_categorizing,
-                                             fix_or_prov_or_estm,
-                                             stock.code,
-                                             dateDict)
-            rpt_nm4 = '포괄손익계산서'
-            accnt_nm = '중단영업이익'
-            report = get_financialreport_objects(rpt_nm4,
-                                                 rpt_tp,
-                                                 accnt_nm,
-                                                 disc_categorizing,
-                                                 fix_or_prov_or_estm,
-                                                 stock.code,
-                                                 dateDict)
-            if report: print(report)
-            rpt_nm2 = '시세현황1'
-            rpt_tp2 = ''
-            column_nm = '종가'
-            daily = get_dailysnapshot_objects(rpt_nm2, rpt_tp2, column_nm, stock.code, dateDict)
-            if stock.market_text:
-                rpt_nm3 = '업종 비교10D'
-                rpt_tp3 = ''
-                column_nm = stock.market_text.replace(' ', '')
-                key = 'ROE'
-                industry = get_dailysnapshot_objects(rpt_nm3, rpt_tp3, column_nm, stock.code, dateDict, key)
-                if len(industry) > 0:
-                    industryROE = industry[0]['value']
-                else:
-                    industryROE = 10.0
-            else:
-                industryROE = 10.0
-            # print(snapshot)
-            # print(snapshot2)
-            # print(snapshot3)
-            if len(snapshot) > 0 and len(snapshot2) > 0 and len(snapshot3) > 0:
-                data['회사명'] = stock.name
-                data['발행주식수'] = stock.issued_shares
-                data['자본금'] = stock.capital
-                data['액면가'] = stock.par_value
-                data['통화'] = stock.curr
-                data[snapshot[0]['accnt_nm']] = snapshot[0]['value'] * 100000000
-                data[snapshot2[0]['accnt_nm']] = snapshot2[0]['value'] * 100000000
-                data[snapshot3[0]['accnt_nm']] = snapshot3[0]['value']
-                if len(report) > 0:
-                    data[report[0]['accnt_nm']] = report[0]['value'] * 100000000
-                    data['RAW_ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
-                else:
-                    data['중단영업이익'] = 0
-                    data['RAW_ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
-                # data['ADJ_ROE'] = (data['ROE'] + data['RAW_ROE']) / 2
-                # data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['ADJ_ROE'] - industryROE) / industryROE)
-                data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['RAW_ROE'] - industryROE) / industryROE)
+            data['회사명'] = stock.name
+            data['발행주식수'] = stock.issued_shares
+            data['자본금'] = stock.capital
+            data['액면가'] = stock.par_value
+            data['통화'] = 'KRW' if stock.curr == '' else stock.curr
+            soup = get_soup_from_file('snapshot', yyyymmdd, stock.name, stock.code)
+
+            marketTxt = fnguide.select_by_attr(soup, 'span', 'id', 'strMarketTxt').text.replace(' ', '') # 업종분류
+            data['업종구분'] = marketTxt.replace('\n', '')
+            if data['업종구분'] != '' and stock.market_text is None:
+                fnguide.StockMarketTextUpdate(stock.code, marketTxt)
+            yearly_highlight = fnguide.select_by_attr(soup, 'div', 'id', 'highlight_D_Y')  # Snapshot FinancialHighlight
+            if yearly_highlight:
+                columns, items, values = fnguide.setting(fnguide.get_table_contents(yearly_highlight, 'table thead tr th')[1:],
+                                                         fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
+                                                         fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
+                if DEBUG: print(columns, items, values)
+                for idx, i in enumerate(items):
+                    if i in ['지배주주순이익', '지배주주지분', '자산총계']:
+                        for idx2, yyyymm in enumerate(columns):
+                            # print(idx2, yyyymm)
+                            # print(yyyymm[:4], dateDict['yyyy'], values[idx][idx2])
+                            if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
+                                data['Period'] = yyyymm
+                                data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
+                                break
+                            elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
+                                data['Period'] = columns[idx2-1]
+                                data[i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
+                            else:
+                                continue
+                    elif i in ['ROE(%)']:
+                        for idx2, yyyymm in enumerate(columns):
+                            # print(idx2, yyyymm)
+                            # print(yyyymm[:4], dateDict['yyyy'], values[idx][idx2])
+                            if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
+                                data['Period'] = yyyymm
+                                if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                    pass
+                                else:
+                                    data['확인사항'] = values[idx][idx2].replace(',', '')
+                                break
+                            elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
+                                data['Period'] = columns[idx2-1]
+                                if fnguide.is_float(values[idx][idx2-1].replace(',', '')):
+                                    pass
+                                else:
+                                    data['확인사항'] = values[idx][idx2-1].replace(',', '')
+                                break
+                            else:
+                                continue
+                daily = fnguide.select_by_attr(soup, 'div', 'id', 'svdMainGrid1')  # Snapshot 시세현황1
+                columns, items, values = fnguide.setting(
+                    fnguide.get_table_contents(daily, 'table thead tr th')[1:],
+                    fnguide.get_table_contents(daily, 'table tbody tr th'),
+                    fnguide.get_table_contents(daily, 'table tbody tr td'))
+                if DEBUG: print(columns, items, values)
+                for idx, col in enumerate(columns):
+                    if col in ['종가']:
+                        # print(col, values[idx])
+                        data[col] = float(values[idx].replace(',', ''))
+                        break
+
+                daily = fnguide.select_by_attr(soup, 'div', 'id', 'svdMainGrid10D')  # Snapshot 업종비교
+                columns, items, values = fnguide.setting(
+                    fnguide.get_table_contents(daily, 'table thead tr th'),
+                    fnguide.get_table_contents(daily, 'table tbody tr th'),
+                    fnguide.get_table_contents(daily, 'table tbody tr td'))
+                if DEBUG: print(columns, items, values)
+                for idx, i in enumerate(items):
+                    if i in ['ROE']:
+                        for idx2, col in enumerate(columns):
+                            # print(columns, items, values)
+                            # print(idx, i, idx2, col, values[idx][idx2])
+                            if col != '' and col.replace('\n', '').replace(' ', '') == marketTxt.replace('\n', '').replace(' ', ''):
+                                data['요구수익률'] = float(values[idx][idx2])
+                                break
+                if '요구수익률' not in data.keys():
+                    for idx, i in enumerate(items):
+                        if i in ['ROE']:
+                            for idx2, col in enumerate(columns):
+                                if col != '' and col.replace('\n', '').replace(' ', '') == 'KOSPI':
+                                    data['요구수익률'] = float(values[idx][idx2])
+                                    break
+                if '요구수익률' not in data.keys(): data['요구수익률'] = 10.0
+                if data['요구수익률'] < 8.0: data['요구수익률'] = 8.0
+                # data['요구수익률'] = (data['요구수익률'] + 10) /2
+                # print(data)
+                soup = get_soup_from_file('financeReport', yyyymmdd, stock.name, stock.code)
+                yearly_sonik = fnguide.select_by_attr(soup, 'div', 'id', 'divSonikY')  # Snapshot 포괄손익계산서
+                columns, valueDict = fnguide.dynamic_parse_table('divSonikY', yearly_sonik.table, stock.code, stock.name)
+                if DEBUG:
+                    for key in valueDict.keys():
+                        # if key.endswith('금융수익'):
+                            print(key, valueDict[key])
+                # print(columns, valueDict)
+                for key in valueDict.keys():
+                    if key in ['중단영업이익', '금융수익-금융수익', '기타수익-기타수익']:
+                        for idx, yyyymm in enumerate(columns[1:]):
+                            if DEBUG: print(yyyymm, dateDict)
+                            # if yyyymm[:4] == dateDict['yyyy'] and yyyymm[5:7] == dateDict['mm']:
+                            if yyyymm[:4] == data['Period'][:4] and yyyymm[5:7] == data['Period'][5:7]:
+                                data[key] = 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
+                                break
+                            elif yyyymm[:4] == data['Period'][:4]:
+                                data[key] = 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
+                                break
+                            else:
+                                continue
+                    # elif key.startswith('금융수익'):
+                    #     if '금융수익' not in data.keys(): data['금융수익'] = 0.0
+                    #     for idx, yyyymm in enumerate(columns[1:]):
+                    #         if yyyymm[:4] == data['Period'][:4] and yyyymm[5:7] == data['Period'][5:7]:
+                    #             data['금융수익'] += 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
+                    #             break
+                    #         elif yyyymm[:4] == data['Period'][:4]:
+                    #             data['금융수익'] += 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
+                    #             break
+                    #         else:
+                    #             continue
+                if '중단영업이익' not in data.keys(): data['중단영업이익'] = 0.0
+                if '금융수익-금융수익' not in data.keys(): data['금융수익-금융수익'] = 0.0
+                if '기타수익-기타수익' not in data.keys(): data['기타수익-기타수익'] = 0.0
+                data['ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+                if data['ROE'] > 20 and (data['금융수익-금융수익'] / data['지배주주순이익'] > 0.7 or data['기타수익-기타수익'] / data['지배주주순이익'] > 0.7 ):
+                    data['ROE'] = (data['지배주주순이익'] - data['금융수익-금융수익'] - data['기타수익-기타수익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+                data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['ROE'] - data['요구수익률']) / data['요구수익률'])
                 data['NPV'] = data['주주가치'] / data['발행주식수']
-                data['종가'] = daily[0]['value']
-                data['요구수익률'] = industryROE
+                data['NPV2'] = (data['주주가치'] * (data['지배주주지분'] / data['자산총계'])) / data['발행주식수']
+                if DEBUG: print(data)
                 treasure[stock.code] = data
-            # print(data)
-        # print(treasure)
         print('='*50, '마이너스', '='*50)
+        print(align_string('L', 'No.', 10),
+              align_string('R', 'Code', 10),
+              align_string('R', 'Name', 20),
+              align_string('R', 'ROE', 20),
+              align_string('R', '지배주주지분', 14),
+              align_string('R', '주주가치', 16),
+              align_string('R', 'NPV', 20),
+              align_string('R', '종가', 10),
+              align_string('R', '확인사항', 16),
+              )
+        if not DEBUG: dataInit()
+        cnt = 0
         for d in treasure.keys():
             # print(d)
-            if treasure[d]['NPV'] < 0:
-                print(align_string('R', d, 10),
+            # if treasure[d]['NPV'] > 0 and treasure[d]['NPV']/treasure[d]['종가']*100 > 100:  # 수익예상 종목
+            if treasure[d]['NPV'] < 0 or ('확인사항' in treasure[d].keys() and treasure[d]['확인사항'] == '완전잠식'):  # 제외종목
+                cnt += 1
+                print(align_string('L', cnt, 10),
+                      align_string('R', d, 10),
                       align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
-                      align_string(',', treasure[d]['RAW_ROE'], 20),
+                      align_string(',', treasure[d]['ROE'], 20),
                       align_string(',', treasure[d]['지배주주지분'], 20),
                       align_string(',', treasure[d]['주주가치'], 20),
                       align_string(',', treasure[d]['NPV'], 20),
                       align_string(',', treasure[d]['종가'], 10),
+                      align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                       )
                 continue
             # print(d, treasure[d]['회사명'])
+            # if treasure[d]['ROE'] < 15:
+            #     cnt += 1
+            #     print(align_string('L', cnt, 10),
+            #           align_string('R', d, 10),
+            #           align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
+            #           align_string(',', treasure[d]['ROE'], 20),
+            #           align_string(',', treasure[d]['지배주주지분'], 20),
+            #           align_string(',', treasure[d]['주주가치'], 20),
+            #           align_string(',', treasure[d]['NPV'], 20),
+            #           align_string(',', treasure[d]['종가'], 10),
+            #           align_string('R', 'ROE 15 미만' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
+            #           )
+            #     continue
             TargetStockDataStore(d, treasure[d])
+            # print(columns)
+            # print(values)
+            # print(data)
+            # columns = fnguide.get_table_contents(yearly_sonik, 'table thead tr th')[1:]
+            # print(yearly_sonik)
+            # print(columns)
+            # yearly_highlight = fnguide.select_by_attr(soup, 'div', 'id', 'highlight_D_Y')  # Snapshot FinancialHighlight
+            # columns, items, values = fnguide.setting(
+            #     fnguide.get_table_contents(yearly_highlight, 'table thead tr th')[1:],
+            #     fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
+            #     fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
+    #         # data['회사명'] = stock.name
+    #         # data['발행주식수'] = stock.issued_shares
+    #         # data['자본금'] = stock.capital
+    #         # data['액면가'] = stock.par_value
+    #         accnt_nm = '지배주주순이익'
+    #         snapshot = get_snapshot_objects(rpt_nm,
+    #                                         rpt_tp,
+    #                                         accnt_nm,
+    #                                         disc_categorizing,
+    #                                         fix_or_prov_or_estm,
+    #                                         stock.code,
+    #                                         dateDict)
+    #         accnt_nm = '지배주주지분'
+    #         snapshot2 = get_snapshot_objects(rpt_nm,
+    #                                          rpt_tp,
+    #                                          accnt_nm,
+    #                                          disc_categorizing,
+    #                                          fix_or_prov_or_estm,
+    #                                          stock.code,
+    #                                          dateDict)
+    #         accnt_nm = 'ROE'
+    #         snapshot3 = get_snapshot_objects(rpt_nm,
+    #                                          rpt_tp,
+    #                                          accnt_nm,
+    #                                          disc_categorizing,
+    #                                          fix_or_prov_or_estm,
+    #                                          stock.code,
+    #                                          dateDict)
+    #         rpt_nm4 = '포괄손익계산서'
+    #         accnt_nm = '중단영업이익'
+    #         report = get_financialreport_objects(rpt_nm4,
+    #                                              rpt_tp,
+    #                                              accnt_nm,
+    #                                              disc_categorizing,
+    #                                              fix_or_prov_or_estm,
+    #                                              stock.code,
+    #                                              dateDict)
+    #         if report: print(report)
+    #         rpt_nm2 = '시세현황1'
+    #         rpt_tp2 = ''
+    #         column_nm = '종가'
+    #         daily = get_dailysnapshot_objects(rpt_nm2, rpt_tp2, column_nm, stock.code, dateDict)
+    #         if stock.market_text:
+    #             rpt_nm3 = '업종 비교10D'
+    #             rpt_tp3 = ''
+    #             column_nm = stock.market_text.replace(' ', '')
+    #             key = 'ROE'
+    #             industry = get_dailysnapshot_objects(rpt_nm3, rpt_tp3, column_nm, stock.code, dateDict, key)
+    #             if len(industry) > 0:
+    #                 industryROE = industry[0]['value']
+    #             else:
+    #                 industryROE = 10.0
+    #         else:
+    #             industryROE = 10.0
+    #         # print(snapshot)
+    #         # print(snapshot2)
+    #         # print(snapshot3)
+    #         if len(snapshot) > 0 and len(snapshot2) > 0 and len(snapshot3) > 0:
+    #             data['회사명'] = stock.name
+    #             data['발행주식수'] = stock.issued_shares
+    #             data['자본금'] = stock.capital
+    #             data['액면가'] = stock.par_value
+    #             data['통화'] = stock.curr
+    #             data[snapshot[0]['accnt_nm']] = snapshot[0]['value'] * 100000000
+    #             data[snapshot2[0]['accnt_nm']] = snapshot2[0]['value'] * 100000000
+    #             data[snapshot3[0]['accnt_nm']] = snapshot3[0]['value']
+    #             if len(report) > 0:
+    #                 data[report[0]['accnt_nm']] = report[0]['value'] * 100000000
+    #                 data['RAW_ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+    #             else:
+    #                 data['중단영업이익'] = 0
+    #                 data['RAW_ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
+    #             # data['ADJ_ROE'] = (data['ROE'] + data['RAW_ROE']) / 2
+    #             # data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['ADJ_ROE'] - industryROE) / industryROE)
+    #             data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['RAW_ROE'] - industryROE) / industryROE)
+    #             data['NPV'] = data['주주가치'] / data['발행주식수']
+    #             data['종가'] = daily[0]['value']
+    #             data['요구수익률'] = industryROE
+    #             treasure[stock.code] = data
+    #         # print(data)
+    #     # print(treasure)
+    #     print('='*50, '마이너스', '='*50)
+    #     for d in treasure.keys():
+    #         # print(d)
+    #         if treasure[d]['NPV'] > 0 and treasure[d]['NPV']/treasure[d]['종가']*100 > 100:
+    #             print(align_string('R', d, 10),
+    #                   align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
+    #                   align_string(',', treasure[d]['RAW_ROE'], 20),
+    #                   align_string(',', treasure[d]['지배주주지분'], 20),
+    #                   align_string(',', treasure[d]['주주가치'], 20),
+    #                   align_string(',', treasure[d]['NPV'], 20),
+    #                   align_string(',', treasure[d]['종가'], 10),
+    #                   )
+    #             continue
+    #         # print(d, treasure[d]['회사명'])
+    #         # TargetStockDataStore(d, treasure[d])
     except Exception as e:
-        print('error', e)
+        print('error', e, '\n', stock)
+
+
+def dataInit():
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        detective_db.TargetStocks.objects.update(plus_npv='N')
+    except Exception as e:
+        print("TargetStocks data initialization Failed with", e)
 
 
 def TargetStockDataStore(crp_cd, data):
@@ -390,8 +778,11 @@ def TargetStockDataStore(crp_cd, data):
     import os
     import django
     from datetime import datetime
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -402,8 +793,11 @@ def TargetStockDataStore(crp_cd, data):
                                                                       'curr': data['통화'],
                                                                       'last_price': data['종가'],
                                                                       'target_price': data['NPV'],
+                                                                      'target_price2': data['NPV2'],
                                                                       'required_yield': data['요구수익률'],
-                                                                      'ratio': data['NPV']/data['종가']*100
+                                                                      'return_on_equity': data['ROE'],
+                                                                      'ratio': data['NPV']/data['종가']*100,
+                                                                      'plus_npv': 'Y'
                                                                   }
                                                                   )
 
@@ -416,9 +810,11 @@ if __name__ == '__main__':
     # find_hidden_pearl()
     # messeage_to_telegram()
     # find_hidden_pearl()
-    report_type = 'financeRatio'
-    yyyymmdd = '2018-04-28'
-    crp_nm = '삼성전자'
-    crp_cd = '005930'
-    aa = get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd)
-    print(len(aa.find_all('div')))
+    new_find_hidden_pearl()
+    # new_get_dateDict()
+    # getConfig()
+    # report_type = 'financeRatio'
+    # crp_nm = '삼성전자'
+    # crp_cd = '005930'
+    # aa = get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd)
+    # print(len(aa.find_all('div')))

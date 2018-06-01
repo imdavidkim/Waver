@@ -9,6 +9,16 @@ from bs4 import BeautifulSoup
 import csv
 
 
+def getConfig():
+    import configparser
+    global path, django_path, main_path
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    path = config['COMMON']['PROJECT_PATH']
+    django_path = path + r'\MainBoard'
+    main_path = django_path + r'\MainBoard'
+
+
 def getStockInfo():
     gen_otp_url = "http://marketdata.krx.co.kr/contents/COM/GenerateOTP.jspx"
     gen_otp_data = {
@@ -116,8 +126,11 @@ def dataInit():
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\\Waver\MainBoard')
-    sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -131,8 +144,11 @@ def dataStore(retDict):
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\\Waver\MainBoard')
-    sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db

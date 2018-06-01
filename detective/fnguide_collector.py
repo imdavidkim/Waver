@@ -10,15 +10,38 @@ import pprint
 import csv
 import xmltodict
 import os
+from multiprocessing import pool, Process
 
 marketTxt = None
+
+
+def getConfig():
+    import configparser
+    global path, django_path, main_path
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    path = config['COMMON']['PROJECT_PATH']
+    django_path = path + r'\MainBoard'
+    main_path = django_path + r'\MainBoard'
+
+
+def saveFile(workDir, code, name, type, xml):
+    file = open(r"%s\financeData_%s_%s_%s.html" % (workDir,
+                                                   name,
+                                                   code,
+                                                   type), "wb")
+    print(file.name)
+    file.write(xml)
+    file.close()
+
 
 def getFinanceData():
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -37,14 +60,14 @@ def getFinanceData():
         104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp'
     }
 
-    reportType = {
-        # 101: 'snapshot',
-        103: 'financeReport'
-    }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
-    urlInfo = {
-        # 101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
-        103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp'
-    }
+    # reportType = {
+    #     # 101: 'snapshot',
+    #     103: 'financeReport'
+    # }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
+    # urlInfo = {
+    #     # 101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
+    #     103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp'
+    # }
 
     data = {
         'pGB': 1,
@@ -139,41 +162,40 @@ def getFinanceData():
                 soup = BeautifulSoup(response.decode('utf-8'), "lxml")
                 # File 처리
                 xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-                file = open(r"%s\financeData_%s_%s_%s.html" % (workDir,
-                                                              s.name,
-                                                              s.code,
-                                                              reportType[key]), "wb")
-                print(file.name)
-                file.write(xml)
-                file.close()
+                # p = Process(target=saveFile, args=(workDir, s, reportType[key], xml))
+                # p = Process(target=saveFile, args=(workDir, s.code, s.name, reportType[key], xml))
+                # p.start()
+                # p.join()
+                saveFile(workDir, s.code, s.name, reportType[key], xml)
+
                 # File 처리 끝
                 # DB 처리
-                marketTxt = select_by_attr(soup, 'span', 'id', 'strMarketTxt').text
-                if marketTxt and key == 'snapshot':
-                    StockMarketTextUpdate(s.code, marketTxt)
-                    marketTxt = None
-                divs = soup.find_all('div')
-                if reportType[key] in ['snapshot', 'financeReport']:
-                    for d in divs:
-                        if 'id' in d.attrs.keys():
-                            # if ('div' in d.attrs['id'] or 'highlight' in d.attrs['id']) and 'um_table' in d.attrs['class']:
-                            if 'div' in d.attrs['id'] and 'um_table' in d.attrs['class']:
-                                # print(d.attrs['id'], d.attrs['class'])
-                                # if d.attrs['id'] == 'divSonikY':
-                                dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
-                                # print('\n\n\n\n\n')
-                            # 20180418
-                            elif 'highlight_D' in d.attrs['id'] and 'um_table' in d.attrs['class']:
-                                if 'highlight_D_A' == d.attrs['id']:
-                                    continue
-                                # print(d.attrs['id'], d.attrs['class'])
-                                dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
-                            elif 'svdMainGrid' in d.attrs['id'] and 'um_table' in d.attrs['class']:
-                                # print(d.attrs['id'], d.attrs['class'])
-                                dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
-                    # DB 처리 끝
-                else:
-                    static_parse_table(divs, s.code, s.name)
+                # marketTxt = select_by_attr(soup, 'span', 'id', 'strMarketTxt').text
+                # if marketTxt and key == 'snapshot':
+                #     StockMarketTextUpdate(s.code, marketTxt)
+                #     marketTxt = None
+                # divs = soup.find_all('div')
+                # if reportType[key] in ['snapshot', 'financeReport']:
+                #     for d in divs:
+                #         if 'id' in d.attrs.keys():
+                #             # if ('div' in d.attrs['id'] or 'highlight' in d.attrs['id']) and 'um_table' in d.attrs['class']:
+                #             if 'div' in d.attrs['id'] and 'um_table' in d.attrs['class']:
+                #                 # print(d.attrs['id'], d.attrs['class'])
+                #                 # if d.attrs['id'] == 'divSonikY':
+                #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
+                #                 # print('\n\n\n\n\n')
+                #             # 20180418
+                #             elif 'highlight_D' in d.attrs['id'] and 'um_table' in d.attrs['class']:
+                #                 if 'highlight_D_A' == d.attrs['id']:
+                #                     continue
+                #                 # print(d.attrs['id'], d.attrs['class'])
+                #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
+                #             elif 'svdMainGrid' in d.attrs['id'] and 'um_table' in d.attrs['class']:
+                #                 # print(d.attrs['id'], d.attrs['class'])
+                #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
+                #     # DB 처리 끝
+                # else:
+                #     static_parse_table(divs, s.code, s.name)
         # FinanceReport 성공 끝
         
         '''
@@ -286,7 +308,7 @@ def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hie
                     tmpTag = tag3.text.replace('\n', '').replace('(P) : Provisional잠정실적', '')
                     column_names.append(tmpTag)
                 else:
-                    column_names.append(tag3.text)
+                    column_names.append(tag3.text.replace('\n', '').strip())
 
     tmpHierarchy = table_hierarchy['VerticalHeader'].split('-')
     dataHierarchy = table_hierarchy['Data'].split('-')
@@ -299,7 +321,7 @@ def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hie
                                              get_table_contents(table, 'tbody tr th'),
                                              get_table_contents(table, 'tbody tr td'))
         if len(keys) == 0:
-            print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
+            # print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
             # if report_name == 'svdMainGrid10D':
                 # print(column_names)
                 # print(keys)
@@ -310,34 +332,35 @@ def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hie
                 # print(column_names)
                 # print(keys)
                 # print(values)
-            print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
+            # print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
             for idx1, key in enumerate(keys):
                 DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, key, values[idx1])
     else:
-        print("[%s][%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name, categorizing))
-        for di in data_information.keys():
-            # print(categorizing, column_names)
-            # print(di, data_information[di])
-            ## 20180504
-            if report_name == 'FinancialHighlight':
-                # print(table.text)
-                # get_table_contents(table, 'tbody tr th')
-                # get_table_contents(table, 'tbody tr td')
-                # print("FinancialHighlight")
-                SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, di, data_information[di])
-            else:
-                # print(report_name)
-                # get_table_contents(table, 'tbody tr th')
-                # get_table_contents(table, 'tbody tr td')
-                # print("FinancialReportDataStore")
-                FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, di, data_information[di])
-            ## 20180504
-            # for idx, column_name in enumerate(column_names[1:]):
-            #     period_info = column_name.split('/')
-            #     if len(period_info) < 2:
-            #         continue
-            #     print(report_name, crp_cd, crp_nm, categorizing, period_info[0], period_info[1],
-            #           str(int(period_info[1])/3)[0]+'Q', di, data_information[di][idx])
+        # print("[%s][%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name, categorizing))
+        return column_names, data_information # DB저장 빼고 파일에서 직접 읽어오기위해 처리
+        # for di in data_information.keys():
+        #     # print(categorizing, column_names)
+        #     # print(di, data_information[di])
+        #     ## 20180504
+        #     if report_name == 'FinancialHighlight':
+        #         # print(table.text)
+        #         # get_table_contents(table, 'tbody tr th')
+        #         # get_table_contents(table, 'tbody tr td')
+        #         # print("FinancialHighlight")
+        #         SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, di, data_information[di])
+        #     else:
+        #         # print(report_name)
+        #         # get_table_contents(table, 'tbody tr th')
+        #         # get_table_contents(table, 'tbody tr td')
+        #         # print("FinancialReportDataStore")
+        #         FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, di, data_information[di])
+        #     ## 20180504
+        #     # for idx, column_name in enumerate(column_names[1:]):
+        #     #     period_info = column_name.split('/')
+        #     #     if len(period_info) < 2:
+        #     #         continue
+        #     #     print(report_name, crp_cd, crp_nm, categorizing, period_info[0], period_info[1],
+        #     #           str(int(period_info[1])/3)[0]+'Q', di, data_information[di][idx])
 
 
 def get_table_row_header(rs, hierarchy, hierarchy2, c_hierarchy, data_information, prev_column, data_pipe, level=0):
@@ -390,9 +413,9 @@ def get_table_row_header(rs, hierarchy, hierarchy2, c_hierarchy, data_informatio
                     # print(get_data_content(tag, hierarchy2, len(hierarchy2)-1))
                     # print(('~~~~~~~~~~~~~~~~~~~~~~~' + prev_column) * 4)
                     if prev_column == '' or tag.text.replace(u'\xa0', '') == prev_column:
-                        data_information[tag.text.replace(u'\xa0', '')] = data_pipe
+                        data_information[tag.text.replace(u'\xa0', '').replace('\n', '').strip()] = data_pipe
                     else:
-                        data_information[prev_column + '-' + tag.text.replace(u'\xa0', '')] = data_pipe
+                        data_information[prev_column + '-' + tag.text.replace(u'\xa0', '').replace('\n', '').strip()] = data_pipe
                     # print(data_information)
                     break
     except Exception as e:
@@ -402,7 +425,7 @@ def get_table_row_header(rs, hierarchy, hierarchy2, c_hierarchy, data_informatio
 def get_data_content(rs, hierarchy, level):
     retResult = []
     for tag in rs.find_all(hierarchy[level]):
-        retResult.append(tag.text.replace(u'\xa0', 'None'))
+        retResult.append(tag.text.replace(u'\xa0', 'None').replace('\n', '').strip())
     return retResult
 
 
@@ -424,7 +447,7 @@ def get_text_content(rs, hierarchy, prev_column, level):
                 if tag.text == retStr:
                     pass
                 else:
-                    retStr = tag.text
+                    retStr = tag.text.replace('\n', '').strip()
         # print('*'*20)
         # print(retStr)
         # print('*' * 20)
@@ -442,8 +465,11 @@ def StockMarketTextUpdate(crp_cd, market_text):
     import os
     import django
     from datetime import datetime
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -458,8 +484,9 @@ def DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, k
     import os
     import django
     from datetime import datetime
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -493,8 +520,11 @@ def SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, k
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -548,8 +578,11 @@ def FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_n
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -655,12 +688,18 @@ def is_float(s):
 
 def get_table_contents(soup, structure):
     retList = []
-    for tag in soup.select(structure):
-        if tag.div and tag.div.dl and tag.div.dl.dt:
-            retList.append(tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', ''))
-        if tag.div and tag.div.dl and tag.div.dl.dd:
-            continue
-        retList.append(tag.text.replace(u'\xa0', '').replace('\n', ''))
+    if soup:
+        for tag in soup.select(structure):
+            if tag.div and tag.div.dl and tag.div.dl.dt:
+                if '(E) : Estimate' == tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip():
+                    retList.append(tag.div.span.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
+                elif '(P) : Provisional' == tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ','').replace('   ', '').strip():
+                    retList.append(tag.div.span.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
+                else:
+                    retList.append(tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
+            if tag.div and tag.div.dl and tag.div.dl.dd:
+                continue
+            retList.append(tag.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
     return retList
 
 
@@ -699,38 +738,38 @@ def setting(header, items, datas):
                 tmpData = []
                 if item.find('/') > -1: # 한 컬럼에 여러개의 값이 있는 경우
                     if item.find('(') > -1: # 여러개의 컬럼의 괄호로 묶인 공통인자가 있는 경우
-                        prev_column = item[:item.find('(')]
+                        prev_column = item[:item.find('(')].strip().replace('  ', '').replace('   ', '')
                         tmpHeader = [(prev_column + '-' + i.replace(' ', '')) for i in
-                                     item[item.find('(')+1:item.find(')')].split('/')]
+                                     item[item.find('(')+1:item.find(')')].strip().replace('  ', '').replace('   ', '').split('/')]
                     elif item.find('.') > -1: # 여러개의 컬럼의 마침표로 분리된 공통인자가 있는 경우
                         prev_column = item[:item.find('.')]
                         tmpHeader = [(prev_column + '-' + i.replace(' ', '')) for i in
-                                     item[item.find('.')+1:].split('/')]
+                                     item[item.find('.')+1:].strip().replace('  ', '').replace('   ', '').split('/')]
                     else: # 공통인자 없이 서로 다른 두개의 값이 / 로 묶인 컬럼인 경우
-                        tmpHeader = item.split('/')
-                    tmpData = datas[idx].split('/')
+                        tmpHeader = item.strip().replace('  ', '').replace('   ', '').split('/')
+                    tmpData = datas[idx].strip().replace('  ', '').replace('   ', '').split('/')
                     retHeader.extend(tmpHeader)
                     retValue.extend(tmpData)
                 else:
-                    retHeader.append(item)
-                    retValue.append(datas[idx])
+                    retHeader.append(item.strip().replace('  ', '').replace('   ', ''))
+                    retValue.append(datas[idx].strip().replace('  ', '').replace('   ', ''))
         elif len(items) == 0:
             # print(
             #     ":::::::::::::::::::::::::::::::::::::::len(items) == 0::::::::::::::::::::::::::::::::::::::::::::::::")
             for idx, head in enumerate(header):
-                retHeader.append(head.replace(' ', ''))
-                retValue.append(datas[idx].replace(' ', ''))
+                retHeader.append(head.replace('  ', '').replace('   ', ''))
+                retValue.append(datas[idx].replace('  ', '').replace('   ', ''))
         else:
             # print("::::::::::::::::::::::::::::::::::::::::::::else:::::::::::::::::::::::::::::::::::::::::::::::::")
             for idx, head in enumerate(header[1:]):
-                retHeader.append(head.replace(' ', ''))
+                retHeader.append(head.replace('  ', '').replace('   ', ''))
             retKey = items
 
             for i in range(len(retKey)):
                 tmpData = []
                 for j in range(len(retHeader)):
                     # print(i, j, len(retHeader)*i+j)
-                    tmpData.append(datas[len(retHeader)*i+j].replace(' ', ''))
+                    tmpData.append(datas[len(retHeader)*i+j].replace('  ', '').replace('   ', ''))
                 retValue.append(tmpData)
     except Exception as e:
         print(e)
@@ -743,8 +782,11 @@ def FinancialRatioDataStore(report_name, report_type, crp_cd, crp_nm, categorizi
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
