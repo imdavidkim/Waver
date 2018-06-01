@@ -27,13 +27,16 @@ class TargetStocks(models.Model):
     curr = models.CharField(max_length=3)
     last_price = models.FloatField(null=True)
     target_price = models.FloatField(null=True)
+    target_price2 = models.FloatField(null=True)
     ratio = models.FloatField(null=True)
     valuation = models.CharField(max_length=1, default='B')
     permanence = models.CharField(max_length=1, default='B')
     audit = models.CharField(max_length=1, default='B')
     required_yield = models.FloatField(null=True)
+    return_on_equity = models.FloatField(null=True)
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    plus_npv = models.CharField(max_length=1, default='Y')
 
 
 class DartRequestIndex(models.Model):
