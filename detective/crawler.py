@@ -292,5 +292,5 @@ def httpRequest(url, data=None, method='POST'):
         return None
 
 if __name__ == '__main__':
-    # getStockInfo()
+    getStockInfo()
     getSnP500StockInfo()

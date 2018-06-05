@@ -918,5 +918,31 @@ def httpRequest(url, data, method='POST'):
         return None
 
 
+def getUSFinanceData():
+    import sys
+    import os
+    import django
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import MainBoard.detective_app.models as detective_db
+    global marketTxt
+
+    yyyymmdd = str(datetime.now())[:10]
+    url = "http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp"
+    reportType = {
+        101: 'snapshot',
+        103: 'financeReport',
+        104: 'financeRatio'
+    }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
+    urlInfo = {
+        101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
+        103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp',
+        104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp'
+    }
+    url = 'https://finance.yahoo.com/quote/%s/financials?p=%s'
+
 if __name__ == '__main__':
     getFinanceData()
