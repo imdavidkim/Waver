@@ -697,27 +697,46 @@ def get_table_contents(soup, structure):
                     retList.append(tag.div.span.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
                 else:
                     retList.append(tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
+            elif tag.a:
+                retList.append('%s(%s)' % (tag.a.text, tag.a['href']))
+                continue
             if tag.div and tag.div.dl and tag.div.dl.dd:
                 continue
             retList.append(tag.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
     return retList
 
 
-def select_by_attr(soup, tagname, attr, condition):
+def select_by_attr(soup, tagname, attr, condition, all=None):
     retTag = None
-    if attr == 'id':
-        retTag = soup.find(tagname, {"id": condition})
-    elif attr == 'class':
-        retTag = soup.find(tagname, {"class": condition})
-    elif attr == 'style':
-        retTag = soup.find(tagname, {"style": condition})
-    elif attr == 'scope':
-        retTag = soup.find(tagname, {"scope": condition})
-    elif attr == 'href':
-        retTag = soup.find(tagname, {"href": condition})
+    if all:
+        if attr == 'id':
+            retTag = soup.find_all(tagname, {"id": condition})
+        elif attr == 'class':
+            retTag = soup.find_all(tagname, {"class": condition})
+        elif attr == 'style':
+            retTag = soup.find_all(tagname, {"style": condition})
+        elif attr == 'scope':
+            retTag = soup.find_all(tagname, {"scope": condition})
+        elif attr == 'href':
+            if condition:
+                retTag = soup.find_all(tagname, {"href": condition})
+            else:
+                retTag = soup.find_all(tagname, href=True)
+        else:
+            pass
     else:
-        pass
-
+        if attr == 'id':
+            retTag = soup.find(tagname, {"id": condition})
+        elif attr == 'class':
+            retTag = soup.find(tagname, {"class": condition})
+        elif attr == 'style':
+            retTag = soup.find(tagname, {"style": condition})
+        elif attr == 'scope':
+            retTag = soup.find(tagname, {"scope": condition})
+        elif attr == 'href':
+            retTag = soup.find(tagname, {"href": condition})
+        else:
+            pass
     return retTag
 
 

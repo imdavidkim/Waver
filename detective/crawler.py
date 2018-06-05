@@ -65,6 +65,41 @@ def getStockInfo():
     # print(df)
 
 
+def getSnP500StockInfo():
+    url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+    response = httpRequest(url)
+    dic = wikiDataCleansing(response)
+    USDataInit()
+    USDataStore(dic)
+
+
+def wikiDataCleansing(content):
+    import detective.fnguide_collector as fnguide
+    retDict = {}
+    soup = BeautifulSoup(content, 'lxml')
+    snp500_companies = fnguide.select_by_attr(soup, 'table', 'class', 'wikitable sortable')  # Snapshot FinancialHighlight
+    # print(snp500_companies)
+    if snp500_companies:
+        header = fnguide.get_table_contents(snp500_companies, 'tr th')
+        datas = fnguide.get_table_contents(snp500_companies, 'tr td')
+        for d in range(0, len(datas), 9):
+            retDict[datas[d+7]] = {
+                'CIK': datas[d+7],
+                'Ticker': datas[d][:datas[d].find('(')],
+                'TickerLink': datas[d][datas[d].find('(')+1:datas[d].find(')')],
+                'Security': datas[d+1][:datas[d+1].find('(')],
+                'SecurityLink': datas[d+1][datas[d+1].find('(')+1:datas[d+1].find(')')],
+                'CategoryName': datas[d+3],
+                'CategoryDetail': datas[d+4],
+                'SecurityFiling': datas[d+2][datas[d+2].find('(')+1:datas[d+2].find(')')],
+                'Address': datas[d+5][:datas[d+5].find('(')],
+                'AddressLink': datas[d+5][datas[d+5].find('(')+1:datas[d+5].find(')')],
+                'DateFirstAdded': datas[d+6],
+                'Founded': datas[d+8]}
+
+    return retDict
+
+
 def dataCleansing(content):
     import re
     retDict = {}
@@ -140,6 +175,24 @@ def dataInit():
         print("Stock data initialization Failed with", e)
 
 
+def USDataInit():
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        detective_db.USStocks.objects.update(listing='N')
+    except Exception as e:
+        print("USStocks data initialization Failed with", e)
+
+
 def dataStore(retDict):
     import sys
     import os
@@ -173,19 +226,6 @@ def dataStore(retDict):
                                                                     'listing': 'Y'
                                                                 }
                                                                 )
-            # 기존에 했다가 에러난 코드
-            # info = detective_db.Stocks.objects.update_or_create(code=key,
-            #                                                     name=retDict[key]['종목명'],
-            #                                                     category_code=retDict[key]['업종코드'],
-            #                                                     category_name=retDict[key]['업종명'],
-            #                                                     issued_shares=float(
-            #                                                               retDict[key]['상장주식수'].replace(',', '')),
-            #                                                     capital=float(retDict[key]['자본금'].replace(',', '')),
-            #                                                     par_value=float(retDict[key]['액면가'].replace(',', '')),
-            #                                                     tel=retDict[key]['전화번호'],
-            #                                                     address=retDict[key]['주소'])
-            # info.save()
-            # print("[%s][%s] Successfully saved!!" % (key, retDict[key]['종목명']))
             count += 1
             if count % 100 == 0:
                 print("%d Stock Information on processing..." % count)
@@ -194,16 +234,63 @@ def dataStore(retDict):
         print(key, retDict[key])
 
 
-def httpRequest(url, data, method='POST'):
+def USDataStore(retDict):
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        count = 0
+        print("USStock Information crawling started")
+        for key in retDict.keys():
+            info = detective_db.USStocks.objects.update_or_create(cik=retDict[key]['CIK'],
+                                                                  security=retDict[key]['Security'],
+                                                                  defaults={
+                                                                      'ticker': retDict[key]['Ticker'],
+                                                                      'ticker_symbol_link': retDict[key]['TickerLink'],
+                                                                      'security_wiki_link': retDict[key]['SecurityLink'],
+                                                                      'category_name': retDict[key]['CategoryName'],
+                                                                      'category_detail': retDict[key]['CategoryDetail'],
+                                                                      'sec_filing': retDict[key]['SecurityFiling'],
+                                                                      'location': retDict[key]['Address'],
+                                                                      'location_link': retDict[key]['AddressLink'],
+                                                                      'date_first_added': None if retDict[key]['DateFirstAdded'] == '' else datetime.strptime(retDict[key]['DateFirstAdded'], '%Y-%m-%d'),
+                                                                      'founded': retDict[key]['Founded'],
+                                                                      'listing': 'Y'
+                                                                }
+                                                                )
+            count += 1
+            if count % 100 == 0:
+                print("%d USStock Information on processing..." % count)
+        print("Total %d" % count)
+    except Exception as e:
+        print(e, key, retDict[key])
+
+
+def httpRequest(url, data=None, method='POST'):
     try:
         if method == 'POST':
-            r = requests.post(url, data)
+            if data is None:
+                r = requests.post(url)
+            else:
+                r = requests.post(url, data)
             return r.content
         else:
-            r = requests.get(url, data)
+            if data is None:
+                r = requests.get(url)
+            else:
+                r = requests.get(url, data)
             return r.content
     except:
         return None
 
 if __name__ == '__main__':
-    getStockInfo()
+    # getStockInfo()
+    getSnP500StockInfo()
