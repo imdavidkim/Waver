@@ -41,4 +41,14 @@ and accnt_nm = '중단영업이익'
 
 https://amazon.qwiklab.com/users/sign_in?locale=en
 
+select code, name, curr, last_price, target_price2, target_price, return_on_equity, ratio, target_price2 / last_price * 100 as ratio2 from detective_app_targetstocks
+where ratio2 > 100
+order by return_on_equity desc
+limit 20;
+
+select code, name, curr, last_price, target_price2, target_price, return_on_equity, ratio, target_price2 / last_price * 100 as ratio2 from detective_app_targetstocks
+where ratio2 > 100
+and return_on_equity > 14
+order by ratio2 desc
+limit 20;
 '''
