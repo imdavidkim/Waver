@@ -44,7 +44,7 @@ def getFinanceData():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     global marketTxt
 
     yyyymmdd = str(datetime.now())[:10]
@@ -472,7 +472,7 @@ def StockMarketTextUpdate(crp_cd, market_text):
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         detective_db.Stocks.objects.filter(code=crp_cd).update(market_text=market_text)
     except Exception as e:
@@ -489,7 +489,7 @@ def DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, k
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         for idx, column_name in enumerate(column_names):
             info = detective_db.FnGuideDailySnapShot.objects.update_or_create(rpt_nm=caption,
@@ -527,7 +527,7 @@ def SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, k
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         for idx, column_name in enumerate(column_names[1:]):
 
@@ -585,7 +585,7 @@ def FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_n
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         for idx, column_name in enumerate(column_names[1:]):
             period_info = column_name.split('/')
@@ -808,7 +808,7 @@ def FinancialRatioDataStore(report_name, report_type, crp_cd, crp_nm, categorizi
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         for idx, column_name in enumerate(column_names):
             period_info = column_name.split('/')

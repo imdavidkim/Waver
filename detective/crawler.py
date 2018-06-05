@@ -168,7 +168,7 @@ def dataInit():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         detective_db.Stocks.objects.update(listing='N')
     except Exception as e:
@@ -186,7 +186,7 @@ def USDataInit():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         detective_db.USStocks.objects.update(listing='N')
     except Exception as e:
@@ -204,7 +204,7 @@ def dataStore(retDict):
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         count = 0
         print("Stock Information crawling started")
@@ -245,7 +245,7 @@ def USDataStore(retDict):
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         count = 0
         print("USStock Information crawling started")

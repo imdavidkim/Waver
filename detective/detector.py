@@ -128,7 +128,7 @@ def get_dailysnapshot_objects(rpt_nm, rpt_tp, column_nm, crp_cd, dateDict, key=N
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     if key:
         result = detective_db.FnGuideDailySnapShot.objects.filter(rpt_nm=rpt_nm,
                                                                   rpt_tp=rpt_tp,
@@ -177,7 +177,7 @@ def get_snapshot_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix_or_pro
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     result = detective_db.FnGuideSnapShot.objects.filter(rpt_nm=rpt_nm,
                                                          rpt_tp=rpt_tp,
                                                          accnt_nm=accnt_nm,
@@ -233,7 +233,7 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     result = detective_db.FnGuideFinancialReport.objects.filter(rpt_nm=rpt_nm,
                                                                 rpt_tp=rpt_tp,
                                                                 accnt_nm=accnt_nm,
@@ -288,7 +288,7 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
 #     sys.path.append(main_path)
 #     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
 #     django.setup()
-#     import detective_app.models as detective_db
+#     import MainBoard.detective_app.models as detective_db
 #     treasure = {}
 #     data = {}
 #     # 날짜 정보 셋팅
@@ -433,7 +433,7 @@ def new_find_hidden_pearl():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     treasure = {}
     data = {}
     # 날짜 정보 셋팅
@@ -766,7 +766,7 @@ def dataInit():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         detective_db.TargetStocks.objects.update(plus_npv='N')
     except Exception as e:
@@ -785,7 +785,7 @@ def TargetStockDataStore(crp_cd, data):
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import detective_app.models as detective_db
+    import MainBoard.detective_app.models as detective_db
     try:
         info = detective_db.TargetStocks.objects.update_or_create(code=crp_cd,
                                                                   defaults={
