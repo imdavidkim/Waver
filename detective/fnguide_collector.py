@@ -25,6 +25,16 @@ def getConfig():
     main_path = django_path + r'\MainBoard'
 
 
+def fileCheck(workDir, code, name, type):
+    import os.path
+    filename = r"%s\financeData_%s_%s_%s.html" % (workDir,
+                                                   name,
+                                                   code,
+                                                   type)
+    # print(filename)
+    return os.path.isfile(filename)
+
+
 def saveFile(workDir, code, name, type, xml):
     file = open(r"%s\financeData_%s_%s_%s.html" % (workDir,
                                                    name,
@@ -35,7 +45,7 @@ def saveFile(workDir, code, name, type, xml):
     file.close()
 
 
-def getFinanceData():
+def getFinanceData(cmd):
     import sys
     import os
     import django
@@ -44,7 +54,7 @@ def getFinanceData():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     global marketTxt
 
     yyyymmdd = str(datetime.now())[:10]
@@ -74,7 +84,7 @@ def getFinanceData():
         'gicode': '',
         'cID': '',
         'MenuYn': 'Y',
-        'ReportGB': 'D',    # D: 연결, B: 별도
+        'ReportGB': 'D',  # D: 연결, B: 별도
         'NewMenuID': 0,
         'stkGb': 701,
     }
@@ -147,16 +157,23 @@ def getFinanceData():
             #                                               reportType[key]), "wb")
             # file.write(xml)
             # file.close()
-        ''' # FinanceReport 성공
+        '''  # FinanceReport 성공
         stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-        # stockInfo = detective_db.Stocks.objects.filter(code='002620', listing='Y')
+        # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
         for key in reportType.keys():
-            workDir = r'E:\Github\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
+            # print(cmd, cmd and key != cmd)
+            if cmd and key != cmd:
+                continue
+            workDir = r'C:\Github\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
             if not os.path.exists(workDir):
                 os.makedirs(workDir)
-                
+
             data['NewMenuID'] = key
             for idx, s in enumerate(stockInfo):
+                # print(fileCheck(workDir, s.code, s.name, reportType[key]))
+                if fileCheck(workDir, s.code, s.name, reportType[key]):
+                    print('[%s][%s][%s] File is already exist. Skipped...' % (reportType[key], s.code, s.name))
+                    continue
                 data['gicode'] = 'A%s' % s.code
                 response = httpRequest(urlInfo[key], data)
                 soup = BeautifulSoup(response.decode('utf-8'), "lxml")
@@ -197,7 +214,7 @@ def getFinanceData():
                 # else:
                 #     static_parse_table(divs, s.code, s.name)
         # FinanceReport 성공 끝
-        
+
         '''
         stockInfo = detective_db.Stocks.objects.all()
         for key in reportType.keys():
@@ -274,7 +291,7 @@ def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hie
         'column': {'TargetTag': 'tr',
                    'Attribute': 'class',
                    'Hierarchy': ['acd_dep_start_close', 'acd_dep2_sub']
-        },
+                   },
         'row': []
     }
 
@@ -298,8 +315,8 @@ def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hie
                 if tag3.text == '전년동기':
                     temp = column_names[-1]
                     period = temp.split('/')
-                    column_names.append('%d/%s' %(int(period[0])-1, period[1]))
-                elif tag3.text in ['Annual','Net Quarter']:
+                    column_names.append('%d/%s' % (int(period[0]) - 1, period[1]))
+                elif tag3.text in ['Annual', 'Net Quarter']:
                     pass
                 elif '(E)' in tag3.text:
                     tmpTag = tag3.text.replace('\n', '').replace('(E) : Estimate컨센서스, 추정치', '')
@@ -313,7 +330,8 @@ def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hie
     tmpHierarchy = table_hierarchy['VerticalHeader'].split('-')
     dataHierarchy = table_hierarchy['Data'].split('-')
 
-    get_table_row_header(table, tmpHierarchy, dataHierarchy, content_hierarchy, data_information, prev_column, data_pipe)
+    get_table_row_header(table, tmpHierarchy, dataHierarchy, content_hierarchy, data_information, prev_column,
+                         data_pipe)
     if report_name.startswith('svdMainGrid'):
         # print(report_name)
         caption = report_name.replace('svdMainGrid', get_table_contents(table, 'caption')[0])
@@ -323,21 +341,21 @@ def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hie
         if len(keys) == 0:
             # print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
             # if report_name == 'svdMainGrid10D':
-                # print(column_names)
-                # print(keys)
-                # print(values)
+            # print(column_names)
+            # print(keys)
+            # print(values)
             DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, '', values)
         else:
             # if report_name == 'svdMainGrid10D':
-                # print(column_names)
-                # print(keys)
-                # print(values)
+            # print(column_names)
+            # print(keys)
+            # print(values)
             # print("[%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name))
             for idx1, key in enumerate(keys):
                 DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, key, values[idx1])
     else:
         # print("[%s][%s][%s][%s] Data is on Processing" % (crp_cd, crp_nm, report_name, categorizing))
-        return column_names, data_information # DB저장 빼고 파일에서 직접 읽어오기위해 처리
+        return column_names, data_information  # DB저장 빼고 파일에서 직접 읽어오기위해 처리
         # for di in data_information.keys():
         #     # print(categorizing, column_names)
         #     # print(di, data_information[di])
@@ -373,7 +391,7 @@ def get_table_row_header(rs, hierarchy, hierarchy2, c_hierarchy, data_informatio
     isUpper = False
     # data = data_pipe
     try:
-        if len(hierarchy) < i+1:
+        if len(hierarchy) < i + 1:
             pass
         else:
             # print(('~~~~~~~~~~~~~~~~~~~~~~~' + prev_column) * 2)
@@ -387,13 +405,14 @@ def get_table_row_header(rs, hierarchy, hierarchy2, c_hierarchy, data_informatio
                             isUpper = True
                 # print('else4', hierarchy[i+1])
                 # if len(tag.find_all(hierarchy[i+1])):
-                if hierarchy[i] == 'tr' and len(tag.find_all(hierarchy2[len(hierarchy2)-1])):
-                    data_pipe = get_data_content(tag, hierarchy2, len(hierarchy2)-1)
-                if is_exist_more_information(tag, hierarchy, i+1):
+                if hierarchy[i] == 'tr' and len(tag.find_all(hierarchy2[len(hierarchy2) - 1])):
+                    data_pipe = get_data_content(tag, hierarchy2, len(hierarchy2) - 1)
+                if is_exist_more_information(tag, hierarchy, i + 1):
                     # print(tag)
                     if isTarget and isUpper:
                         # print('if isTarget and isUpper:' * 5)
-                        prev_column = get_text_content(tag, hierarchy, prev_column, len(hierarchy)-1).replace(u'\xa0', '')
+                        prev_column = get_text_content(tag, hierarchy, prev_column, len(hierarchy) - 1).replace(u'\xa0',
+                                                                                                                '')
                         # print('if isTarget and isUpper:' * 5)
                         # print(('~~~~~~~~~~~~~~~~~~~~~~~' + prev_column) * 3)
                     # if 'class' in tag.attrs.keys(): print(tag.attrs['class'])
@@ -407,7 +426,7 @@ def get_table_row_header(rs, hierarchy, hierarchy2, c_hierarchy, data_informatio
                                          data_information,
                                          prev_column,
                                          data_pipe,
-                                         i+1)
+                                         i + 1)
                 else:
                     # print(tag)
                     # print(get_data_content(tag, hierarchy2, len(hierarchy2)-1))
@@ -415,7 +434,8 @@ def get_table_row_header(rs, hierarchy, hierarchy2, c_hierarchy, data_informatio
                     if prev_column == '' or tag.text.replace(u'\xa0', '') == prev_column:
                         data_information[tag.text.replace(u'\xa0', '').replace('\n', '').strip()] = data_pipe
                     else:
-                        data_information[prev_column + '-' + tag.text.replace(u'\xa0', '').replace('\n', '').strip()] = data_pipe
+                        data_information[
+                            prev_column + '-' + tag.text.replace(u'\xa0', '').replace('\n', '').strip()] = data_pipe
                     # print(data_information)
                     break
     except Exception as e:
@@ -432,12 +452,12 @@ def get_data_content(rs, hierarchy, level):
 def get_text_content(rs, hierarchy, prev_column, level):
     # print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n', prev_column, '\n$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
     retStr = prev_column
-    if len(hierarchy) < level+1:
+    if len(hierarchy) < level + 1:
         return None
     for tag in rs.find_all(hierarchy[level]):
         # print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n', tag, '\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        if is_exist_more_information(tag, hierarchy, level+1):
-            get_text_content(tag, hierarchy, prev_column, level+1)
+        if is_exist_more_information(tag, hierarchy, level + 1):
+            get_text_content(tag, hierarchy, prev_column, level + 1)
         else:
             # print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%', tag, '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
             # print(tag.attrs['class'], tag.attrs)
@@ -455,7 +475,7 @@ def get_text_content(rs, hierarchy, prev_column, level):
 
 
 def is_exist_more_information(rs, hierarchy, level):
-    if len(hierarchy) < level+1:
+    if len(hierarchy) < level + 1:
         return 0
     return len(rs.find_all(hierarchy[level]))
 
@@ -472,7 +492,7 @@ def StockMarketTextUpdate(crp_cd, market_text):
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         detective_db.Stocks.objects.filter(code=crp_cd).update(market_text=market_text)
     except Exception as e:
@@ -487,28 +507,29 @@ def DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, k
     getConfig()
     sys.path.append(django_path)
     sys.path.append(main_path)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         for idx, column_name in enumerate(column_names):
             info = detective_db.FnGuideDailySnapShot.objects.update_or_create(rpt_nm=caption,
                                                                               rpt_tp='',
                                                                               crp_cd=crp_cd,
                                                                               crp_nm=crp_nm,
-                                                                              disc_date=datetime.now().strftime('%Y-%m-%d'),
+                                                                              disc_date=datetime.now().strftime(
+                                                                                  '%Y-%m-%d'),
                                                                               column_nm=column_name,
                                                                               key=key,
                                                                               defaults={
-                                                                                 'value': None
-                                                                                 if not is_float(data_list[idx])
-                                                                                 else float(
-                                                                                    data_list[idx].replace(',', '')),
-                                                                                 'value_rmk': ''
-                                                                                 if is_float(data_list[idx])
-                                                                                 else data_list[idx],
+                                                                                  'value': None
+                                                                                  if not is_float(data_list[idx])
+                                                                                  else float(
+                                                                                      data_list[idx].replace(',', '')),
+                                                                                  'value_rmk': ''
+                                                                                  if is_float(data_list[idx])
+                                                                                  else data_list[idx],
                                                                               }
-                                                                         )
+                                                                              )
             # print(key, column_name, data_list[idx])
         # print("[%s][%s][%s] %s information stored successfully" % (caption, crp_cd, crp_nm, key))
         # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
@@ -527,7 +548,7 @@ def SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, k
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         for idx, column_name in enumerate(column_names[1:]):
 
@@ -552,20 +573,20 @@ def SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, k
                                                                          crp_nm=crp_nm,
                                                                          disc_year=period_info[0],
                                                                          disc_month=period_info[1],
-                                                                         disc_quarter=int(period_info[1])/3,
+                                                                         disc_quarter=int(period_info[1]) / 3,
                                                                          disc_categorizing=categorizing,
                                                                          accnt_nm=key,
                                                                          defaults={
-                                                                            'accnt_cd': '',
-                                                                            'fix_or_prov_or_estm': f_p_e,
-                                                                            'value': None
-                                                                            if not is_float(data_list[idx])
-                                                                            else float(
-                                                                                data_list[idx].replace(',', '')),
-                                                                            'rmk': ''
-                                                                            if is_float(data_list[idx])
-                                                                            else data_list[idx],
-                                                                            }
+                                                                             'accnt_cd': '',
+                                                                             'fix_or_prov_or_estm': f_p_e,
+                                                                             'value': None
+                                                                             if not is_float(data_list[idx])
+                                                                             else float(
+                                                                                 data_list[idx].replace(',', '')),
+                                                                             'rmk': ''
+                                                                             if is_float(data_list[idx])
+                                                                             else data_list[idx],
+                                                                         }
                                                                          )
 
         # print("[%s][%s][%s] %s information stored successfully" % (report_name, crp_cd, crp_nm, key))
@@ -585,7 +606,7 @@ def FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_n
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         for idx, column_name in enumerate(column_names[1:]):
             period_info = column_name.split('/')
@@ -608,7 +629,7 @@ def FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_n
                                                                                 crp_nm=crp_nm,
                                                                                 disc_year=period_info[0],
                                                                                 disc_month=period_info[1],
-                                                                                disc_quarter=int(period_info[1])/3,
+                                                                                disc_quarter=int(period_info[1]) / 3,
                                                                                 disc_categorizing=categorizing,
                                                                                 accnt_nm=key,
                                                                                 defaults={
@@ -617,7 +638,8 @@ def FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_n
                                                                                     'value': None
                                                                                     if not is_float(data_list[idx])
                                                                                     else float(
-                                                                                        data_list[idx].replace(',', '')),
+                                                                                        data_list[idx].replace(',',
+                                                                                                               '')),
                                                                                     'rmk': ''
                                                                                     if is_float(data_list[idx])
                                                                                     else data_list[idx],
@@ -691,12 +713,22 @@ def get_table_contents(soup, structure):
     if soup:
         for tag in soup.select(structure):
             if tag.div and tag.div.dl and tag.div.dl.dt:
-                if '(E) : Estimate' == tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip():
-                    retList.append(tag.div.span.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
-                elif '(P) : Provisional' == tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ','').replace('   ', '').strip():
-                    retList.append(tag.div.span.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
+                if '(E) : Estimate' == tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ',
+                                                                                                         '').replace(
+                        '   ', '').strip():
+                    retList.append(
+                        tag.div.span.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ',
+                                                                                                           '').strip())
+                elif '(P) : Provisional' == tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ',
+                                                                                                              '').replace(
+                        '   ', '').strip():
+                    retList.append(
+                        tag.div.span.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ',
+                                                                                                           '').strip())
                 else:
-                    retList.append(tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
+                    retList.append(
+                        tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ',
+                                                                                                            '').strip())
             elif tag.a:
                 retList.append('%s(%s)' % (tag.a.text, tag.a['href']))
                 continue
@@ -755,16 +787,18 @@ def setting(header, items, datas):
                 prev_column = ''
                 tmpHeader = []
                 tmpData = []
-                if item.find('/') > -1: # 한 컬럼에 여러개의 값이 있는 경우
-                    if item.find('(') > -1: # 여러개의 컬럼의 괄호로 묶인 공통인자가 있는 경우
+                if item.find('/') > -1:  # 한 컬럼에 여러개의 값이 있는 경우
+                    if item.find('(') > -1:  # 여러개의 컬럼의 괄호로 묶인 공통인자가 있는 경우
                         prev_column = item[:item.find('(')].strip().replace('  ', '').replace('   ', '')
                         tmpHeader = [(prev_column + '-' + i.replace(' ', '')) for i in
-                                     item[item.find('(')+1:item.find(')')].strip().replace('  ', '').replace('   ', '').split('/')]
-                    elif item.find('.') > -1: # 여러개의 컬럼의 마침표로 분리된 공통인자가 있는 경우
+                                     item[item.find('(') + 1:item.find(')')].strip().replace('  ', '').replace('   ',
+                                                                                                               '').split(
+                                         '/')]
+                    elif item.find('.') > -1:  # 여러개의 컬럼의 마침표로 분리된 공통인자가 있는 경우
                         prev_column = item[:item.find('.')]
                         tmpHeader = [(prev_column + '-' + i.replace(' ', '')) for i in
-                                     item[item.find('.')+1:].strip().replace('  ', '').replace('   ', '').split('/')]
-                    else: # 공통인자 없이 서로 다른 두개의 값이 / 로 묶인 컬럼인 경우
+                                     item[item.find('.') + 1:].strip().replace('  ', '').replace('   ', '').split('/')]
+                    else:  # 공통인자 없이 서로 다른 두개의 값이 / 로 묶인 컬럼인 경우
                         tmpHeader = item.strip().replace('  ', '').replace('   ', '').split('/')
                     tmpData = datas[idx].strip().replace('  ', '').replace('   ', '').split('/')
                     retHeader.extend(tmpHeader)
@@ -788,7 +822,7 @@ def setting(header, items, datas):
                 tmpData = []
                 for j in range(len(retHeader)):
                     # print(i, j, len(retHeader)*i+j)
-                    tmpData.append(datas[len(retHeader)*i+j].replace('  ', '').replace('   ', ''))
+                    tmpData.append(datas[len(retHeader) * i + j].replace('  ', '').replace('   ', ''))
                 retValue.append(tmpData)
     except Exception as e:
         print(e)
@@ -808,7 +842,7 @@ def FinancialRatioDataStore(report_name, report_type, crp_cd, crp_nm, categorizi
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         for idx, column_name in enumerate(column_names):
             period_info = column_name.split('/')
@@ -830,19 +864,19 @@ def FinancialRatioDataStore(report_name, report_type, crp_cd, crp_nm, categorizi
                                                                                crp_nm=crp_nm,
                                                                                disc_year=period_info[0],
                                                                                disc_month=period_info[1],
-                                                                               disc_quarter=int(period_info[1])/3,
+                                                                               disc_quarter=int(period_info[1]) / 3,
                                                                                disc_categorizing=categorizing,
                                                                                ratio_nm=key,
                                                                                defaults={
-                                                                                    'ratio_cd': '',
-                                                                                    'fix_or_prov_or_estm': f_p_e,
-                                                                                    'value': None
-                                                                                    if not is_float(data_list[idx])
-                                                                                    else float(
-                                                                                        data_list[idx].replace(',', '')),
-                                                                                    'rmk': ''
-                                                                                    if is_float(data_list[idx])
-                                                                                    else data_list[idx],
+                                                                                   'ratio_cd': '',
+                                                                                   'fix_or_prov_or_estm': f_p_e,
+                                                                                   'value': None
+                                                                                   if not is_float(data_list[idx])
+                                                                                   else float(
+                                                                                       data_list[idx].replace(',', '')),
+                                                                                   'rmk': ''
+                                                                                   if is_float(data_list[idx])
+                                                                                   else data_list[idx],
                                                                                }
                                                                                )
 
@@ -927,7 +961,7 @@ def getUSFinanceData():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     global marketTxt
 
     yyyymmdd = str(datetime.now())[:10]
@@ -944,5 +978,8 @@ def getUSFinanceData():
     }
     url = 'https://finance.yahoo.com/quote/%s/financials?p=%s'
 
+
 if __name__ == '__main__':
-    getFinanceData()
+    # getFinanceData(101)
+    getFinanceData(103)
+    # getFinanceData(104)
