@@ -51,4 +51,7 @@ where ratio2 > 100
 and return_on_equity > 14
 order by ratio2 desc
 limit 20;
+
+https://www.alphavantage.co/support/#api-key
+JIYAOYWT20KLGNY4
 '''
