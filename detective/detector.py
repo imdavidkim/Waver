@@ -95,6 +95,32 @@ def get_max_date_on_dailysnapshot(crp_cd):
     return dictfetchall(cursor)[0]
 
 
+def get_high_ranked_stock():
+    import sys
+    import os
+    import django
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    from django.db import connection
+    cursor = connection.cursor()
+    sql = """select t.code, t.name, t.curr, t.last_price, t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
+                select code, name, curr, last_price, target_price, target_price2, return_on_equity, ratio, target_price2/last_price*100 as ratio2 from detective_app_targetstocks
+                where ratio > 100
+                and return_on_equity > 14
+                order by ratio2 desc, return_on_equity desc, ratio desc
+                limit 500) as t
+             where last_price > 14000
+             and ratio2 > 100
+             order by return_on_equity desc"""
+    cursor.execute(sql)
+    retStr = ''
+    for idx, d in enumerate(dictfetchall(cursor)):
+        retStr += '%d. %s\t%d => %d\n' % (idx+1, d['name'], int(d['last_price']), int(d['target_price2']))
+    return retStr
+
 def align_string(switch, text, digit):
     if switch == 'L':
         return format(text, " <%d" % digit)
@@ -106,12 +132,12 @@ def align_string(switch, text, digit):
         return None
 
 
-def messeage_to_telegram():
+def messeage_to_telegram(txt):
     import telegram
     my_token = '577949495:AAFk3JWQjHlbJr2_AtZeonjqQS7buu8cYG4'
     chat_id = '568559695'
     bot = telegram.Bot(token=my_token)
-    bot.sendMessage(chat_id=chat_id, text="GG")
+    bot.sendMessage(chat_id=chat_id, text=txt)
     # updates = bot.getUpdates()
     # for u in updates:
     #     print(u.message)
@@ -128,7 +154,7 @@ def get_dailysnapshot_objects(rpt_nm, rpt_tp, column_nm, crp_cd, dateDict, key=N
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     if key:
         result = detective_db.FnGuideDailySnapShot.objects.filter(rpt_nm=rpt_nm,
                                                                   rpt_tp=rpt_tp,
@@ -177,7 +203,7 @@ def get_snapshot_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix_or_pro
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     result = detective_db.FnGuideSnapShot.objects.filter(rpt_nm=rpt_nm,
                                                          rpt_tp=rpt_tp,
                                                          accnt_nm=accnt_nm,
@@ -233,7 +259,7 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     result = detective_db.FnGuideFinancialReport.objects.filter(rpt_nm=rpt_nm,
                                                                 rpt_tp=rpt_tp,
                                                                 accnt_nm=accnt_nm,
@@ -288,7 +314,7 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
 #     sys.path.append(main_path)
 #     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
 #     django.setup()
-#     import MainBoard.detective_app.models as detective_db
+#     import detective_app.models as detective_db
 #     treasure = {}
 #     data = {}
 #     # 날짜 정보 셋팅
@@ -424,8 +450,6 @@ def new_find_hidden_pearl():
     import sys
     import os
     import django
-    # DEBUG = True
-    DEBUG = False
     # sys.path.append(r'E:\Github\Waver\MainBoard')
     # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
     getConfig()
@@ -433,14 +457,18 @@ def new_find_hidden_pearl():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
+    import json
+
     treasure = {}
     data = {}
     # 날짜 정보 셋팅
     dateDict = new_get_dateDict()
     # 종목 정보 셋팅
+    # DEBUG = True
+    DEBUG = False
     stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code='025530', listing='Y') # 제일파마홀딩스
+    # stockInfo = detective_db.Stocks.objects.filter(code='263770', listing='Y') # 제일파마홀딩스
     # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
@@ -458,7 +486,13 @@ def new_find_hidden_pearl():
     # fix_or_prov_or_estm = 'E'
     # # ----------------------------------dd
     try:
+        if os.path.exists('result.json'):
+            with open("result.json", "r") as f:
+                data = f.read()
+                treasure = json.loads(data)
         for ii, stock in enumerate(stockInfo):
+            if stock.code in treasure.keys():
+                continue
             data = {}
             # print(dir(stock))
             print(align_string('L', ii+1, 10),
@@ -496,8 +530,17 @@ def new_find_hidden_pearl():
                                 data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
                                 break
                             elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
-                                data['Period'] = columns[idx2-1]
-                                data[i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
+                                if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2 - 1] == '':
+                                    if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2 - 2] == '':
+                                        continue
+                                        # data['Period'] = columns[idx2 - 3]
+                                        # data[i] = float(values[idx][idx2 - 3].replace(',', '')) * 100000000
+                                    else:
+                                        data['Period'] = columns[idx2 - 2]
+                                        data[i] = float(values[idx][idx2 - 2].replace(',', '')) * 100000000
+                                else:
+                                    data['Period'] = columns[idx2-1]
+                                    data[i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
                             else:
                                 continue
                     elif i in ['ROE(%)']:
@@ -520,6 +563,7 @@ def new_find_hidden_pearl():
                                 break
                             else:
                                 continue
+                if not set(['지배주주순이익', '지배주주지분', '자산총계']).issubset(data.keys()): continue
                 daily = fnguide.select_by_attr(soup, 'div', 'id', 'svdMainGrid1')  # Snapshot 시세현황1
                 columns, items, values = fnguide.setting(
                     fnguide.get_table_contents(daily, 'table thead tr th')[1:],
@@ -751,8 +795,12 @@ def new_find_hidden_pearl():
     #             continue
     #         # print(d, treasure[d]['회사명'])
     #         # TargetStockDataStore(d, treasure[d])
+        if os.path.exists('result.json'):
+            os.remove('result.json')
     except Exception as e:
         print('error', e, '\n', stock)
+        with open('result.json', 'wb') as fp:
+            json.dump(treasure, fp)
 
 
 def dataInit():
@@ -766,7 +814,7 @@ def dataInit():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         detective_db.TargetStocks.objects.update(plus_npv='N')
     except Exception as e:
@@ -785,7 +833,7 @@ def TargetStockDataStore(crp_cd, data):
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         info = detective_db.TargetStocks.objects.update_or_create(code=crp_cd,
                                                                   defaults={
@@ -810,7 +858,8 @@ if __name__ == '__main__':
     # find_hidden_pearl()
     # messeage_to_telegram()
     # find_hidden_pearl()
-    new_find_hidden_pearl()
+    # new_find_hidden_pearl()
+    messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
     # report_type = 'financeRatio'

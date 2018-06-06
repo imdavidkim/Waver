@@ -40,7 +40,7 @@ def saveFile(workDir, code, name, type, xml):
                                                    name,
                                                    code,
                                                    type), "wb")
-    print(file.name)
+    # print(file.name)
     file.write(xml)
     file.close()
 
@@ -174,6 +174,7 @@ def getFinanceData(cmd):
                 if fileCheck(workDir, s.code, s.name, reportType[key]):
                     print('[%s][%s][%s] File is already exist. Skipped...' % (reportType[key], s.code, s.name))
                     continue
+                print('[%s][%s][%s] File is on process...' % (reportType[key], s.code, s.name))
                 data['gicode'] = 'A%s' % s.code
                 response = httpRequest(urlInfo[key], data)
                 soup = BeautifulSoup(response.decode('utf-8'), "lxml")
@@ -941,11 +942,11 @@ def httpRequest(url, data, method='POST'):
     try:
         if method == 'POST':
             r = requests.post(url, data)
-            print(method, 'httpRequest error status', r.raise_for_status(), data['gicode'])
+            # print(method, 'httpRequest error status', r.raise_for_status(), data['gicode'])
             return r.content
         else:
             r = requests.get(url, data)
-            print(method, 'httpRequest error status', r.raise_for_status(), data['gicode'])
+            # print(method, 'httpRequest error status', r.raise_for_status(), data['gicode'])
             return r.content
     except Exception as e:
         print(e)
