@@ -35,11 +35,11 @@ def fileCheck(workDir, code, name, type):
     return os.path.isfile(filename)
 
 
-def saveFile(workDir, code, name, type, xml):
+def saveFile(workDir, code, name, type, xml, mode='wb'):
     file = open(r"%s\financeData_%s_%s_%s.html" % (workDir,
                                                    name,
                                                    code,
-                                                   type), "wb")
+                                                   type), mode)
     # print(file.name)
     file.write(xml)
     file.close()
@@ -953,31 +953,51 @@ def httpRequest(url, data, method='POST'):
         return None
 
 
-def getUSFinanceData():
+def getUSFinanceData(cmd=None):
     import sys
     import os
     import django
+    import edgar
     getConfig()
     sys.path.append(django_path)
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
-    global marketTxt
+    # workDir = r'%s'
 
     yyyymmdd = str(datetime.now())[:10]
-    url = "http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp"
+    # url = "http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp"
     reportType = {
-        101: 'snapshot',
-        103: 'financeReport',
-        104: 'financeRatio'
+        # 101: 'snapshotUS',
+        103: 'financeReportUS'
+        # 104: 'financeRatioUS'
     }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
-    urlInfo = {
-        101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
-        103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp',
-        104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp'
-    }
-    url = 'https://finance.yahoo.com/quote/%s/financials?p=%s'
+    # urlInfo = {
+    #     101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
+    #     103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp',
+    #     104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp'
+    # }
+    # url = 'https://finance.yahoo.com/quote/%s/financials?p=%s'
+
+    # stockInfo = detective_db.USStocks.objects.filter(listing='Y')
+    stockInfo = detective_db.USStocks.objects.filter(security='Oracle Corp.', listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
+    for key in reportType.keys():
+        # print(cmd, cmd and key != cmd)
+        if cmd and key != cmd:
+            continue
+        # workDir = r'%s\%s\%s' % (report_path, reportType[key], yyyymmdd)
+        workDir = r'C:\Github\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
+        if not os.path.exists(workDir):
+            os.makedirs(workDir)
+        for s in stockInfo:
+            company = edgar.Company(s.security, s.cik)
+            tree = company.getAllFilings(filingType="10-K")
+            docs = edgar.getXMLDocuments(tree, noOfDocuments=1)
+            # print(docs)
+            for xml in docs:
+                saveFile(workDir, s.cik, s.security.replace(' ', '_'), reportType[key], xml, 'w')
 
 
 if __name__ == '__main__':
