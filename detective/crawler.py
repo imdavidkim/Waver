@@ -94,7 +94,7 @@ def wikiDataCleansing(content):
                 'SecurityFiling': datas[d+2][datas[d+2].find('(')+1:datas[d+2].find(')')],
                 'Address': datas[d+5][:datas[d+5].find('(')],
                 'AddressLink': datas[d+5][datas[d+5].find('(')+1:datas[d+5].find(')')],
-                'DateFirstAdded': datas[d+6],
+                'DateFirstAdded': '' if datas[d+6] == '' else datas[d+6],
                 'Founded': datas[d+8]}
 
     return retDict
