@@ -799,7 +799,7 @@ def new_find_hidden_pearl():
             os.remove('result.json')
     except Exception as e:
         print('error', e, '\n', stock)
-        with open('result.json', 'wb') as fp:
+        with open('result.json', 'w') as fp:
             json.dump(treasure, fp)
 
 
