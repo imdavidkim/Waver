@@ -26,20 +26,28 @@ def getConfig():
 
 
 def fileCheck(workDir, code, name, type):
-    import os.path
     filename = r"%s\financeData_%s_%s_%s.html" % (workDir,
                                                    name,
                                                    code,
                                                    type)
     # print(filename)
-    return os.path.isfile(filename)
+    # print(os.path.isfile(filename))
+    # if os.path.isfile(filename):
+    #     print(os.stat(filename).st_size, os.stat(filename).st_size > 0)
+    return os.path.isfile(filename) and os.stat(filename).st_size > 0
 
 
-def saveFile(workDir, code, name, type, xml, mode='wb'):
-    file = open(r"%s\financeData_%s_%s_%s.html" % (workDir,
-                                                   name,
-                                                   code,
-                                                   type), mode)
+def saveFile(workDir, code, name, type, xml, mode='wb', encoding='utf8'):
+    if mode[-1] == 'b':
+        file = open(r"%s\financeData_%s_%s_%s.html" % (workDir,
+                                                       name,
+                                                       code,
+                                                       type), mode=mode)
+    else:
+        file = open(r"%s\financeData_%s_%s_%s.html" % (workDir,
+                                                       name,
+                                                       code,
+                                                       type), mode=mode, encoding=encoding)
     # print(file.name)
     file.write(xml)
     file.close()
