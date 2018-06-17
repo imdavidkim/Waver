@@ -180,9 +180,9 @@ def getFinanceData(cmd):
             for idx, s in enumerate(stockInfo):
                 # print(fileCheck(workDir, s.code, s.name, reportType[key]))
                 if fileCheck(workDir, s.code, s.name, reportType[key]):
-                    print('[%s][%s][%s] File is already exist. Skipped...' % (reportType[key], s.code, s.name))
+                    print('[%d/%d][%s][%s][%s] File is already exist. Skipped...' % (idx+1, len(stockInfo), reportType[key], s.code, s.name))
                     continue
-                print('[%s][%s][%s] File is on process...' % (reportType[key], s.code, s.name))
+                print('[%d/%d][%s][%s][%s] File is on process...' % (idx+1, len(stockInfo), reportType[key], s.code, s.name))
                 data['gicode'] = 'A%s' % s.code
                 response = httpRequest(urlInfo[key], data)
                 soup = BeautifulSoup(response.decode('utf-8'), "lxml")
