@@ -4,8 +4,9 @@ from django.db import models
 # Create your models here.
 class Stocks(models.Model):
     class Meta:
-        unique_together = (('code', 'name'),)
-    code = models.CharField(max_length=20, unique=True, primary_key=True)
+        unique_together = (('name', 'code', 'listing'),)
+        # unique_together = (('code', 'name', 'listing'),)
+    code = models.CharField(max_length=20, primary_key=True)
     name = models.TextField()
     category_code = models.CharField(max_length=20)
     category_name = models.TextField()
