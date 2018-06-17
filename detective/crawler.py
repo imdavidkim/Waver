@@ -211,6 +211,7 @@ def dataStore(retDict):
         for key in retDict.keys():
             info = detective_db.Stocks.objects.update_or_create(code=key,
                                                                 name=retDict[key]['종목명'],
+                                                                listing='Y',
                                                                 defaults={
                                                                     'category_code': retDict[key]['업종코드'],
                                                                     'category_name': retDict[key]['업종명'],
@@ -222,8 +223,7 @@ def dataStore(retDict):
                                                                         retDict[key]['액면가'].replace(',', '')),
                                                                     'tel': retDict[key]['전화번호'].replace(' ', ''),
                                                                     'address': retDict[key]['주소'],
-                                                                    'curr': retDict[key]['통화'],
-                                                                    'listing': 'Y'
+                                                                    'curr': retDict[key]['통화']
                                                                 }
                                                                 )
             count += 1
