@@ -1,11 +1,11 @@
 from django.db import models
-
+from datetime import datetime
 
 # Create your models here.
 class Stocks(models.Model):
     class Meta:
-        unique_together = (('name', 'code', 'listing'),)
-        # unique_together = (('code', 'name', 'listing'),)
+        # unique_together = (('name', 'code', 'listing'),)
+        unique_together = (('code', 'name', 'listing'),)
     code = models.CharField(max_length=20, primary_key=True)
     name = models.TextField()
     category_code = models.CharField(max_length=20)
@@ -17,7 +17,7 @@ class Stocks(models.Model):
     tel = models.CharField(max_length=20)
     address = models.TextField()
     market_text = models.TextField(null=True)
-    listing = models.CharField(max_length=1, default='Y')
+    listing = models.CharField(max_length=1, default='N')
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -50,6 +50,9 @@ class USStocks(models.Model):
 
 
 class TargetStocks(models.Model):
+    class Meta:
+        unique_together = (('valuation_date', 'code'),)
+    valuation_date = models.CharField(max_length=10, default=str(datetime.now())[:10])
     code = models.CharField(max_length=20, unique=True, primary_key=True)
     name = models.TextField()
     curr = models.CharField(max_length=3)
@@ -65,6 +68,7 @@ class TargetStocks(models.Model):
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     plus_npv = models.CharField(max_length=1, default='Y')
+    liquidity_rate = models.FloatField(null=True)
 
 
 class DartRequestIndex(models.Model):
