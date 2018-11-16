@@ -22,31 +22,47 @@ def getConfig():
 def getStockInfo():
     gen_otp_url = "http://marketdata.krx.co.kr/contents/COM/GenerateOTP.jspx"
     gen_otp_data = {
-        'name': 'fileDown',
-        'filetype': 'csv',
-        'url': 'MKD/04/0406/04060100/mkd04060100_01',
-        'market_gubun': 'STK',
-        'isu_cdnm': '전체',
-        'isu_cd': '',
-        'isu_nm': '',
-        'isu_srt_cd': '',
-        'sort_type': 'A',
-        'std_ind_cd': '01',
-        'par_pr': '',
-        'cpta_scl': '',
-        'sttl_trm': '',
-        'lst_stk_vl': '1',
-        'in_lst_stk_vl': '',
-        'in_lst_stk_vl2': '',
-        'cpt': '1',
-        'in_cpt': '',
-        'in_cpt2': '',
-        'isu_cdnm': '전체',
-        'isu_cd': '',
-        'mktpartc_no': '',
-        'isu_srt_cd': '',
-        'pagePath': '/contents/MKD/04/0406/04060100/MKD04060100.jsp',
-    }
+       'name': 'fileDown',
+       'filetype': 'csv',
+       'url': 'MKD/04/0406/04060100/mkd04060100_01',
+       'market_gubun': 'ALL',
+       'isu_cdnm': '전체',
+       'isu_cd': '',
+       'isu_nm': '',
+       'isu_srt_cd': '',
+       'sort_type': 'A',
+       'std_ind_cd': '01',
+       'par_pr': '',
+       'cpta_scl': '',
+       'sttl_trm': '',
+       'lst_stk_vl': '1',
+       'in_lst_stk_vl': '',
+       'in_lst_stk_vl2': '',
+       'cpt': '1',
+       'in_cpt': '',
+       'in_cpt2': '',
+       'isu_cdnm': '전체',
+       'isu_cd': '',
+       'mktpartc_no': '',
+       'isu_srt_cd': '',
+       'pagePath': '/contents/MKD/04/0406/04060100/MKD04060100.jsp',
+   }
+    # gen_otp_data = {
+    #     'name': 'fileDown',
+    #     'filetype': 'csv',
+    #     'url': 'MKD/04/0406/04060200/mkd04060200',
+    #     'market_gubun': 'ALL',
+    #     'indx_ind_cd': '',
+    #     'sect_tp_cd': 'ALL',
+    #     'isu_cdnm': '전체',
+    #     'isu_cd': '',
+    #     'isu_nm': '',
+    #     'isu_srt_cd': '',
+    #     'secugrp':'ST',
+    #     'stock_gubun':'on',
+    #     'schdate': str(datetime.now().strftime('%Y%m%d')),
+    #     'pagePath': '/contents/MKD/04/0406/04060200/MKD04060200.jsp',
+    # }
     code = httpRequest(gen_otp_url, gen_otp_data)
     # r = requests.post(gen_otp_url, gen_otp_data)
     # code = r.content
@@ -57,7 +73,12 @@ def getStockInfo():
     }
 
     # r = requests.post(down_url, down_data)
-    response = httpRequest(down_url, down_data)
+    down_header = {'User-Agent': 'User-Agent: Mozilla/5.0'
+                   , 'Accept-Encoding': 'gzip, deflate'
+                   , 'Referer': 'http://marketdata.krx.co.kr/mdi'
+                   , 'Content-Type': 'application/x-www-form-urlencoded'
+                   }
+    response = httpRequest(down_url, down_data, down_header)
     dic = dataCleansing(response)
     dataInit()
     dataStore(dic)
@@ -83,19 +104,19 @@ def wikiDataCleansing(content):
         header = fnguide.get_table_contents(snp500_companies, 'tr th')
         datas = fnguide.get_table_contents(snp500_companies, 'tr td')
         for d in range(0, len(datas), 9):
-            retDict[datas[d+7]] = {
-                'CIK': datas[d+7],
-                'Ticker': datas[d][:datas[d].find('(')],
-                'TickerLink': datas[d][datas[d].find('(')+1:datas[d].find(')')],
-                'Security': datas[d+1][:datas[d+1].find('(')],
-                'SecurityLink': datas[d+1][datas[d+1].find('(')+1:datas[d+1].find(')')],
-                'CategoryName': datas[d+3],
-                'CategoryDetail': datas[d+4],
-                'SecurityFiling': datas[d+2][datas[d+2].find('(')+1:datas[d+2].find(')')],
-                'Address': datas[d+5][:datas[d+5].find('(')],
-                'AddressLink': datas[d+5][datas[d+5].find('(')+1:datas[d+5].find(')')],
-                'DateFirstAdded': '' if datas[d+6] == '' else datas[d+6],
-                'Founded': datas[d+8]}
+            retDict[datas[d+7].strip()] = {
+                'CIK': datas[d+7].strip(),
+                'Ticker': datas[d][:datas[d].find('(')].strip(),
+                'TickerLink': datas[d][datas[d].find('(')+1:datas[d].find(')')].strip(),
+                'Security': datas[d+1][:datas[d+1].find('(')].strip(),
+                'SecurityLink': datas[d+1][datas[d+1].find('(')+1:datas[d+1].find(')')].strip(),
+                'CategoryName': datas[d+3].strip(),
+                'CategoryDetail': datas[d+4].strip(),
+                'SecurityFiling': datas[d+2][datas[d+2].find('(')+1:datas[d+2].find(')')].strip(),
+                'Address': datas[d+5][:datas[d+5].find('(')].strip(),
+                'AddressLink': datas[d+5][datas[d+5].find('(')+1:datas[d+5].find(')')].strip(),
+                'DateFirstAdded': '' if datas[d+6].strip() == '' else datas[d+6].strip(),
+                'Founded': datas[d+8].strip()}
 
     return retDict
 
@@ -168,7 +189,7 @@ def dataInit():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         detective_db.Stocks.objects.update(listing='N')
     except Exception as e:
@@ -186,7 +207,7 @@ def USDataInit():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         detective_db.USStocks.objects.update(listing='N')
     except Exception as e:
@@ -204,15 +225,14 @@ def dataStore(retDict):
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         count = 0
         print("Stock Information crawling started")
         for key in retDict.keys():
             info = detective_db.Stocks.objects.update_or_create(code=key,
-                                                                name=retDict[key]['종목명'],
-                                                                listing='Y',
                                                                 defaults={
+                                                                    'name': retDict[key]['종목명'],
                                                                     'category_code': retDict[key]['업종코드'],
                                                                     'category_name': retDict[key]['업종명'],
                                                                     'issued_shares': float(
@@ -223,15 +243,17 @@ def dataStore(retDict):
                                                                         retDict[key]['액면가'].replace(',', '')),
                                                                     'tel': retDict[key]['전화번호'].replace(' ', ''),
                                                                     'address': retDict[key]['주소'],
-                                                                    'curr': retDict[key]['통화']
+                                                                    'curr': retDict[key]['통화'],
+                                                                    'listing': 'Y'
                                                                 }
                                                                 )
             count += 1
             if count % 100 == 0:
                 print("%d Stock Information on processing..." % count)
         print("Total %d" % count)
-    except:
-        print(key, retDict[key])
+    except Exception as e:
+        print(count, key, retDict[key])
+        print(e)
 
 
 def USDataStore(retDict):
@@ -245,7 +267,7 @@ def USDataStore(retDict):
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    import MainBoard.detective_app.models as detective_db
+    import detective_app.models as detective_db
     try:
         count = 0
         print("USStock Information crawling started")
@@ -274,17 +296,25 @@ def USDataStore(retDict):
         print(e, key, retDict[key])
 
 
-def httpRequest(url, data=None, method='POST'):
+def httpRequest(url, data=None, header=None, method='POST'):
     try:
         if method == 'POST':
             if data is None:
                 r = requests.post(url)
+            elif header is not None:
+                session = requests.session()
+                session.headers.update(header)
+                r = session.post(url, data)
             else:
                 r = requests.post(url, data)
             return r.content
         else:
             if data is None:
                 r = requests.get(url)
+            elif header is not None:
+                session = requests.session()
+                session.headers.update(header)
+                r = session.get(url, data)
             else:
                 r = requests.get(url, data)
             return r.content
@@ -293,4 +323,4 @@ def httpRequest(url, data=None, method='POST'):
 
 if __name__ == '__main__':
     getStockInfo()
-    getSnP500StockInfo()
+    # getSnP500StockInfo()
