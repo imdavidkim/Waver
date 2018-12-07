@@ -53,7 +53,7 @@ def saveFile(workDir, code, name, type, xml, mode='wb', encoding='utf8'):
     file.close()
 
 
-def getFinanceData(cmd):
+def getFinanceData(cmd=None):
     import sys
     import os
     import django
@@ -167,7 +167,7 @@ def getFinanceData(cmd):
             # file.close()
         '''  # FinanceReport 성공
         stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-        # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
+        # stockInfo = detective_db.Stocks.objects.filter(code='004980', listing='Y')
         for key in reportType.keys():
             # print(cmd, cmd and key != cmd)
             if cmd and key != cmd:
@@ -989,17 +989,21 @@ def getUSFinanceData(cmd=None):
     # url = 'https://finance.yahoo.com/quote/%s/financials?p=%s'
 
     # stockInfo = detective_db.USStocks.objects.filter(listing='Y')
-    stockInfo = detective_db.USStocks.objects.filter(security='Oracle Corp.', listing='Y')
+    stockInfo = detective_db.USStocks.objects.filter(security='Apple Inc.', listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
     for key in reportType.keys():
         # print(cmd, cmd and key != cmd)
         if cmd and key != cmd:
             continue
         # workDir = r'%s\%s\%s' % (report_path, reportType[key], yyyymmdd)
-        workDir = r'C:\Github\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
+        workDir = r'E:\Github\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
         if not os.path.exists(workDir):
             os.makedirs(workDir)
         for s in stockInfo:
+            if fileCheck(workDir, s.cik, s.security.replace(' ', '_'), reportType[key]):
+                print('[%s][%s][%s] File is already exist. Skipped...' % (reportType[key], s.cik, s.security))
+                continue
+            print('[%s][%s][%s] File is on process...' % (reportType[key], s.cik, s.security))
             company = edgar.Company(s.security, s.cik)
             tree = company.getAllFilings(filingType="10-K")
             docs = edgar.getXMLDocuments(tree, noOfDocuments=1)
@@ -1012,3 +1016,4 @@ if __name__ == '__main__':
     # getFinanceData(101)
     getFinanceData(103)
     # getFinanceData(104)
+    # getUSFinanceData()
