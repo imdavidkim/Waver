@@ -184,3 +184,34 @@ class FnGuideFinancialRatio(models.Model):
     rmk = models.TextField(null=True)
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+class EcosServiceList(models.Model):
+    class Meta:
+        unique_together = (('P_STAT_CODE', 'STAT_CODE'),)
+        index_together = (('P_STAT_CODE', 'STAT_CODE'),)
+    P_STAT_CODE = models.CharField(max_length=20)
+    STAT_CODE = models.CharField(max_length=20)
+    STAT_NAME = models.CharField(max_length=100)
+    CYCLE = models.CharField(max_length=20)
+    SRCH_YN = models.CharField(max_length=1)
+    ORG_NAME = models.CharField(max_length=100)
+    CREATE_AT = models.DateTimeField(auto_now_add=True)
+    UPDATED_AT = models.DateTimeField(auto_now=True)
+
+
+class EcosStatDetailItemList(models.Model):
+    class Meta:
+        unique_together = (('STAT_CODE', 'ITEM_CODE'),)
+        index_together = (('STAT_CODE', 'ITEM_CODE'),)
+    STAT_CODE = models.CharField(max_length=20)
+    STAT_NAME = models.CharField(max_length=100)
+    GRP_NAME = models.CharField(max_length=20)
+    ITEM_CODE = models.CharField(max_length=20)
+    ITEM_NAME = models.CharField(max_length=100)
+    CYCLE = models.CharField(max_length=20)
+    START_TIME = models.CharField(max_length=20)
+    END_TIME = models.CharField(max_length=20)
+    DATA_CNT = models.IntegerField()
+    CREATE_AT = models.DateTimeField(auto_now_add=True)
+    UPDATED_AT = models.DateTimeField(auto_now=True)
