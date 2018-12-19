@@ -240,7 +240,28 @@ def getStatisticItemListData():  # 통계 세부항목 목록
         print(e)
 
 def getStatisticSearchData():  #  통계 조회 조건 설정
+    global down_header
     getConfig()
+    passing_index = 360
+    ssd = SelectEcosStatisticDetailTargetItem()
+    for idx, target in enumerate(ssd):
+        if idx < passing_index:
+            continue
+        api_url_full = makeApiUrl(api_url, api_service4, auth_key, target)
+        print(api_url_full)
+        json_str = httpRequest(api_url_full, None, down_header, 'GET').decode('utf-8')
+        json_obj = json.loads(json_str)
+
+        tmp = ecosData()
+        if api_service4 in json_obj.keys():
+            for dic in json_obj[api_service4]['row']:
+                tmp.SetData(api_service4, dic)
+                print(dic)
+            for cls in tmp.dicArray[api_service4]:
+                # print(dic)
+                EcosStatisticSearchDataStore(cls.STAT_CODE, cls.STAT_NAME, cls.ITEM_CODE1, cls.ITEM_NAME1,
+                                             cls.ITEM_CODE2, cls.ITEM_NAME2, cls.ITEM_CODE3, cls.ITEM_NAME3,
+                                             cls.UNIT_NAME, cls.TIME, cls.DATA_VALUE)
 
 def getStatisticMetaData():  # 통계메타DB
     getConfig()
@@ -249,15 +270,22 @@ def getStatisticWordData():  # 통계용어사전
     getConfig()
 
 def makeApiUrl(url, service_name, auth_key, qry_key=None):
+    retStr = url
+    retStr += service_name + '/'
+    retStr += auth_key + '/'
     if service_name in [api_service1, api_service2]:
-        retStr = url
-        retStr += service_name + '/'
-        retStr += auth_key + '/'
         retStr += 'json/kr/1/1000/'
+    elif service_name in [api_service4]:
+        # 1/10/010Y002/MM/201101/201101/AAAA11/
+        retStr += 'json/kr/1/{}/{}/{}/{}/{}/{}/{}/{}/'.format(qry_key.DATA_CNT
+                                                              , qry_key.STAT_CODE
+                                                              , qry_key.CYCLE
+                                                              , qry_key.START_TIME
+                                                              , qry_key.END_TIME
+                                                              , qry_key.ITEM_CODE_1 if qry_key.ITEM_CODE_1 is not None else '?'
+                                                              , qry_key.ITEM_CODE_2 if qry_key.ITEM_CODE_2 is not None else '?'
+                                                              , qry_key.ITEM_CODE_3 if qry_key.ITEM_CODE_3 is not None else '?')
     else:
-        retStr = url
-        retStr += service_name + '/'
-        retStr += auth_key + '/'
         retStr += 'json/kr/1/1000/'
         if qry_key is not None:
             retStr += qry_key + '/'
@@ -336,8 +364,8 @@ def EcosServiceListDataSelect():
     info = None
     import detective_app.models as detective_db
     try:
-        # info = detective_db.EcosServiceList.objects.filter(SRCH_YN='Y')
-        info = detective_db.EcosServiceList.objects.filter(SRCH_YN='Y', id__gte=547)
+        # info = detective_db.EcosServiceList.objects.filter(SRCH_YN='Y', STAT_CODE='080Y101')
+        info = detective_db.EcosServiceList.objects.filter(SRCH_YN='Y', STAT_CODE='099Y004')
     except Exception as e:
         print('[Error on EcosServiceListDataSelect]\n', '*' * 50, e)
     finally:
@@ -374,9 +402,141 @@ def EcosStatDetailItemListDataStore(STAT_CODE, STAT_NAME, GRP_NAME, ITEM_CODE, I
         print('[Error on EcosStatDetailItemListDataStore]\n', '*' * 50, e)
 
 
+def EcosStatisticSearchDataStore(STAT_CODE, STAT_NAME, ITEM_CODE1, ITEM_NAME1, ITEM_CODE2, ITEM_NAME2, ITEM_CODE3, ITEM_NAME3, UNIT_NAME, TIME, DATA_VALUE):
+    import sys
+    import os
+    import django
+    sys.path.append(r'E:\Github\Waver\MainBoard')
+    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # getConfig()
+    # sys.path.append(django_path)
+    # sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        info = detective_db.EcosStatisticSearchData.objects.update_or_create(STAT_CODE=STAT_CODE,
+                                                                             ITEM_CODE1=ITEM_CODE1,
+                                                                             ITEM_CODE2=ITEM_CODE2,
+                                                                             ITEM_CODE3=ITEM_CODE3,
+                                                                             UNIT_NAME=UNIT_NAME,
+                                                                             TIME=TIME,
+                                                                             defaults={
+                                                                                 'STAT_NAME': STAT_NAME,
+                                                                                 'ITEM_NAME1': ITEM_NAME1,
+                                                                                 'ITEM_NAME2': ITEM_NAME2,
+                                                                                 'ITEM_NAME3': ITEM_NAME3,
+                                                                                 'DATA_VALUE': DATA_VALUE,
+                                                                             }
+                                                                             )
+
+    except Exception as e:
+        print('[Error on EcosStatisticSearchData]\n', '*' * 50, e)
+
+def SelectEcosStatisticDetailTargetItem():
+    import sys
+    import os
+    import django
+    sys.path.append(r'E:\Github\Waver\MainBoard')
+    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # getConfig()
+    # sys.path.append(django_path)
+    # sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+
+    from django.db import connection
+
+    target_code = ['080Y101', '099Y004']
+    select_qry = """
+    select * from (
+        select m.STAT_CODE
+             , m.STAT_NAME
+             , d1.CYCLE
+             , d1.START_TIME
+             , d1.END_TIME
+             , d1.DATA_CNT
+             , m.ITEM_CODE as ITEM_CODE_1
+             , m.ITEM_NAME as ITEM_NAME_1
+             , d.ITEM_CODE as ITEM_CODE_2
+             , d.ITEM_NAME as ITEM_NAME_2
+             , d1.ITEM_CODE as ITEM_CODE_3 
+             , d1.ITEM_NAME as ITEM_NAME_3
+        from detective_app_ecosstatdetailitemlist m
+            ,detective_app_ecosstatdetailitemlist d
+            ,detective_app_ecosstatdetailitemlist d1
+        where m.GRP_NAME = 'Group1'
+          and d.GRP_NAME = 'Group2'
+          and d1.GRP_NAME = 'Group3'
+          and m.STAT_CODE = d.STAT_CODE
+          and d.STAT_CODE = d1.STAT_CODE
+        union all
+        select m.STAT_CODE
+             , m.STAT_NAME
+             , d.CYCLE
+             , d.START_TIME
+             , d.END_TIME
+             , d.DATA_CNT
+             , m.ITEM_CODE
+             , m.ITEM_NAME
+             , d.ITEM_CODE
+             , d.ITEM_NAME
+             , null
+             , null
+        from detective_app_ecosstatdetailitemlist m
+            ,detective_app_ecosstatdetailitemlist d
+        where m.GRP_NAME = 'Group1'
+          and d.GRP_NAME = 'Group2'
+          and m.STAT_CODE = d.STAT_CODE
+        union all
+        select m.STAT_CODE
+             , m.STAT_NAME
+             , m.CYCLE
+             , m.START_TIME
+             , m.END_TIME
+             , m.DATA_CNT
+             , m.ITEM_CODE
+             , m.ITEM_NAME
+             , null
+             , null
+             , null
+             , null
+        from detective_app_ecosstatdetailitemlist m
+            ,(
+                select STAT_CODE, count(GRP_NAME) as GRP_CNT
+                from (
+                    select m.STAT_CODE, m.STAT_NAME, m.GRP_NAME
+                    from detective_app_ecosstatdetailitemlist m
+                    group by m.STAT_CODE, m.STAT_NAME, m.GRP_NAME
+                )
+                group by STAT_CODE
+            ) t
+        where t.GRP_CNT = 1
+          and m.STAT_CODE = t.STAT_CODE
+    )
+    where STAT_CODE IN  (%s)
+    order by STAT_CODE, ITEM_CODE_1
+    """ % str(target_code).replace('[', '').replace(']', '')
+
+    # print(select_qry)
+    with connection.cursor() as cursor:
+        cursor.execute(select_qry)
+        # tuples = cursor.fetchall()
+        tuples = namedtuplefetchall(cursor)
+        # print(tuples)
+    return tuples
+
+def namedtuplefetchall(cursor):
+    from collections import namedtuple
+    "Return all rows from a cursor as a namedtuple"
+    desc = cursor.description
+    nt_result = namedtuple('Result', [col[0] for col in desc])
+    return [nt_result(*row) for row in cursor.fetchall()]
+
 if __name__ == '__main__':
     # getKeyStatisticListData()
     # getStatisticTableListData()
-    getStatisticItemListData()
+    # getStatisticItemListData()
+    getStatisticSearchData()
     # dictionary = {'a':'b'}
     # print(type(dictionary) == dict)
