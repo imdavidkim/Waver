@@ -215,3 +215,20 @@ class EcosStatDetailItemList(models.Model):
     DATA_CNT = models.IntegerField()
     CREATE_AT = models.DateTimeField(auto_now_add=True)
     UPDATED_AT = models.DateTimeField(auto_now=True)
+
+
+class EcosStatisticSearchData(models.Model):
+    class Meta:
+        unique_together = (('STAT_CODE', 'ITEM_CODE1', 'ITEM_CODE2', 'ITEM_CODE3', 'UNIT_NAME', 'TIME'),)
+        index_together = (('STAT_CODE', 'ITEM_CODE1', 'ITEM_CODE2', 'ITEM_CODE3', 'UNIT_NAME', 'TIME'),)
+    STAT_CODE = models.CharField(max_length=20)
+    STAT_NAME = models.CharField(max_length=100)
+    ITEM_CODE1 = models.CharField(max_length=20)
+    ITEM_NAME1 = models.CharField(max_length=100)
+    ITEM_CODE2 = models.CharField(max_length=20)
+    ITEM_NAME2 = models.CharField(max_length=100)
+    ITEM_CODE3 = models.CharField(max_length=20)
+    ITEM_NAME3 = models.CharField(max_length=100)
+    UNIT_NAME = models.CharField(max_length=20)
+    TIME = models.CharField(max_length=20)
+    DATA_VALUE = models.CharField(max_length=20)
