@@ -25,8 +25,8 @@ def getConfig():
     django_path = proj_path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
     filename = r'\financeData_%s_%s_%s.html'
-    yyyymmdd = str(datetime.now())[:10]
-    # yyyymmdd = '2018-05-31'
+    # yyyymmdd = str(datetime.now())[:10]
+    yyyymmdd = '2019-02-21'
     # print(path, filename)
 
 
@@ -138,9 +138,27 @@ def messeage_to_telegram(txt):
     chat_id = '568559695'
     bot = telegram.Bot(token=my_token)
     bot.sendMessage(chat_id=chat_id, text=txt)
+    # 진오 =====================================================
+    my_token = '781845768:AAEG55_jbdDIDlmGXWHl8Ag2aDUg-YAA8fc'
+    chat_id = '84410715'
+    bot = telegram.Bot(token=my_token)
+    bot.sendMessage(chat_id=chat_id, text=txt)
+    # ==========================================================
+    # my_token = '781845768:AAEG55_jbdDIDlmGXWH18Ag2aDUg-YAA8fc'
+    # bot = telegram.Bot(token=my_token)
     # updates = bot.getUpdates()
     # for u in updates:
     #     print(u.message)
+
+
+def telegram_test():
+    import telegram
+    # my_token = '577949495:AAFk3JWQjHlbJr2_AtZeonjqQS7buu8cYG4'
+    my_token = '781845768:AAEG55_jbdDIDlmGXWHl8Ag2aDUg-YAA8fc'
+    chat_id = '84410715'
+    bot = telegram.Bot(token=my_token)
+    txt = '고생했다~~앞으로 여기로 보내줄께'
+    bot.sendMessage(chat_id=chat_id, text=txt)
 
 
 def get_dailysnapshot_objects(rpt_nm, rpt_tp, column_nm, crp_cd, dateDict, key=None):
@@ -446,6 +464,48 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
 #         print('error', e)
 
 
+def test_find_hidden_pearl():
+    import sys
+    import os
+    import django
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    import json
+
+    treasure = {}
+    data = {}
+    # 날짜 정보 셋팅
+    dateDict = new_get_dateDict()
+    # 종목 정보 셋팅
+    # DEBUG = True
+    DEBUG = False
+    # stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+    stockInfo = detective_db.Stocks.objects.filter(code='263770', listing='Y') # 제일파마홀딩스
+    # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
+
+    try:
+        if os.path.exists('result.json'):
+            with open("result.json", "r") as f:
+                data = f.read()
+                treasure = json.loads(data)
+        for ii, stock in enumerate(stockInfo):
+            if stock.code in treasure.keys():
+                continue
+            data = {}
+            # yyyymmdd = '2019-02-01'
+            soup = get_soup_from_file('consensus', yyyymmdd, stock.name, stock.code)
+            consensus = fnguide.select_by_attr(soup, 'div', 'id', 'corp_group2')  # Snapshot FinancialHighlight
+            # print(soup.getText())
+            print(consensus)
+    except Exception as e:
+        print('error', e, '\n', stock)
+        with open('result.json', 'w') as fp:
+            json.dump(treasure, fp)
+
 def new_find_hidden_pearl():
     import sys
     import os
@@ -467,9 +527,9 @@ def new_find_hidden_pearl():
     # 종목 정보 셋팅
     # DEBUG = True
     DEBUG = False
-    stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code='263770', listing='Y') # 제일파마홀딩스
-    # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
+    # stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(code='002620', listing='Y') # 제일파마홀딩스
+    stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
@@ -633,15 +693,42 @@ def new_find_hidden_pearl():
                     #             break
                     #         else:
                     #             continue
+                fwd_summary = fnguide.select_by_attr(soup, 'div', 'id', 'corp_group2')  # Snapshot section ul_corpinfo
+                summary_title = []
+                summary_data = []
+                if fwd_summary:
+                    for tag in fwd_summary.select('dl'):
+                        if tag.dt.text.strip() != '' and tag.dt.text.strip() != '\n':
+                            print(tag.dt.text.strip())
+                            summary_title.append(tag.dt.text.strip())
+                    for tag in fwd_summary.select('dl dd'):
+                        try:
+                            print(tag.text.strip())
+                            float(tag.text.strip())
+                            summary_data.append(float(tag.text.strip()))
+                        except Exception as e:
+                            if '%' in tag.text.strip():
+                                summary_data.append(tag.text.strip())
+                                # summary_data.append(float(tag.text.strip().replace('%', '')) * 0.01)
+                            elif '-' in tag.text.strip():
+                                summary_data.append(0)
+                            else:
+                                continue
+                if fwd_summary and summary_title:
+                    for idx, title in enumerate(summary_title):
+                        data[title] = summary_data[idx]
+
                 if '중단영업이익' not in data.keys(): data['중단영업이익'] = 0.0
                 if '금융수익-금융수익' not in data.keys(): data['금융수익-금융수익'] = 0.0
                 if '기타수익-기타수익' not in data.keys(): data['기타수익-기타수익'] = 0.0
                 data['ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
                 if data['ROE'] > 20 and (data['금융수익-금융수익'] / data['지배주주순이익'] > 0.7 or data['기타수익-기타수익'] / data['지배주주순이익'] > 0.7 ):
-                    data['ROE'] = (data['지배주주순이익'] - data['금융수익-금융수익'] - data['기타수익-기타수익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+                    # data['ROE'] = (data['지배주주순이익'] - data['금융수익-금융수익'] - data['기타수익-기타수익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+                    data['ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
                 data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['ROE'] - data['요구수익률']) / data['요구수익률'])
                 data['NPV'] = data['주주가치'] / data['발행주식수']
                 data['NPV2'] = (data['주주가치'] * (data['지배주주지분'] / data['자산총계'])) / data['발행주식수']
+                # if data['회사명'] in ['쿠쿠홀딩스','오리온홀딩스','제일파마홀딩스']: print(data)
                 if DEBUG: print(data)
                 treasure[stock.code] = data
         print('='*50, '마이너스', '='*50)
@@ -858,8 +945,10 @@ if __name__ == '__main__':
     # find_hidden_pearl()
     # messeage_to_telegram()
     # find_hidden_pearl()
-    # new_find_hidden_pearl()
-    messeage_to_telegram(get_high_ranked_stock())
+    # test_find_hidden_pearl()
+    new_find_hidden_pearl()
+    # telegram_test()
+    # messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
     # report_type = 'financeRatio'
