@@ -17,12 +17,13 @@ marketTxt = None
 
 def getConfig():
     import configparser
-    global path, django_path, main_path
+    global path, django_path, main_path, chrome_path
     config = configparser.ConfigParser()
     config.read('config.ini')
     path = config['COMMON']['PROJECT_PATH']
     django_path = path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
+    chrome_path = config['COMMON']['CHROME_PATH']
 
 
 def fileCheck(workDir, code, name, type):
@@ -57,7 +58,24 @@ def getFinanceData(cmd=None):
     import sys
     import os
     import django
+    # from seleniumrequests import Chrome
+    # from selenium.webdriver.chrome.options import Options
+    # getConfig()
+    # CHROMEDRIVER_PATH = chrome_path
+    # options = Options()
+    # options.headless = True
+    # driver = Chrome(CHROMEDRIVER_PATH, chrome_options=options)
+    # driver.implicitly_wait(3)
+    # ----Original Source
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
     getConfig()
+    CHROMEDRIVER_PATH = chrome_path
+    options = Options()
+    options.headless = True
+    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
+    # driver.implicitly_wait(3)
+
     sys.path.append(django_path)
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
@@ -70,12 +88,14 @@ def getFinanceData(cmd=None):
     reportType = {
         101: 'snapshot',
         103: 'financeReport',
-        104: 'financeRatio'
+        104: 'financeRatio',
+        108: 'consensus'
     }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
     urlInfo = {
         101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
         103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp',
-        104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp'
+        104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp',
+        108: 'http://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp'
     }
 
     # reportType = {
@@ -102,7 +122,7 @@ def getFinanceData(cmd=None):
     try:
         '''
         for key in reportType.keys():
-            workDir = r'E:\Github\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
+            workDir = r'D:\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
             if not os.path.exists(workDir):
                 os.makedirs(workDir)
 
@@ -167,12 +187,12 @@ def getFinanceData(cmd=None):
             # file.close()
         '''  # FinanceReport 성공
         stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-        # stockInfo = detective_db.Stocks.objects.filter(code='004980', listing='Y')
+        # stockInfo = detective_db.Stocks.objects.filter(code='003490', listing='Y')
         for key in reportType.keys():
             # print(cmd, cmd and key != cmd)
             if cmd and key != cmd:
                 continue
-            workDir = r'C:\Github\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
+            workDir = r'D:\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
             if not os.path.exists(workDir):
                 os.makedirs(workDir)
 
@@ -184,7 +204,9 @@ def getFinanceData(cmd=None):
                     continue
                 print('[%d/%d][%s][%s][%s] File is on process...' % (idx+1, len(stockInfo), reportType[key], s.code, s.name))
                 data['gicode'] = 'A%s' % s.code
-                response = httpRequest(urlInfo[key], data)
+                # response = httpRequest(urlInfo[key], data)
+                response = httpRequestWithDriver(driver, urlInfo[key], data)
+                # print(response)
                 soup = BeautifulSoup(response.decode('utf-8'), "lxml")
                 # File 처리
                 xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
@@ -494,8 +516,8 @@ def StockMarketTextUpdate(crp_cd, market_text):
     import os
     import django
     from datetime import datetime
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'D:\Waver\MainBoard')
+    # sys.path.append(r'D:\Waver\MainBoard\MainBoard')
     getConfig()
     sys.path.append(django_path)
     sys.path.append(main_path)
@@ -550,8 +572,8 @@ def SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, k
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'D:\Waver\MainBoard')
+    # sys.path.append(r'D:\Waver\MainBoard\MainBoard')
     getConfig()
     sys.path.append(django_path)
     sys.path.append(main_path)
@@ -608,8 +630,8 @@ def FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_n
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'D:\Waver\MainBoard')
+    # sys.path.append(r'D:\Waver\MainBoard\MainBoard')
     getConfig()
     sys.path.append(django_path)
     sys.path.append(main_path)
@@ -742,6 +764,10 @@ def get_table_contents(soup, structure):
                 retList.append('%s(%s)' % (tag.a.text, tag.a['href']))
                 continue
             if tag.div and tag.div.dl and tag.div.dl.dd:
+                # print('[Continue]', tag.div.dl.dd)
+                continue
+            if tag.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip() == '헤더' \
+                or tag.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip() == '내용':
                 continue
             retList.append(tag.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
     return retList
@@ -844,8 +870,8 @@ def FinancialRatioDataStore(report_name, report_type, crp_cd, crp_nm, categorizi
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    # sys.path.append(r'D:\Waver\MainBoard')
+    # sys.path.append(r'D:\Waver\MainBoard\MainBoard')
     getConfig()
     sys.path.append(django_path)
     sys.path.append(main_path)
@@ -946,6 +972,27 @@ def parse_html_table(table):
     return df
 
 
+def request(driver):
+    s = requests.Session()
+    # cookies = driver.get_cookies()
+    # for cookie in cookies:
+    #     s.cookies.set(cookie['name'], cookie['value'])
+    return s
+
+
+def httpRequestWithDriver(driver, url, data, method='POST'):
+    try:
+        req = request(driver)
+        if method == 'POST':
+            r = req.post(url, data)
+            return r.content
+        else:
+            r = req.get(url, data)
+            return r.content
+    except Exception as e:
+        print(e)
+
+
 def httpRequest(url, data, method='POST'):
     try:
         if method == 'POST':
@@ -996,7 +1043,7 @@ def getUSFinanceData(cmd=None):
         if cmd and key != cmd:
             continue
         # workDir = r'%s\%s\%s' % (report_path, reportType[key], yyyymmdd)
-        workDir = r'E:\Github\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
+        workDir = r'D:\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
         if not os.path.exists(workDir):
             os.makedirs(workDir)
         for s in stockInfo:
@@ -1014,6 +1061,7 @@ def getUSFinanceData(cmd=None):
 
 if __name__ == '__main__':
     # getFinanceData(101)
-    getFinanceData(103)
+    # getFinanceData(103)
+    getFinanceData(108)
     # getFinanceData(104)
     # getUSFinanceData()
