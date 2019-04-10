@@ -1,0 +1,6 @@
+# PBR 은 우선 낮게 비중을 가져간다!!!
+# consensus 에 12M PER, 업종 PER, PBR, 배당수익률을 가져와서 저장해둔다
+# 구글 Central Bank Inflation Target (세계 적정 물가치라고 생각하면 된다)
+# 신용스프레드는 축소되면 좋은 것 / 최악은 급격히 확대
+# 장단기 금리차는 확대되면 좋은 것 / 최악은 마이너스(미국은 Fred, 한국은 Kofiabond, 중국은 shibor.org)
+# ROE 10% 이상(직전 2개년), PBR 3 미만, 12M PER <= 업종PER * 70%
