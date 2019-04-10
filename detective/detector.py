@@ -25,8 +25,8 @@ def getConfig():
     django_path = proj_path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
     filename = r'\financeData_%s_%s_%s.html'
-    # yyyymmdd = str(datetime.now())[:10]
-    yyyymmdd = '2019-02-21'
+    yyyymmdd = str(datetime.now())[:10]
+    # yyyymmdd = '2019-02-21'
     # print(path, filename)
 
 
@@ -109,16 +109,17 @@ def get_high_ranked_stock():
     sql = """select t.code, t.name, t.curr, t.last_price, t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
                 select code, name, curr, last_price, target_price, target_price2, return_on_equity, ratio, target_price2/last_price*100 as ratio2 from detective_app_targetstocks
                 where ratio > 100
-                and return_on_equity > 14
+                --and return_on_equity > 14
+                and valuation_date = '%s'
                 order by ratio2 desc, return_on_equity desc, ratio desc
                 limit 500) as t
-             where last_price > 14000
-             and ratio2 > 100
-             order by return_on_equity desc"""
+             --where last_price > 14000
+             --and ratio2 > 100
+             order by t.ratio desc""" % yyyymmdd
     cursor.execute(sql)
     retStr = ''
     for idx, d in enumerate(dictfetchall(cursor)):
-        retStr += '%d. %s\t%d => %d\n' % (idx+1, d['name'], int(d['last_price']), int(d['target_price2']))
+        retStr += '%d. %s\t%d => %d\n' % (idx+1, d['name'], int(d['last_price']), int(d['target_price']))
     return retStr
 
 def align_string(switch, text, digit):
@@ -527,9 +528,9 @@ def new_find_hidden_pearl():
     # 종목 정보 셋팅
     # DEBUG = True
     DEBUG = False
-    # stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code='002620', listing='Y') # 제일파마홀딩스
-    stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
+    stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(code='003490', listing='Y') # 제일파마홀딩스
+    # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
@@ -576,6 +577,10 @@ def new_find_hidden_pearl():
                 fnguide.StockMarketTextUpdate(stock.code, marketTxt)
             yearly_highlight = fnguide.select_by_attr(soup, 'div', 'id', 'highlight_D_Y')  # Snapshot FinancialHighlight
             if yearly_highlight:
+                # print(len(fnguide.get_table_contents(yearly_highlight, 'table thead tr th')))
+                # print(len(fnguide.get_table_contents(yearly_highlight, 'table tbody tr th')))
+                # print(fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
+                # print(yearly_highlight)
                 columns, items, values = fnguide.setting(fnguide.get_table_contents(yearly_highlight, 'table thead tr th')[1:],
                                                          fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
                                                          fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
@@ -584,7 +589,7 @@ def new_find_hidden_pearl():
                     if i in ['지배주주순이익', '지배주주지분', '자산총계']:
                         for idx2, yyyymm in enumerate(columns):
                             # print(idx2, yyyymm)
-                            # print(yyyymm[:4], dateDict['yyyy'], values[idx][idx2])
+                            # print(yyyymm[:4], dateDict['yyyy'], i, values[idx][idx2])
                             if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
                                 data['Period'] = yyyymm
                                 data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
@@ -596,9 +601,11 @@ def new_find_hidden_pearl():
                                         # data['Period'] = columns[idx2 - 3]
                                         # data[i] = float(values[idx][idx2 - 3].replace(',', '')) * 100000000
                                     else:
+                                        # print("data['Period'] = columns[idx2 - 2]")
                                         data['Period'] = columns[idx2 - 2]
                                         data[i] = float(values[idx][idx2 - 2].replace(',', '')) * 100000000
                                 else:
+                                    # print("data['Period'] = columns[idx2-1]")
                                     data['Period'] = columns[idx2-1]
                                     data[i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
                             else:
@@ -699,24 +706,29 @@ def new_find_hidden_pearl():
                 if fwd_summary:
                     for tag in fwd_summary.select('dl'):
                         if tag.dt.text.strip() != '' and tag.dt.text.strip() != '\n':
-                            print(tag.dt.text.strip())
+                            # print(tag.dt.text.strip())
                             summary_title.append(tag.dt.text.strip())
                     for tag in fwd_summary.select('dl dd'):
                         try:
-                            print(tag.text.strip())
-                            float(tag.text.strip())
-                            summary_data.append(float(tag.text.strip()))
+                            # print(tag.text.strip())
+                            float(tag.text.strip().replace(',', ''))
+                            summary_data.append(float(tag.text.strip().replace(',', '')))
                         except Exception as e:
+                            # print('[Error]', tag.text.strip())
                             if '%' in tag.text.strip():
                                 summary_data.append(tag.text.strip())
                                 # summary_data.append(float(tag.text.strip().replace('%', '')) * 0.01)
-                            elif '-' in tag.text.strip():
+                            elif '-' == tag.text.strip():
                                 summary_data.append(0)
                             else:
                                 continue
+                # print(fwd_summary)
+                # print(summary_title)
+                # print(summary_data)
                 if fwd_summary and summary_title:
                     for idx, title in enumerate(summary_title):
                         data[title] = summary_data[idx]
+                        # print(title, summary_data[idx])
 
                 if '중단영업이익' not in data.keys(): data['중단영업이익'] = 0.0
                 if '금융수익-금융수익' not in data.keys(): data['금융수익-금융수익'] = 0.0
@@ -732,10 +744,12 @@ def new_find_hidden_pearl():
                 if DEBUG: print(data)
                 treasure[stock.code] = data
         print('='*50, '마이너스', '='*50)
-        print(align_string('L', 'No.', 10),
+        print(align_string('L', 'No.', 5),
               align_string('R', 'Code', 10),
               align_string('R', 'Name', 20),
               align_string('R', 'ROE', 20),
+              align_string('R', '12M PER', 8),
+              align_string('R', '업종 PER', 8),
               align_string('R', '지배주주지분', 14),
               align_string('R', '주주가치', 16),
               align_string('R', 'NPV', 20),
@@ -747,15 +761,35 @@ def new_find_hidden_pearl():
         for d in treasure.keys():
             # print(d)
             # if treasure[d]['NPV'] > 0 and treasure[d]['NPV']/treasure[d]['종가']*100 > 100:  # 수익예상 종목
-            if treasure[d]['NPV'] < 0 or ('확인사항' in treasure[d].keys() and treasure[d]['확인사항'] == '완전잠식'):  # 제외종목
+
+            # if treasure[d]['NPV'] < 0 or ('확인사항' in treasure[d].keys() and treasure[d]['확인사항'] == '완전잠식'):  # 제외종목
+            #     cnt += 1
+            #     print(align_string('L', cnt, 10),
+            #           align_string('R', d, 10),
+            #           align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
+            #           align_string(',', round(treasure[d]['ROE'], 2), 20),
+            #           align_string(',', treasure[d]['12M PER'], 8),
+            #           align_string(',', treasure[d]['업종 PER'], 8),
+            #           align_string(',', treasure[d]['지배주주지분'], 20),
+            #           align_string(',', treasure[d]['주주가치'], 20),
+            #           align_string(',', round(treasure[d]['NPV'], 2), 20),
+            #           align_string(',', treasure[d]['종가'], 10),
+            #           align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
+            #           )
+            #     continue
+            if treasure[d]['12M PER'] > treasure[d]['업종 PER'] * 0.7 or \
+               treasure[d]['12M PER'] < 10 or \
+               treasure[d]['PBR(Price Book-value Ratio)'] > 3:
                 cnt += 1
-                print(align_string('L', cnt, 10),
+                print(align_string('L', cnt, 5),
                       align_string('R', d, 10),
                       align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
-                      align_string(',', treasure[d]['ROE'], 20),
+                      align_string(',', round(treasure[d]['ROE'], 2), 20),
+                      align_string(',', treasure[d]['12M PER'], 8),
+                      align_string(',', treasure[d]['업종 PER'], 8),
                       align_string(',', treasure[d]['지배주주지분'], 20),
                       align_string(',', treasure[d]['주주가치'], 20),
-                      align_string(',', treasure[d]['NPV'], 20),
+                      align_string(',', round(treasure[d]['NPV'], 2), 20),
                       align_string(',', treasure[d]['종가'], 10),
                       align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                       )
@@ -932,11 +966,12 @@ def TargetStockDataStore(crp_cd, data):
                                                                       'required_yield': data['요구수익률'],
                                                                       'return_on_equity': data['ROE'],
                                                                       'ratio': data['NPV']/data['종가']*100,
-                                                                      'plus_npv': 'Y'
+                                                                      'plus_npv': 'Y',
+                                                                      'valuation_date': str(datetime.now())[:10]
                                                                   }
                                                                   )
 
-        # print("[TargetStocks][%s][%s] information stored successfully" % (crp_cd, data['회사명']))
+        print("[TargetStocks][%s][%s] information stored successfully" % (crp_cd, data['회사명']))
         # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
     except Exception as e:
         print('[Error on TargetStockDataStore]\n', '*' * 50, e)
@@ -947,7 +982,6 @@ if __name__ == '__main__':
     # find_hidden_pearl()
     # test_find_hidden_pearl()
     new_find_hidden_pearl()
-    # telegram_test()
     # messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
