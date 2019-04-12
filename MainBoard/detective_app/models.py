@@ -69,6 +69,11 @@ class TargetStocks(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     plus_npv = models.CharField(max_length=1, default='Y')
     liquidity_rate = models.FloatField(null=True)
+    holders_share = models.FloatField(null=True)
+    holders_profit = models.FloatField(null=True)
+    holders_value = models.FloatField(null=True)
+    impairment_profit = models.FloatField(null=True)
+    issued_shares = models.FloatField(null=True)
 
 
 class DartRequestIndex(models.Model):
@@ -232,3 +237,10 @@ class EcosStatisticSearchData(models.Model):
     UNIT_NAME = models.CharField(max_length=20)
     TIME = models.CharField(max_length=20)
     DATA_VALUE = models.CharField(max_length=20)
+
+
+class FredStatisticCategory(models.Model):
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=100)
+    parent_id = models.IntegerField()
+    notes = models.TextField(default=None, null=True)
