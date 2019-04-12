@@ -119,7 +119,8 @@ def get_high_ranked_stock():
     cursor.execute(sql)
     retStr = ''
     for idx, d in enumerate(dictfetchall(cursor)):
-        retStr += '%d. %s\t%d => %d\n' % (idx+1, d['name'], int(d['last_price']), int(d['target_price']))
+        retStr += '%d. %s\t%s => %s\n' % (
+            idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','))
     return retStr
 
 def align_string(switch, text, digit):
@@ -140,10 +141,10 @@ def messeage_to_telegram(txt):
     bot = telegram.Bot(token=my_token)
     bot.sendMessage(chat_id=chat_id, text=txt)
     # 진오 =====================================================
-    my_token = '781845768:AAEG55_jbdDIDlmGXWHl8Ag2aDUg-YAA8fc'
-    chat_id = '84410715'
-    bot = telegram.Bot(token=my_token)
-    bot.sendMessage(chat_id=chat_id, text=txt)
+    # my_token = '781845768:AAEG55_jbdDIDlmGXWHl8Ag2aDUg-YAA8fc'
+    # chat_id = '84410715'
+    # bot = telegram.Bot(token=my_token)
+    # bot.sendMessage(chat_id=chat_id, text=txt)
     # ==========================================================
     # my_token = '781845768:AAEG55_jbdDIDlmGXWH18Ag2aDUg-YAA8fc'
     # bot = telegram.Bot(token=my_token)
@@ -529,7 +530,7 @@ def new_find_hidden_pearl():
     # DEBUG = True
     DEBUG = False
     stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code='003490', listing='Y') # 제일파마홀딩스
+    # stockInfo = detective_db.Stocks.objects.filter(code='007630', listing='Y') # 제일파마홀딩스
     # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
@@ -580,7 +581,7 @@ def new_find_hidden_pearl():
                 # print(len(fnguide.get_table_contents(yearly_highlight, 'table thead tr th')))
                 # print(len(fnguide.get_table_contents(yearly_highlight, 'table tbody tr th')))
                 # print(fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
-                # print(yearly_highlight)
+                if DEBUG: print(yearly_highlight)
                 columns, items, values = fnguide.setting(fnguide.get_table_contents(yearly_highlight, 'table thead tr th')[1:],
                                                          fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
                                                          fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
@@ -787,9 +788,9 @@ def new_find_hidden_pearl():
                       align_string(',', round(treasure[d]['ROE'], 2), 20),
                       align_string(',', treasure[d]['12M PER'], 8),
                       align_string(',', treasure[d]['업종 PER'], 8),
-                      align_string(',', treasure[d]['지배주주지분'], 20),
-                      align_string(',', treasure[d]['주주가치'], 20),
-                      align_string(',', round(treasure[d]['NPV'], 2), 20),
+                      align_string(',', round(treasure[d]['지배주주지분'], 0), 20),
+                      align_string(',', round(treasure[d]['주주가치'], 0), 20),
+                      align_string(',', round(treasure[d]['NPV'], 0), 20),
                       align_string(',', treasure[d]['종가'], 10),
                       align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                       )
@@ -967,6 +968,11 @@ def TargetStockDataStore(crp_cd, data):
                                                                       'return_on_equity': data['ROE'],
                                                                       'ratio': data['NPV']/data['종가']*100,
                                                                       'plus_npv': 'Y',
+                                                                      'holders_share': data['지배주주지분'],
+                                                                      'holders_value': data['주주가치'],
+                                                                      'holders_profit': data['지배주주순이익'],
+                                                                      'issued_shares': data['발행주식수'],
+                                                                      'impairment_profit': data['중단영업이익'],
                                                                       'valuation_date': str(datetime.now())[:10]
                                                                   }
                                                                   )
@@ -982,7 +988,7 @@ if __name__ == '__main__':
     # find_hidden_pearl()
     # test_find_hidden_pearl()
     new_find_hidden_pearl()
-    # messeage_to_telegram(get_high_ranked_stock())
+    messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
     # report_type = 'financeRatio'
