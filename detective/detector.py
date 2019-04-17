@@ -995,6 +995,7 @@ def TargetStockDataStore(crp_cd, data):
     import detective_app.models as detective_db
     try:
         info = detective_db.TargetStocks.objects.update_or_create(code=crp_cd,
+                                                                  valuation_date=str(datetime.now())[:10],
                                                                   defaults={
                                                                       'name': data['회사명'],
                                                                       'curr': data['통화'],
@@ -1010,7 +1011,6 @@ def TargetStockDataStore(crp_cd, data):
                                                                       'holders_profit': data['지배주주순이익'],
                                                                       'issued_shares': data['발행주식수'],
                                                                       # 'impairment_profit': data['중단영업이익'],
-                                                                      'valuation_date': str(datetime.now())[:10]
                                                                   }
                                                                   )
 
