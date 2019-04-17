@@ -112,15 +112,15 @@ def get_high_ranked_stock():
                 --and return_on_equity > 14
                 and valuation_date = '%s'
                 order by ratio2 desc, return_on_equity desc, ratio desc
-                limit 500) as t
+                limit 30) as t
              --where last_price > 14000
              --and ratio2 > 100
              order by t.ratio desc""" % yyyymmdd
     cursor.execute(sql)
     retStr = ''
     for idx, d in enumerate(dictfetchall(cursor)):
-        retStr += '%d. %s\t%s => %s\n' % (
-            idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','))
+        retStr += '%d. %s\t%s => %s[%s%%]\n' % (
+            idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
     return retStr
 
 def align_string(switch, text, digit):
@@ -465,48 +465,62 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
 #     except Exception as e:
 #         print('error', e)
 
+#
+# def test_find_hidden_pearl():
+#     import sys
+#     import os
+#     import django
+#     getConfig()
+#     sys.path.append(django_path)
+#     sys.path.append(main_path)
+#     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+#     django.setup()
+#     import detective_app.models as detective_db
+#     import json
+#
+#     treasure = {}
+#     data = {}
+#     # 날짜 정보 셋팅
+#     dateDict = new_get_dateDict()
+#     # 종목 정보 셋팅
+#     # DEBUG = True
+#     DEBUG = False
+#     # stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+#     stockInfo = detective_db.Stocks.objects.filter(code='263770', listing='Y') # 제일파마홀딩스
+#     # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
+#
+#     try:
+#         if os.path.exists('result.json'):
+#             with open("result.json", "r") as f:
+#                 data = f.read()
+#                 treasure = json.loads(data)
+#         for ii, stock in enumerate(stockInfo):
+#             if stock.code in treasure.keys():
+#                 continue
+#             data = {}
+#             # yyyymmdd = '2019-02-01'
+#             soup = get_soup_from_file('consensus', yyyymmdd, stock.name, stock.code)
+#             consensus = fnguide.select_by_attr(soup, 'div', 'id', 'corp_group2')  # Snapshot FinancialHighlight
+#             # print(soup.getText())
+#             print(consensus)
+#     except Exception as e:
+#         print('error', e, '\n', stock)
+#         with open('result.json', 'w') as fp:
+#             json.dump(treasure, fp)
+# def get_adjust_factor(market_text):
+#     if '건설' in market_text:
+#         return 0
+#     elif '' in market_text:
+#         return 0
+#     elif '' in market_text:
+#         return 0
+#     elif '' in market_text:
+#         return 0
+#     elif '' in market_text:
+#         return 0
+#     elif '' in market_text:
+#         return 0
 
-def test_find_hidden_pearl():
-    import sys
-    import os
-    import django
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
-    django.setup()
-    import detective_app.models as detective_db
-    import json
-
-    treasure = {}
-    data = {}
-    # 날짜 정보 셋팅
-    dateDict = new_get_dateDict()
-    # 종목 정보 셋팅
-    # DEBUG = True
-    DEBUG = False
-    # stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-    stockInfo = detective_db.Stocks.objects.filter(code='263770', listing='Y') # 제일파마홀딩스
-    # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
-
-    try:
-        if os.path.exists('result.json'):
-            with open("result.json", "r") as f:
-                data = f.read()
-                treasure = json.loads(data)
-        for ii, stock in enumerate(stockInfo):
-            if stock.code in treasure.keys():
-                continue
-            data = {}
-            # yyyymmdd = '2019-02-01'
-            soup = get_soup_from_file('consensus', yyyymmdd, stock.name, stock.code)
-            consensus = fnguide.select_by_attr(soup, 'div', 'id', 'corp_group2')  # Snapshot FinancialHighlight
-            # print(soup.getText())
-            print(consensus)
-    except Exception as e:
-        print('error', e, '\n', stock)
-        with open('result.json', 'w') as fp:
-            json.dump(treasure, fp)
 
 def new_find_hidden_pearl():
     import sys
@@ -548,8 +562,8 @@ def new_find_hidden_pearl():
     # fix_or_prov_or_estm = 'E'
     # # ----------------------------------dd
     try:
-        if os.path.exists('result.json'):
-            with open("result.json", "r") as f:
+        if os.path.exists('result.%s.json' % yyyymmdd):
+            with open('result.%s.json' % yyyymmdd, "r") as f:
                 data = f.read()
                 treasure = json.loads(data)
         for ii, stock in enumerate(stockInfo):
@@ -669,38 +683,39 @@ def new_find_hidden_pearl():
                 if data['요구수익률'] < 8.0: data['요구수익률'] = 8.0
                 # data['요구수익률'] = (data['요구수익률'] + 10) /2
                 # print(data)
-                soup = get_soup_from_file('financeReport', yyyymmdd, stock.name, stock.code)
-                yearly_sonik = fnguide.select_by_attr(soup, 'div', 'id', 'divSonikY')  # Snapshot 포괄손익계산서
-                columns, valueDict = fnguide.dynamic_parse_table('divSonikY', yearly_sonik.table, stock.code, stock.name)
-                if DEBUG:
-                    for key in valueDict.keys():
-                        # if key.endswith('금융수익'):
-                            print(key, valueDict[key])
-                # print(columns, valueDict)
-                for key in valueDict.keys():
-                    if key in ['중단영업이익', '금융수익-금융수익', '기타수익-기타수익']:
-                        for idx, yyyymm in enumerate(columns[1:]):
-                            if DEBUG: print(yyyymm, dateDict)
-                            # if yyyymm[:4] == dateDict['yyyy'] and yyyymm[5:7] == dateDict['mm']:
-                            if yyyymm[:4] == data['Period'][:4] and yyyymm[5:7] == data['Period'][5:7]:
-                                data[key] = 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
-                                break
-                            elif yyyymm[:4] == data['Period'][:4]:
-                                data[key] = 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
-                                break
-                            else:
-                                continue
-                    # elif key.startswith('금융수익'):
-                    #     if '금융수익' not in data.keys(): data['금융수익'] = 0.0
-                    #     for idx, yyyymm in enumerate(columns[1:]):
-                    #         if yyyymm[:4] == data['Period'][:4] and yyyymm[5:7] == data['Period'][5:7]:
-                    #             data['금융수익'] += 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
-                    #             break
-                    #         elif yyyymm[:4] == data['Period'][:4]:
-                    #             data['금융수익'] += 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
-                    #             break
-                    #         else:
-                    #             continue
+                # 포괄손익계산서가 과거데이터가 많아 제외 - 20190417
+                # soup = get_soup_from_file('financeReport', yyyymmdd, stock.name, stock.code)
+                # yearly_sonik = fnguide.select_by_attr(soup, 'div', 'id', 'divSonikY')  # Snapshot 포괄손익계산서
+                # columns, valueDict = fnguide.dynamic_parse_table('divSonikY', yearly_sonik.table, stock.code, stock.name)
+                # if DEBUG:
+                #     for key in valueDict.keys():
+                #         # if key.endswith('금융수익'):
+                #             print(key, valueDict[key])
+                # # print(columns, valueDict)
+                # for key in valueDict.keys():
+                #     if key in ['중단영업이익', '금융수익-금융수익', '기타수익-기타수익']:
+                #         for idx, yyyymm in enumerate(columns[1:]):
+                #             if DEBUG: print(yyyymm, dateDict)
+                #             # if yyyymm[:4] == dateDict['yyyy'] and yyyymm[5:7] == dateDict['mm']:
+                #             if yyyymm[:4] == data['Period'][:4] and yyyymm[5:7] == data['Period'][5:7]:
+                #                 data[key] = 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
+                #                 break
+                #             elif yyyymm[:4] == data['Period'][:4]:
+                #                 data[key] = 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
+                #                 break
+                #             else:
+                #                 continue
+                #     # elif key.startswith('금융수익'):
+                #     #     if '금융수익' not in data.keys(): data['금융수익'] = 0.0
+                #     #     for idx, yyyymm in enumerate(columns[1:]):
+                #     #         if yyyymm[:4] == data['Period'][:4] and yyyymm[5:7] == data['Period'][5:7]:
+                #     #             data['금융수익'] += 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
+                #     #             break
+                #     #         elif yyyymm[:4] == data['Period'][:4]:
+                #     #             data['금융수익'] += 0.0 if valueDict[key][idx] == '' else float(valueDict[key][idx].replace(',', '')) * 100000000
+                #     #             break
+                #     #         else:
+                #     #             continue
                 fwd_summary = fnguide.select_by_attr(soup, 'div', 'id', 'corp_group2')  # Snapshot section ul_corpinfo
                 summary_title = []
                 summary_data = []
@@ -730,15 +745,17 @@ def new_find_hidden_pearl():
                     for idx, title in enumerate(summary_title):
                         data[title] = summary_data[idx]
                         # print(title, summary_data[idx])
-
-                if '중단영업이익' not in data.keys(): data['중단영업이익'] = 0.0
-                if '금융수익-금융수익' not in data.keys(): data['금융수익-금융수익'] = 0.0
-                if '기타수익-기타수익' not in data.keys(): data['기타수익-기타수익'] = 0.0
-                data['ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
-                if data['ROE'] > 20 and (data['금융수익-금융수익'] / data['지배주주순이익'] > 0.7 or data['기타수익-기타수익'] / data['지배주주순이익'] > 0.7 ):
-                    # data['ROE'] = (data['지배주주순이익'] - data['금융수익-금융수익'] - data['기타수익-기타수익'] - data['중단영업이익']) / data['지배주주지분'] * 100
-                    data['ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
-                data['주주가치'] = data['지배주주지분'] + (data['지배주주지분'] * (data['ROE'] - data['요구수익률']) / data['요구수익률'])
+                adjval = data['업종 PER'] * data['PBR(Price Book-value Ratio)']
+                # if '중단영업이익' not in data.keys(): data['중단영업이익'] = 0.0
+                # if '금융수익-금융수익' not in data.keys(): data['금융수익-금융수익'] = 0.0
+                # if '기타수익-기타수익' not in data.keys(): data['기타수익-기타수익'] = 0.0
+                # data['ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+                data['ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
+                # if data['ROE'] > 20 and (data['금융수익-금융수익'] / data['지배주주순이익'] > 0.7 or data['기타수익-기타수익'] / data['지배주주순이익'] > 0.7 ):
+                #     # data['ROE'] = (data['지배주주순이익'] - data['금융수익-금융수익'] - data['기타수익-기타수익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+                #     data['ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+                data['주주가치'] = data['지배주주지분'] + (
+                            data['지배주주지분'] * (data['ROE'] - data['요구수익률']) / (data['요구수익률'] * adjval))
                 data['NPV'] = data['주주가치'] / data['발행주식수']
                 data['NPV2'] = (data['주주가치'] * (data['지배주주지분'] / data['자산총계'])) / data['발행주식수']
                 # if data['회사명'] in ['쿠쿠홀딩스','오리온홀딩스','제일파마홀딩스']: print(data)
@@ -778,8 +795,10 @@ def new_find_hidden_pearl():
             #           align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
             #           )
             #     continue
-            if treasure[d]['12M PER'] > treasure[d]['업종 PER'] * 0.7 or \
-               treasure[d]['12M PER'] < 10 or \
+            if treasure[d]['NPV'] < 0 or treasure[d]['12M PER'] == 0 or \
+               treasure[d]['NPV']/treasure[d]['종가']*100 < 100 or \
+               treasure[d]['12M PER'] > treasure[d]['업종 PER'] * 0.7 or \
+               treasure[d]['ROE'] < 15 or \
                treasure[d]['PBR(Price Book-value Ratio)'] > 3:
                 cnt += 1
                 print(align_string('L', cnt, 5),
@@ -795,6 +814,18 @@ def new_find_hidden_pearl():
                       align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                       )
                 continue
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
+                  align_string(',', round(treasure[d]['ROE'], 2), 20),
+                  align_string(',', treasure[d]['12M PER'], 8),
+                  align_string(',', treasure[d]['업종 PER'], 8),
+                  align_string(',', round(treasure[d]['지배주주지분'], 0), 20),
+                  align_string(',', round(treasure[d]['주주가치'], 0), 20),
+                  align_string(',', round(treasure[d]['NPV'], 0), 20),
+                  align_string(',', treasure[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
+                  )
             # print(d, treasure[d]['회사명'])
             # if treasure[d]['ROE'] < 15:
             #     cnt += 1
@@ -917,12 +948,18 @@ def new_find_hidden_pearl():
     #             continue
     #         # print(d, treasure[d]['회사명'])
     #         # TargetStockDataStore(d, treasure[d])
-        if os.path.exists('result.json'):
-            os.remove('result.json')
+        if os.path.exists('result.%s.json' % yyyymmdd):
+            os.remove('result.%s.json' % yyyymmdd)
+        with open('result.%s.json' % yyyymmdd, 'w') as fp:
+            json.dump(treasure, fp)
     except Exception as e:
         print('error', e, '\n', stock)
-        with open('result.json', 'w') as fp:
+        if os.path.exists('result.%s.json' % yyyymmdd):
+            os.remove('result.%s.json' % yyyymmdd)
+        with open('result.%s.json' % yyyymmdd, 'w') as fp:
             json.dump(treasure, fp)
+        # with open('result.%s.json' % yyyymmdd, 'w') as fp:
+        #     json.dump(treasure, fp)
 
 
 def dataInit():
@@ -972,7 +1009,7 @@ def TargetStockDataStore(crp_cd, data):
                                                                       'holders_value': data['주주가치'],
                                                                       'holders_profit': data['지배주주순이익'],
                                                                       'issued_shares': data['발행주식수'],
-                                                                      'impairment_profit': data['중단영업이익'],
+                                                                      # 'impairment_profit': data['중단영업이익'],
                                                                       'valuation_date': str(datetime.now())[:10]
                                                                   }
                                                                   )
