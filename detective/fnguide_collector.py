@@ -20,8 +20,9 @@ def getConfig():
     global path, django_path, main_path, chrome_path
     config = configparser.ConfigParser()
     config.read('config.ini')
-    path = config['COMMON']['PROJECT_PATH']
-    django_path = path + r'\MainBoard'
+    path = config['COMMON']['REPORT_PATH']
+    proj_path = config['COMMON']['PROJECT_PATH']
+    django_path = proj_path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
     chrome_path = config['COMMON']['CHROME_PATH']
 
@@ -102,15 +103,6 @@ def getFinanceData(cmd=None):
         200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A%s_D.json',
     }
 
-    # reportType = {
-    #     # 101: 'snapshot',
-    #     103: 'financeReport'
-    # }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
-    # urlInfo = {
-    #     # 101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
-    #     103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp'
-    # }
-
     data = {
         'pGB': 1,
         'gicode': '',
@@ -120,96 +112,17 @@ def getFinanceData(cmd=None):
         'NewMenuID': 0,
         'stkGb': 701,
     }
-    #
-    # dataRoe = {
-    #     'oid': 'upjongChartD',
-    #     'cid': '01_04',
-    #     'gicode': '',
-    #     'filter': 'D',
-    #     'term': 'Y',
-    #     'etc': '04',
-    #     'etc2': '0',
-    #     'titleTxt': 'undefined',
-    #     'dateTxt': 'undefined',
-    #     'unitTxt': ''
-    # }
 
     xmlString = ''
 
     try:
-        '''
-        for key in reportType.keys():
-            workDir = r'D:\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
-            if not os.path.exists(workDir):
-                os.makedirs(workDir)
-
-            data['NewMenuID'] = key
-            data['gicode'] = 'A005930'
-            response = httpRequest(urlInfo[key], data)
-            # ##############################################################Using pandas
-            # tables = pd.read_html(response.decode('utf-8'), header=0)
-            # for t in tables:
-            #     print(t)
-            # ##############################################################Using beautifulSoup
-            soup = BeautifulSoup(response.decode('utf-8'), "lxml")
-            # tables = soup.find_all('table')
-            divs = soup.find_all('div')
-            for d in divs:
-                if len(d.attrs) > 0 and 'class' in d.attrs.keys() and d.attrs['class'] in [['ul_col2wrap', 'pd_t25']]:
-                    column_name = []
-                    data_header = ''
-                    column_data = []
-                    data_information = {}
-                    report_name = d.find('div').find('div').find('div').get_text().replace('\n', '')
-                    for th in d.table.thead.find_all('th'):
-                        # print(th.get_text())
-                        if th.get_text() == 'IFRS(연결)':
-                            continue
-                        else:
-                            column_name.append(th.get_text())
-
-                    for tr in d.table.tbody.find_all('tr'):
-                        data_header = ''
-                        if tr.attrs['class'] == ['tbody_tit']:  # 표 이름은 저장하지 않음
-                            continue
-                        elif 'acd_dep2_sub' in tr.attrs['class']:  # 하위의 BackData 는 저장하지 않음
-                            continue
-                        elif 'acd_dep_start_close' in tr.attrs['class']:
-                            data_header = tr.th.div.div.dl.dt.get_text()
-                            column_data = []
-                            # print(data_header)
-                            # print(tr.th.div.div.dl.dt.get_text(), prev_column)
-                            for td in tr.find_all('td'):
-                                if len(td.find_all('span')) > 0:
-                                    column_data.append(td.span.get_text())
-                                else:
-                                    column_data.append(td.get_text())
-                        data_information[data_header] = column_data
-                    print(report_name, column_name)
-                    for dh in data_information.keys():
-                        print(dh, data_information[dh])
-                    # if d.attrs['id'] == 'divSonikY':
-                    # dynamic_parse_table(d.attrs['id'], d.table)
-                    print('\n\n\n\n\n')
-            # for t in tables:
-            #     if t
-            #     dynamic_parse_table(t)
-            #     parse_html_table(t)
-            # xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-            # file = open(r"%s\financeData_%s_%s_%s.txt" % (workDir,
-            #                                               '삼성전자',
-            #                                               '005930',
-            #                                               reportType[key]), "wb")
-            # file.write(xml)
-            # file.close()
-        '''  # FinanceReport 성공
         stockInfo = detective_db.Stocks.objects.filter(listing='Y')
         # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
         for key in reportType.keys():
             # print(cmd, cmd and key != cmd)
             if cmd and key != cmd:
                 continue
-            workDir = r'D:\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
+            workDir = r'%s\%s\%s' % (path, reportType[key], yyyymmdd)
             if not os.path.exists(workDir):
                 os.makedirs(workDir)
 
@@ -1071,8 +984,8 @@ def getUSFinanceData(cmd=None):
         # print(cmd, cmd and key != cmd)
         if cmd and key != cmd:
             continue
-        # workDir = r'%s\%s\%s' % (report_path, reportType[key], yyyymmdd)
-        workDir = r'D:\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
+        workDir = r'%s\%s\%s' % (path, reportType[key], yyyymmdd)
+        # workDir = r'D:\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
         if not os.path.exists(workDir):
             os.makedirs(workDir)
         for s in stockInfo:
@@ -1089,9 +1002,9 @@ def getUSFinanceData(cmd=None):
 
 
 if __name__ == '__main__':
-    # getFinanceData(101)
+    getFinanceData(101)
+    # getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
-    getFinanceData(200)
     # getFinanceData(104)
     # getUSFinanceData()
