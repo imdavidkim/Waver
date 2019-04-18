@@ -26,11 +26,12 @@ def getConfig():
     chrome_path = config['COMMON']['CHROME_PATH']
 
 
-def fileCheck(workDir, code, name, type):
-    filename = r"%s\financeData_%s_%s_%s.html" % (workDir,
+def fileCheck(workDir, code, name, type, ext):
+    filename = r"%s\financeData_%s_%s_%s.%s" % (workDir,
                                                    name,
                                                    code,
-                                                   type)
+                                                   type,
+                                                   ext)
     # print(filename)
     # print(os.path.isfile(filename))
     # if os.path.isfile(filename):
@@ -58,6 +59,7 @@ def getFinanceData(cmd=None):
     import sys
     import os
     import django
+    import json
     # from seleniumrequests import Chrome
     # from selenium.webdriver.chrome.options import Options
     # getConfig()
@@ -89,13 +91,15 @@ def getFinanceData(cmd=None):
         101: 'snapshot',
         103: 'financeReport',
         104: 'financeRatio',
-        108: 'consensus'
+        108: 'consensus',
+        200: 'ROE',
     }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
     urlInfo = {
         101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
         103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp',
         104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp',
-        108: 'http://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp'
+        108: 'http://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp',
+        200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A%s_D.json',
     }
 
     # reportType = {
@@ -116,6 +120,19 @@ def getFinanceData(cmd=None):
         'NewMenuID': 0,
         'stkGb': 701,
     }
+    #
+    # dataRoe = {
+    #     'oid': 'upjongChartD',
+    #     'cid': '01_04',
+    #     'gicode': '',
+    #     'filter': 'D',
+    #     'term': 'Y',
+    #     'etc': '04',
+    #     'etc2': '0',
+    #     'titleTxt': 'undefined',
+    #     'dateTxt': 'undefined',
+    #     'unitTxt': ''
+    # }
 
     xmlString = ''
 
@@ -187,7 +204,7 @@ def getFinanceData(cmd=None):
             # file.close()
         '''  # FinanceReport 성공
         stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-        # stockInfo = detective_db.Stocks.objects.filter(code='003490', listing='Y')
+        # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
         for key in reportType.keys():
             # print(cmd, cmd and key != cmd)
             if cmd and key != cmd:
@@ -197,71 +214,79 @@ def getFinanceData(cmd=None):
                 os.makedirs(workDir)
 
             data['NewMenuID'] = key
+            ext = 'json' if cmd == 200 else 'html'
             for idx, s in enumerate(stockInfo):
                 # print(fileCheck(workDir, s.code, s.name, reportType[key]))
-                if fileCheck(workDir, s.code, s.name, reportType[key]):
+
+                if fileCheck(workDir, s.code, s.name, reportType[key], ext):
                     print('[%d/%d][%s][%s][%s] File is already exist. Skipped...' % (idx+1, len(stockInfo), reportType[key], s.code, s.name))
                     continue
                 print('[%d/%d][%s][%s][%s] File is on process...' % (idx+1, len(stockInfo), reportType[key], s.code, s.name))
                 data['gicode'] = 'A%s' % s.code
                 # response = httpRequest(urlInfo[key], data)
-                response = httpRequestWithDriver(driver, urlInfo[key], data)
-                # print(response)
-                soup = BeautifulSoup(response.decode('utf-8'), "lxml")
-                # File 처리
-                xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-                # p = Process(target=saveFile, args=(workDir, s, reportType[key], xml))
-                # p = Process(target=saveFile, args=(workDir, s.code, s.name, reportType[key], xml))
-                # p.start()
-                # p.join()
-                saveFile(workDir, s.code, s.name, reportType[key], xml)
+                if cmd == 200:
+                    url = urlInfo[key] % s.code
+                    response = httpRequest(url, None, 'GET')
+                    with open(r'%s\financeData_%s_%s_%s.json' % (workDir, s.name, s.code, reportType[key]), 'w') as fp:
+                        json.dump(json.loads(response), fp)
+                else:
+                    response = httpRequestWithDriver(driver, urlInfo[key], data)
+                    # print(response)
+                    soup = BeautifulSoup(response.decode('utf-8'), "lxml")
+                    # File 처리
+                    xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
+                    # p = Process(target=saveFile, args=(workDir, s, reportType[key], xml))
+                    # p = Process(target=saveFile, args=(workDir, s.code, s.name, reportType[key], xml))
+                    # p.start()
+                    # p.join()
+                    saveFile(workDir, s.code, s.name, reportType[key], xml)
 
-                # File 처리 끝
-                # DB 처리
-                # marketTxt = select_by_attr(soup, 'span', 'id', 'strMarketTxt').text
-                # if marketTxt and key == 'snapshot':
-                #     StockMarketTextUpdate(s.code, marketTxt)
-                #     marketTxt = None
-                # divs = soup.find_all('div')
-                # if reportType[key] in ['snapshot', 'financeReport']:
-                #     for d in divs:
-                #         if 'id' in d.attrs.keys():
-                #             # if ('div' in d.attrs['id'] or 'highlight' in d.attrs['id']) and 'um_table' in d.attrs['class']:
-                #             if 'div' in d.attrs['id'] and 'um_table' in d.attrs['class']:
-                #                 # print(d.attrs['id'], d.attrs['class'])
-                #                 # if d.attrs['id'] == 'divSonikY':
-                #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
-                #                 # print('\n\n\n\n\n')
-                #             # 20180418
-                #             elif 'highlight_D' in d.attrs['id'] and 'um_table' in d.attrs['class']:
-                #                 if 'highlight_D_A' == d.attrs['id']:
-                #                     continue
-                #                 # print(d.attrs['id'], d.attrs['class'])
-                #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
-                #             elif 'svdMainGrid' in d.attrs['id'] and 'um_table' in d.attrs['class']:
-                #                 # print(d.attrs['id'], d.attrs['class'])
-                #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
-                #     # DB 처리 끝
-                # else:
-                #     static_parse_table(divs, s.code, s.name)
-        # FinanceReport 성공 끝
+                    # File 처리 끝
+                    # DB 처리
+                    # marketTxt = select_by_attr(soup, 'span', 'id', 'strMarketTxt').text
+                    # if marketTxt and key == 'snapshot':
+                    #     StockMarketTextUpdate(s.code, marketTxt)
+                    #     marketTxt = None
+                    # divs = soup.find_all('div')
+                    # if reportType[key] in ['snapshot', 'financeReport']:
+                    #     for d in divs:
+                    #         if 'id' in d.attrs.keys():
+                    #             # if ('div' in d.attrs['id'] or 'highlight' in d.attrs['id']) and 'um_table' in d.attrs['class']:
+                    #             if 'div' in d.attrs['id'] and 'um_table' in d.attrs['class']:
+                    #                 # print(d.attrs['id'], d.attrs['class'])
+                    #                 # if d.attrs['id'] == 'divSonikY':
+                    #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
+                    #                 # print('\n\n\n\n\n')
+                    #             # 20180418
+                    #             elif 'highlight_D' in d.attrs['id'] and 'um_table' in d.attrs['class']:
+                    #                 if 'highlight_D_A' == d.attrs['id']:
+                    #                     continue
+                    #                 # print(d.attrs['id'], d.attrs['class'])
+                    #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
+                    #             elif 'svdMainGrid' in d.attrs['id'] and 'um_table' in d.attrs['class']:
+                    #                 # print(d.attrs['id'], d.attrs['class'])
+                    #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
+                    #     # DB 처리 끝
+                    # else:
+                    #     static_parse_table(divs, s.code, s.name)
+            # FinanceReport 성공 끝
 
-        '''
-        stockInfo = detective_db.Stocks.objects.all()
-        for key in reportType.keys():
-            data['NewMenuID'] = key
-            for idx, s in enumerate(stockInfo):
-                data['gicode'] = 'A%s' % s.code
-                response = httpRequest(urlInfo[key], data)
-                soup = BeautifulSoup(response.decode('utf-8'), "lxml")
-                xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-                file = open(r"%s\financeData_%s_%s_%s.txt" % (rootDir,
-                                                              s.name,
-                                                              s.code,
-                                                              reportType[key]), "wb")
-                file.write(xml)
-                file.close()
-        '''
+            '''
+            stockInfo = detective_db.Stocks.objects.all()
+            for key in reportType.keys():
+                data['NewMenuID'] = key
+                for idx, s in enumerate(stockInfo):
+                    data['gicode'] = 'A%s' % s.code
+                    response = httpRequest(urlInfo[key], data)
+                    soup = BeautifulSoup(response.decode('utf-8'), "lxml")
+                    xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
+                    file = open(r"%s\financeData_%s_%s_%s.txt" % (rootDir,
+                                                                  s.name,
+                                                                  s.code,
+                                                                  reportType[key]), "wb")
+                    file.write(xml)
+                    file.close()
+            '''
         print("FnGuideDataCollection job finished")
     except Exception as e:
         print(e)
@@ -987,7 +1012,7 @@ def httpRequestWithDriver(driver, url, data, method='POST'):
             r = req.post(url, data)
             return r.content
         else:
-            r = req.get(url, data)
+            r = req.get(url, params=data)
             return r.content
     except Exception as e:
         print(e)
@@ -995,14 +1020,18 @@ def httpRequestWithDriver(driver, url, data, method='POST'):
 
 def httpRequest(url, data, method='POST'):
     try:
-        if method == 'POST':
-            r = requests.post(url, data)
-            # print(method, 'httpRequest error status', r.raise_for_status(), data['gicode'])
+        if data is None:
+            r = requests.get(url)
             return r.content
         else:
-            r = requests.get(url, data)
-            # print(method, 'httpRequest error status', r.raise_for_status(), data['gicode'])
-            return r.content
+            if method == 'POST':
+                r = requests.post(url, data)
+                # print(method, 'httpRequest error status', r.raise_for_status(), data['gicode'])
+                return r.content
+            else:
+                r = requests.get(url, data)
+                # print(method, 'httpRequest error status', r.raise_for_status(), data['gicode'])
+                return r.content
     except Exception as e:
         print(e)
         return None
@@ -1062,6 +1091,7 @@ def getUSFinanceData(cmd=None):
 if __name__ == '__main__':
     # getFinanceData(101)
     # getFinanceData(103)
-    getFinanceData(108)
+    # getFinanceData(108)
+    getFinanceData(200)
     # getFinanceData(104)
     # getUSFinanceData()
