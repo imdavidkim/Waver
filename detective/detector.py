@@ -536,6 +536,7 @@ def new_find_hidden_pearl():
     import detective_app.models as detective_db
     import json
 
+    req_rate = 8.0
     treasure = {}
     data = {}
     # 날짜 정보 셋팅
@@ -543,6 +544,7 @@ def new_find_hidden_pearl():
     # 종목 정보 셋팅
     # DEBUG = True
     DEBUG = False
+    USE_JSON = True
     stockInfo = detective_db.Stocks.objects.filter(listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(code='007630', listing='Y') # 제일파마홀딩스
     # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
@@ -562,10 +564,12 @@ def new_find_hidden_pearl():
     # fix_or_prov_or_estm = 'E'
     # # ----------------------------------dd
     try:
-        if os.path.exists('result.%s.json' % yyyymmdd):
-            with open('result.%s.json' % yyyymmdd, "r") as f:
+        JsonDir = '%s\ResultJson' % path
+        if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)) and USE_JSON:
+            with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), "r") as f:
                 data = f.read()
                 treasure = json.loads(data)
+                # print(treasure)
         for ii, stock in enumerate(stockInfo):
             if stock.code in treasure.keys():
                 continue
@@ -579,6 +583,23 @@ def new_find_hidden_pearl():
                   align_string('R', stock.par_value, 10),
                   align_string('R', stock.curr, 10),
                   )
+            dic = get_soup_from_file('ROE', yyyymmdd, stock.name, stock.code, 'json')
+            if DEBUG: print(dic)
+            for key in dic:
+                if '04' == key:
+                    if dic[key][0]['VAL3'] == '-':
+                        info_lack = True
+                        break
+                    else:
+                        if len(dic[key]) == 3:
+                            data['요구수익률'] = 0 if dic[key][1]['VAL3'] == '-' else float(dic[key][1]['VAL3'])
+                            data['요구수익률2'] = 0 if dic[key][2]['VAL3'] == '-' else float(dic[key][2]['VAL3'])
+                        else:
+                            data['요구수익률'] = 0 if dic[key][1]['VAL3'] == '-' else float(dic[key][1]['VAL3'])
+                            data['요구수익률2'] = data['요구수익률']
+                    if DEBUG: print(data['요구수익률'], data['요구수익률2'])
+            if info_lack:
+                continue
             data['회사명'] = stock.name
             data['발행주식수'] = stock.issued_shares
             data['자본금'] = stock.capital
