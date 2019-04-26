@@ -1002,8 +1002,8 @@ def getUSFinanceData(cmd=None):
 
 
 if __name__ == '__main__':
-    getFinanceData(101)
-    # getFinanceData(200)
+    # getFinanceData(101)
+    getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
     # getFinanceData(104)
