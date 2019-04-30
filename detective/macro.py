@@ -149,9 +149,14 @@ class ecosData:
 
 def getConfig():
     import configparser
+    global path, django_path, main_path
     global auth_key, auth_key_valid_until, api_url, api_service1, api_service2, api_service3, api_service4, api_service5, api_service6
     config = configparser.ConfigParser()
     config.read('config.ini')
+    path = config['COMMON']['REPORT_PATH']
+    proj_path = config['COMMON']['PROJECT_PATH']
+    django_path = proj_path + r'\MainBoard'
+    main_path = django_path + r'\MainBoard'
     auth_key = config['ECOS']['AUTH-KEY']
     auth_key_valid_until = config['ECOS']['AUTH-KEY-VALID-UNTIL']
     api_url = config['ECOS']['API_URL']
@@ -242,8 +247,9 @@ def getStatisticItemListData():  # 통계 세부항목 목록
 def getStatisticSearchData():  #  통계 조회 조건 설정
     global down_header
     getConfig()
-    passing_index = 360
+    passing_index = 26
     ssd = SelectEcosStatisticDetailTargetItem()
+    print(ssd)
     for idx, target in enumerate(ssd):
         if idx < passing_index:
             continue
@@ -325,11 +331,9 @@ def EcosServiceListDataStore(P_STAT_CODE, STAT_CODE, STAT_NAME, CYCLE, SRCH_YN, 
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    # getConfig()
-    # sys.path.append(django_path)
-    # sys.path.append(main_path)
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -354,18 +358,18 @@ def EcosServiceListDataSelect():
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    # getConfig()
-    # sys.path.append(django_path)
-    # sys.path.append(main_path)
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     info = None
     import detective_app.models as detective_db
     try:
-        # info = detective_db.EcosServiceList.objects.filter(SRCH_YN='Y', STAT_CODE='080Y101')
-        info = detective_db.EcosServiceList.objects.filter(SRCH_YN='Y', STAT_CODE='099Y004')
+        info = detective_db.EcosServiceList.objects.filter(SRCH_YN='Y', STAT_CODE='080Y101') # 16.3.1 산업별 생산·출하·재고지수
+        # info = detective_db.EcosServiceList.objects.filter(SRCH_YN='Y', STAT_CODE='099Y004') # 8.4.4 수입물량지수
     except Exception as e:
         print('[Error on EcosServiceListDataSelect]\n', '*' * 50, e)
     finally:
@@ -437,11 +441,11 @@ def SelectEcosStatisticDetailTargetItem():
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    # getConfig()
-    # sys.path.append(django_path)
-    # sys.path.append(main_path)
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
 
@@ -507,6 +511,7 @@ def SelectEcosStatisticDetailTargetItem():
                 from (
                     select m.STAT_CODE, m.STAT_NAME, m.GRP_NAME
                     from detective_app_ecosstatdetailitemlist m
+                    where m.GRP_NAME = '지표선택'
                     group by m.STAT_CODE, m.STAT_NAME, m.GRP_NAME
                 )
                 group by STAT_CODE
