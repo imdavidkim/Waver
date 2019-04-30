@@ -647,8 +647,8 @@ def new_find_hidden_pearl():
             # if treasure[d]['12M PER'] > treasure[d]['업종 PER'] * 0.7 or \
             if treasure[d]['ROS'] < 10 or \
                treasure[d]['ROE'] < 10 or \
-               treasure[d]['ROE'] / treasure[d]['ROS'] < 0.3333 or \
-               treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.5 or \
+               treasure[d]['ROE'] / treasure[d]['ROS'] < 0.2 or \
+               treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.33 or \
                treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
                treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
                treasure[d]['NPV'] < 0 or treasure[d]['12M PER'] == 0 or \
