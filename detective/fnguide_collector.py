@@ -13,18 +13,7 @@ import os
 from multiprocessing import pool, Process
 
 marketTxt = None
-
-
-def getConfig():
-    import configparser
-    global path, django_path, main_path, chrome_path
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    path = config['COMMON']['REPORT_PATH']
-    proj_path = config['COMMON']['PROJECT_PATH']
-    django_path = proj_path + r'\MainBoard'
-    main_path = django_path + r'\MainBoard'
-    chrome_path = config['COMMON']['CHROME_PATH']
+from detective.settings import config
 
 
 def fileCheck(workDir, code, name, type, ext):
@@ -72,15 +61,10 @@ def getFinanceData(cmd=None):
     # ----Original Source
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
-    getConfig()
-    CHROMEDRIVER_PATH = chrome_path
     options = Options()
     options.headless = True
-    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
-    # driver.implicitly_wait(3)
+    driver = webdriver.Chrome(config.chromedriver, options=options)
 
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -122,7 +106,7 @@ def getFinanceData(cmd=None):
             # print(cmd, cmd and key != cmd)
             if cmd and key != cmd:
                 continue
-            workDir = r'%s\%s\%s' % (path, reportType[key], yyyymmdd)
+            workDir = r'%s\%s\%s' % (config.report_path, reportType[key], yyyymmdd)
             if not os.path.exists(workDir):
                 os.makedirs(workDir)
 
@@ -454,11 +438,6 @@ def StockMarketTextUpdate(crp_cd, market_text):
     import os
     import django
     from datetime import datetime
-    # sys.path.append(r'D:\Waver\MainBoard')
-    # sys.path.append(r'D:\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -473,9 +452,6 @@ def DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, k
     import os
     import django
     from datetime import datetime
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
     django.setup()
     import detective_app.models as detective_db
@@ -512,9 +488,6 @@ def SnapShotDataStore(report_name, crp_cd, crp_nm, categorizing, column_names, k
     import django
     # sys.path.append(r'D:\Waver\MainBoard')
     # sys.path.append(r'D:\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -570,9 +543,6 @@ def FinancialReportDataStore(report_name, crp_cd, crp_nm, categorizing, column_n
     import django
     # sys.path.append(r'D:\Waver\MainBoard')
     # sys.path.append(r'D:\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -808,11 +778,6 @@ def FinancialRatioDataStore(report_name, report_type, crp_cd, crp_nm, categorizi
     import sys
     import os
     import django
-    # sys.path.append(r'D:\Waver\MainBoard')
-    # sys.path.append(r'D:\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -955,9 +920,6 @@ def getUSFinanceData(cmd=None):
     import os
     import django
     import edgar
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -984,7 +946,7 @@ def getUSFinanceData(cmd=None):
         # print(cmd, cmd and key != cmd)
         if cmd and key != cmd:
             continue
-        workDir = r'%s\%s\%s' % (path, reportType[key], yyyymmdd)
+        workDir = r'%s\%s\%s' % (config.project_path, reportType[key], yyyymmdd)
         # workDir = r'D:\Waver\detective\reports\%s\%s' % (reportType[key], yyyymmdd)
         if not os.path.exists(workDir):
             os.makedirs(workDir)

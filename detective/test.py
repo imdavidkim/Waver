@@ -8,6 +8,8 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
+from detective.settings import config
+
 def request(driver):
     s = requests.Session()
     # cookies = driver.get_cookies()
@@ -28,10 +30,9 @@ if __name__ == '__main__':
             'stkGb': 701,
         }
 
-    CHROMEDRIVER_PATH = r'D:\Waver\chromedriver_win32\chromedriver.exe'
     options = Options()
     options.headless = True
-    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
+    driver = webdriver.Chrome(config.chromedriver, options=options)
     # driver.implicitly_wait(3)
     req = request(driver)
     d = json.dumps(data)

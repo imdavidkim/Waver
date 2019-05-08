@@ -1,0 +1,24 @@
+# byte-compiled optimized
+__pycache__
+
+#gnetic ext
+*.swp
+*.pyc
+
+# packaging / distribution
+build/
+dist/
+*.egg-info/
+
+# ide and environment support
+.vscode
+.idea/
+venv/
+_vimrc
+
+# generated file(prom project)
+
+# project related
+chromedriver_win32
+detective/reports/
+detective/config.ini

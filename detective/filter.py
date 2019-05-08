@@ -16,8 +16,6 @@ def sales_check(crp_cd, market, disc_categorizing):
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -100,8 +98,6 @@ def operation_profit_check(crp_cd, market):
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -120,6 +116,7 @@ def operation_profit_check(crp_cd, market):
                                                                  ).order_by('-disc_year', '-disc_month')[:4].values()
         for r in result[0]:
             if r['value'] > 0:
+                pass
     except Exception as e:
         print(e)
     return retGrade

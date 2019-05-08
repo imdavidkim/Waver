@@ -1,0 +1,13 @@
+django
+bs4
+python-telegram-bot
+requests
+xmltodict
+pandas
+numpy
+lxml
+fred
+fredapi
+selenium
+python-telegram-bot
+python-edgar
