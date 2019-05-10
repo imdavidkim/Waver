@@ -1,4 +1,5 @@
 #-*- coding: utf-8 -*-
+from detective.common.log import logger
 import os
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
@@ -9,11 +10,11 @@ from detective.settings import config
 
 DEBUG = True
 
-filename = r'\financeData_%s_%s_%s.%s'
 yyyymmdd = str(datetime.now())[:10]
 
+
 def get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd, ext):
-    f = filename % (crp_nm, crp_cd, report_type, ext)
+    f = 'financeData_%s_%s_%s.%s'% (crp_nm, crp_cd, report_type, ext)
     full_path = os.path.join(config.report_path, report_type, yyyymmdd, f)
     with open(full_path, 'rb') as obj:
         if ext == 'json':
@@ -277,8 +278,6 @@ def new_find_hidden_pearl():
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -631,7 +630,8 @@ def new_find_hidden_pearl():
         with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
             json.dump(treasure, fp)
     except Exception as e:
-        print('error', e, '\n', stock)
+        logger.error(e)
+
         if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)):
             os.remove(r'%s\result.%s.json' % (JsonDir, yyyymmdd))
         with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
@@ -648,14 +648,13 @@ def dataInit():
     try:
         detective_db.TargetStocks.objects.update(plus_npv='N')
     except Exception as e:
-        print("TargetStocks data initialization Failed with", e)
+        logger.error("TargetStocks data initialization Failed with", e)
 
 
 def TargetStockDataDelete(yyyymmdd):
     import sys
     import os
     import django
-    from datetime import datetime
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -665,7 +664,7 @@ def TargetStockDataDelete(yyyymmdd):
         print("[TargetStocks][%s] information Deleted successfully" % yyyymmdd)
         # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
     except Exception as e:
-        print('[Error on TargetStockDataDelete]\n', '*' * 50, e)
+        logger.error('[Error on TargetStockDataDelete]\n', '*' * 50, e)
 
 
 def TargetStockDataStore(crp_cd, data):
@@ -702,14 +701,14 @@ def TargetStockDataStore(crp_cd, data):
         print("[TargetStocks][%s][%s] information stored successfully" % (crp_cd, data['회사명']))
         # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
     except Exception as e:
-        print('[Error on TargetStockDataStore]\n', '*' * 50, e)
+        logger.error('[Error on TargetStockDataStore]' + str(e))
 
 if __name__ == '__main__':
     # find_hidden_pearl()
     # messeage_to_telegram()
     # find_hidden_pearl()
     # test_find_hidden_pearl()
-    # new_find_hidden_pearl()
+    new_find_hidden_pearl()
     messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()

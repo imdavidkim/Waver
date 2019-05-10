@@ -4,6 +4,7 @@ __pycache__
 #gnetic ext
 *.swp
 *.pyc
+*.sqlite3
 
 # packaging / distribution
 build/

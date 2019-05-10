@@ -1,4 +1,3 @@
-django
 bs4
 python-telegram-bot
 requests
@@ -11,3 +10,5 @@ fredapi
 selenium
 python-telegram-bot
 python-edgar
+sqlalchemy
+sqlalchemy-stubs
