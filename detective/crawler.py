@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import os
 import pandas as pd
 import numpy as np
 import requests
@@ -7,16 +7,6 @@ from io import BytesIO
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import csv
-
-
-def getConfig():
-    import configparser
-    global path, django_path, main_path
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    path = config['COMMON']['PROJECT_PATH']
-    django_path = path + r'\MainBoard'
-    main_path = django_path + r'\MainBoard'
 
 
 def getStockInfo():
@@ -182,11 +172,6 @@ def dataInit():
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -194,17 +179,13 @@ def dataInit():
         detective_db.Stocks.objects.update(listing='N')
     except Exception as e:
         print("Stock data initialization Failed with", e)
+        raise Exception(e)
 
 
 def USDataInit():
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -212,17 +193,13 @@ def USDataInit():
         detective_db.USStocks.objects.update(listing='N')
     except Exception as e:
         print("USStocks data initialization Failed with", e)
+        raise Exception(e)
 
 
 def dataStore(retDict):
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -253,18 +230,12 @@ def dataStore(retDict):
         print("Total %d" % count)
     except Exception as e:
         print(count, key, retDict[key])
-        print(e)
+        raise Exception(e)
 
 
 def USDataStore(retDict):
-    import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db

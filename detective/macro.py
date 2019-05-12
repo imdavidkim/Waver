@@ -8,12 +8,25 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import csv
 import xmltodict
+from detective.settings import config
 import json
 
-down_header = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
-        , 'Accept-Encoding': 'gzip, deflate'
-        , 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
-        , 'Content-Type': 'application/x-www-form-urlencoded'}
+down_header = {'User-Agent': ' '.join(['Mozilla/5.0 (Windows NT 6.1; Win64; x64)',
+                                       'AppleWebKit/537.36 (KHTML, like Gecko)',
+                                       'Chrome/70.0.3538.102 Safari/537.36']),
+               'Accept-Encoding': 'gzip, deflate',
+               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+               'Content-Type': 'application/x-www-form-urlencoded'}
+
+API_SERVICE1 ='KeyStatisticList'
+API_SERVICE2 ='StatisticTableList'
+API_SERVICE3 ='StatisticItemList'
+API_SERVICE4 ='StatisticSearch'
+API_SERVICE5 ='StatisticMeta'
+API_SERVICE6 ='StatisticWord'
+
+ecos = config.ecos
+
 
 class ecosData:
     dicArray = {}
@@ -147,58 +160,36 @@ class ecosData:
         CONTENT = None          # 용어설명
 
 
-def getConfig():
-    import configparser
-    global path, django_path, main_path
-    global auth_key, auth_key_valid_until, api_url, api_service1, api_service2, api_service3, api_service4, api_service5, api_service6
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    path = config['COMMON']['REPORT_PATH']
-    proj_path = config['COMMON']['PROJECT_PATH']
-    django_path = proj_path + r'\MainBoard'
-    main_path = django_path + r'\MainBoard'
-    auth_key = config['ECOS']['AUTH-KEY']
-    auth_key_valid_until = config['ECOS']['AUTH-KEY-VALID-UNTIL']
-    api_url = config['ECOS']['API_URL']
-    api_service1 = config['ECOS']['API_SERVICE1']
-    api_service2 = config['ECOS']['API_SERVICE2']
-    api_service3 = config['ECOS']['API_SERVICE3']
-    api_service4 = config['ECOS']['API_SERVICE4']
-    api_service5 = config['ECOS']['API_SERVICE5']
-    api_service6 = config['ECOS']['API_SERVICE6']
-
 def getKeyStatisticListData():  # 100대 통계지표
     global down_header
-    getConfig()
-    api_url_full = makeApiUrl(api_url, api_service1, auth_key)
+    api_url_full = makeApiUrl(ecos.api_url, API_SERVICE1, ecos.auth_key)
     print(api_url_full)
     json_str = httpRequest(api_url_full, None, down_header, 'GET').decode('utf-8')
     json_obj = json.loads(json_str)
 
     tmp = ecosData()
-    if api_service1 in json_obj.keys():
-        for dic in json_obj[api_service1]['row']:
-            tmp.SetData(api_service1, dic)
+    if API_SERVICE1 in json_obj.keys():
+        for dic in json_obj[API_SERVICE1]['row']:
+            tmp.SetData(API_SERVICE1, dic)
             print(dic)
-        # for cls in tmp.dicArray[api_service1]:
+        # for cls in tmp.dicArray[API_SERVICE1]:
         #     print(cls.CLASS_NAME, cls.KEYSTAT_NAME, cls.DATA_VALUE, cls.CYCLE, cls.DATA_VALUE, '\n')
 
 def getStatisticTableListData():  # 서비스 통계 목록
     global down_header
-    getConfig()
 
     try:
-        api_url_full = makeApiUrl(api_url, api_service2, auth_key)
+        api_url_full = makeApiUrl(ecos.api_url, API_SERVICE2, ecos.auth_key)
         print(api_url_full)
         json_str = httpRequest(api_url_full, None, down_header, 'GET').decode('utf-8')
         json_obj = json.loads(json_str)
 
         tmp = ecosData()
-        if api_service2 in json_obj.keys():
-            for dic in json_obj[api_service2]['row']:
-                tmp.SetData(api_service2, dic)
+        if API_SERVICE2 in json_obj.keys():
+            for dic in json_obj[API_SERVICE2]['row']:
+                tmp.SetData(API_SERVICE2, dic)
                 print(dic)
-            for cls in tmp.dicArray[api_service2]:
+            for cls in tmp.dicArray[API_SERVICE2]:
                 EcosServiceListDataStore(cls.P_STAT_CODE
                                          , cls.STAT_CODE
                                          , cls.STAT_NAME
@@ -212,24 +203,23 @@ def getStatisticTableListData():  # 서비스 통계 목록
 
 def getStatisticItemListData():  # 통계 세부항목 목록
     global down_header
-    getConfig()
     sl = EcosServiceListDataSelect()
     # print(sl)
     try:
         if sl is not None:
             for l in sl:
                 # print(dir(l))
-                api_url_full = makeApiUrl(api_url, api_service3, auth_key, l.STAT_CODE)
+                api_url_full = makeApiUrl(ecos.api_url, API_SERVICE3, ecos.auth_key, l.STAT_CODE)
                 print(api_url_full)
                 json_str = httpRequest(api_url_full, None, down_header, 'GET').decode('utf-8')
                 json_obj = json.loads(json_str)
 
                 tmp = ecosData()
-                if api_service3 in json_obj.keys():
-                    for dic in json_obj[api_service3]['row']:
-                        tmp.SetData(api_service3, dic)
+                if API_SERVICE3 in json_obj.keys():
+                    for dic in json_obj[API_SERVICE3]['row']:
+                        tmp.SetData(API_SERVICE3, dic)
                         print(dic)
-                    for cls in tmp.dicArray[api_service3]:
+                    for cls in tmp.dicArray[API_SERVICE3]:
                         EcosStatDetailItemListDataStore(cls.STAT_CODE
                                                         , cls.STAT_NAME
                                                         , cls.GRP_NAME
@@ -246,42 +236,41 @@ def getStatisticItemListData():  # 통계 세부항목 목록
 
 def getStatisticSearchData():  #  통계 조회 조건 설정
     global down_header
-    getConfig()
     passing_index = 26
     ssd = SelectEcosStatisticDetailTargetItem()
     print(ssd)
     for idx, target in enumerate(ssd):
         if idx < passing_index:
             continue
-        api_url_full = makeApiUrl(api_url, api_service4, auth_key, target)
+        api_url_full = makeApiUrl(ecos.api_url, API_SERVICE4, ecos.auth_key, target)
         print(api_url_full)
         json_str = httpRequest(api_url_full, None, down_header, 'GET').decode('utf-8')
         json_obj = json.loads(json_str)
 
         tmp = ecosData()
-        if api_service4 in json_obj.keys():
-            for dic in json_obj[api_service4]['row']:
-                tmp.SetData(api_service4, dic)
+        if API_SERVICE4 in json_obj.keys():
+            for dic in json_obj[API_SERVICE4]['row']:
+                tmp.SetData(API_SERVICE4, dic)
                 print(dic)
-            for cls in tmp.dicArray[api_service4]:
+            for cls in tmp.dicArray[API_SERVICE4]:
                 # print(dic)
                 EcosStatisticSearchDataStore(cls.STAT_CODE, cls.STAT_NAME, cls.ITEM_CODE1, cls.ITEM_NAME1,
                                              cls.ITEM_CODE2, cls.ITEM_NAME2, cls.ITEM_CODE3, cls.ITEM_NAME3,
                                              cls.UNIT_NAME, cls.TIME, cls.DATA_VALUE)
 
 def getStatisticMetaData():  # 통계메타DB
-    getConfig()
+    pass
 
 def getStatisticWordData():  # 통계용어사전
-    getConfig()
+    pass
 
 def makeApiUrl(url, service_name, auth_key, qry_key=None):
     retStr = url
     retStr += service_name + '/'
     retStr += auth_key + '/'
-    if service_name in [api_service1, api_service2]:
+    if service_name in [API_SERVICE1, API_SERVICE2]:
         retStr += 'json/kr/1/1000/'
-    elif service_name in [api_service4]:
+    elif service_name in [API_SERVICE4]:
         # 1/10/010Y002/MM/201101/201101/AAAA11/
         retStr += 'json/kr/1/{}/{}/{}/{}/{}/{}/{}/{}/'.format(qry_key.DATA_CNT
                                                               , qry_key.STAT_CODE
@@ -331,9 +320,6 @@ def EcosServiceListDataStore(P_STAT_CODE, STAT_CODE, STAT_NAME, CYCLE, SRCH_YN, 
     import sys
     import os
     import django
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -358,11 +344,6 @@ def EcosServiceListDataSelect():
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     info = None
@@ -377,14 +358,8 @@ def EcosServiceListDataSelect():
 
 
 def EcosStatDetailItemListDataStore(STAT_CODE, STAT_NAME, GRP_NAME, ITEM_CODE, ITEM_NAME, CYCLE, START_TIME, END_TIME, DATA_CNT):
-    import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Waver\MainBoard')
-    sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    # getConfig()
-    # sys.path.append(django_path)
-    # sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -443,9 +418,6 @@ def SelectEcosStatisticDetailTargetItem():
     import django
     # sys.path.append(r'E:\Github\Waver\MainBoard')
     # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
 
@@ -539,9 +511,9 @@ def namedtuplefetchall(cursor):
     return [nt_result(*row) for row in cursor.fetchall()]
 
 if __name__ == '__main__':
-    # getKeyStatisticListData()
+    getKeyStatisticListData()
     # getStatisticTableListData()
     # getStatisticItemListData()
-    getStatisticSearchData()
+    # getStatisticSearchData()
     # dictionary = {'a':'b'}
     # print(type(dictionary) == dict)

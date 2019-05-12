@@ -1,39 +1,21 @@
-# -*- coding: utf-8 -*-
-
-# import pandas as pd
-# import numpy as np
-# import requests
-# from io import BytesIO
+#-*- coding: utf-8 -*-
+from detective.common.log import logger
+import os
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import json
-# import pprint
-# import csv
-# import xmltodict
-# import os
 import detective.fnguide_collector as fnguide
+
+from detective.settings import config
 
 DEBUG = True
 
-
-def getConfig():
-    import configparser
-    global path, filename, yyyymmdd, django_path, main_path
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    path = config['COMMON']['REPORT_PATH']
-    proj_path = config['COMMON']['PROJECT_PATH']
-    django_path = proj_path + r'\MainBoard'
-    main_path = django_path + r'\MainBoard'
-    filename = r'\financeData_%s_%s_%s.%s'
-    yyyymmdd = str(datetime.now())[:10]
-    # yyyymmdd = '2019-02-21'
-    # print(path, filename)
+yyyymmdd = str(datetime.now())[:10]
 
 
 def get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd, ext):
-    getConfig()
-    full_path = path + r'\%s\%s' % (report_type, yyyymmdd) + filename % (crp_nm, crp_cd, report_type, ext)
+    f = 'financeData_%s_%s_%s.%s'% (crp_nm, crp_cd, report_type, ext)
+    full_path = os.path.join(config.report_path, report_type, yyyymmdd, f)
     with open(full_path, 'rb') as obj:
         if ext == 'json':
             soup = json.loads(obj.read())
@@ -55,11 +37,6 @@ def get_dateDict():
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     from django.db import connection
@@ -82,11 +59,6 @@ def get_max_date_on_dailysnapshot(crp_cd):
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     from django.db import connection
@@ -103,9 +75,6 @@ def get_high_ranked_stock():
     import sys
     import os
     import django
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     from django.db import connection
@@ -121,11 +90,15 @@ def get_high_ranked_stock():
              --and ratio2 > 100
              order by t.ratio desc""" % yyyymmdd
     cursor.execute(sql)
+    rlt = dictfetchall(cursor)
+    if len(rlt) == 0:
+        print('rlt is none, %s' % sql)
     retStr = ''
-    for idx, d in enumerate(dictfetchall(cursor)):
+    for idx, d in enumerate(rlt):
         retStr += '%d. %s\t%s => %s[%s%%]\n' % (
             idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
     return retStr
+
 
 def align_string(switch, text, digit):
     if switch == 'L':
@@ -140,31 +113,17 @@ def align_string(switch, text, digit):
 
 def messeage_to_telegram(txt):
     import telegram
-    my_token = '577949495:AAFk3JWQjHlbJr2_AtZeonjqQS7buu8cYG4'
-    chat_id = '568559695'
-    bot = telegram.Bot(token=my_token)
-    bot.sendMessage(chat_id=chat_id, text=txt)
-    # 진오 =====================================================
-    # my_token = '781845768:AAEG55_jbdDIDlmGXWHl8Ag2aDUg-YAA8fc'
-    # chat_id = '84410715'
-    # bot = telegram.Bot(token=my_token)
-    # bot.sendMessage(chat_id=chat_id, text=txt)
-    # ==========================================================
-    # my_token = '781845768:AAEG55_jbdDIDlmGXWH18Ag2aDUg-YAA8fc'
-    # bot = telegram.Bot(token=my_token)
-    # updates = bot.getUpdates()
-    # for u in updates:
-    #     print(u.message)
+    bot = telegram.Bot(token=config.telegram.token)
+    if txt:
+        bot.sendMessage(chat_id=config.telegram.userid, text=txt)
 
 
 def telegram_test():
     import telegram
-    # my_token = '577949495:AAFk3JWQjHlbJr2_AtZeonjqQS7buu8cYG4'
-    my_token = '781845768:AAEG55_jbdDIDlmGXWHl8Ag2aDUg-YAA8fc'
-    chat_id = '84410715'
-    bot = telegram.Bot(token=my_token)
+
+    bot = telegram.Bot(token=config.telegram.token)
     txt = '고생했다~~앞으로 여기로 보내줄께'
-    bot.sendMessage(chat_id=chat_id, text=txt)
+    bot.sendMessage(chat_id=config.telegram.userid, text=txt)
 
 
 def get_dailysnapshot_objects(rpt_nm, rpt_tp, column_nm, crp_cd, dateDict, key=None):
@@ -173,9 +132,6 @@ def get_dailysnapshot_objects(rpt_nm, rpt_tp, column_nm, crp_cd, dateDict, key=N
     import django
     # sys.path.append(r'E:\Github\Waver\MainBoard')
     # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -220,11 +176,6 @@ def get_snapshot_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix_or_pro
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -276,11 +227,6 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -332,11 +278,6 @@ def new_find_hidden_pearl():
     import sys
     import os
     import django
-    # sys.path.append(r'E:\Github\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -372,7 +313,7 @@ def new_find_hidden_pearl():
     # # ----------------------------------
     HIGH_ROS = []
     try:
-        JsonDir = '%s\ResultJson' % path
+        JsonDir = os.path.join(config.report_path, 'ResultJson')
         if not os.path.exists(JsonDir):
             os.makedirs(JsonDir)
         if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)) and USE_JSON:
@@ -682,13 +623,15 @@ def new_find_hidden_pearl():
                   align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                   )
             TargetStockDataStore(d, treasure[d])
+        print('high ros\n' + '-'*40)
         print(HIGH_ROS)
         if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)):
             os.remove(r'%s\result.%s.json' % (JsonDir, yyyymmdd))
         with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
             json.dump(treasure, fp)
     except Exception as e:
-        print('error', e, '\n', stock)
+        logger.error(e)
+
         if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)):
             os.remove(r'%s\result.%s.json' % (JsonDir, yyyymmdd))
         with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
@@ -699,25 +642,19 @@ def dataInit():
     import sys
     import os
     import django
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
     try:
         detective_db.TargetStocks.objects.update(plus_npv='N')
     except Exception as e:
-        print("TargetStocks data initialization Failed with", e)
+        logger.error("TargetStocks data initialization Failed with", e)
+
 
 def TargetStockDataDelete(yyyymmdd):
     import sys
     import os
     import django
-    from datetime import datetime
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -727,7 +664,7 @@ def TargetStockDataDelete(yyyymmdd):
         print("[TargetStocks][%s] information Deleted successfully" % yyyymmdd)
         # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
     except Exception as e:
-        print('[Error on TargetStockDataDelete]\n', '*' * 50, e)
+        logger.error('[Error on TargetStockDataDelete]\n', '*' * 50, e)
 
 
 def TargetStockDataStore(crp_cd, data):
@@ -735,9 +672,6 @@ def TargetStockDataStore(crp_cd, data):
     import os
     import django
     from datetime import datetime
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -767,7 +701,7 @@ def TargetStockDataStore(crp_cd, data):
         print("[TargetStocks][%s][%s] information stored successfully" % (crp_cd, data['회사명']))
         # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
     except Exception as e:
-        print('[Error on TargetStockDataStore]\n', '*' * 50, e)
+        logger.error('[Error on TargetStockDataStore]' + str(e))
 
 if __name__ == '__main__':
     # find_hidden_pearl()

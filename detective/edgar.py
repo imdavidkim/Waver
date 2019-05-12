@@ -2,7 +2,8 @@ from lxml import html
 import requests
 from bs4 import BeautifulSoup
 
-class Company():
+
+class Company(object):
 
     def __init__(self, name, cik):
         self.name = name
@@ -24,7 +25,6 @@ class Company():
 
 
 class Edgar():
-
     def __init__(self):
         all_companies_page = requests.get("https://www.sec.gov/Archives/edgar/cik-lookup-data.txt")
         all_companies_content = all_companies_page.content.decode("latin1")
@@ -134,3 +134,6 @@ def test():
     com = Company("Oracle Corp", "0001341439")
     tree = com.getAllFilings(filingType = "10-K")
     return getDocuments(tree)
+
+if __name__ == '__main__':
+    print(test())

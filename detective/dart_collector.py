@@ -8,25 +8,12 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import csv
 import xmltodict
-
-
-
-def getConfig():
-    import configparser
-    global search_api_key, company_api_key, search_url, company_url
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    search_api_key = config['DART']['SEARCH-API-KEY']
-    company_api_key = config['DART']['COMPANY-API-KEY']
-    search_url = config['DART']['SEARCH-URL']
-    company_url = config['DART']['COMPANY-URL']
+from detective.settings import config
 
 
 def getDartInfo():
-    getConfig()
-
     dartSearchDict = {
-        'auth': search_api_key,
+        'auth': config.dart.search_key,
         'crp_cd': '',
         'end_dt': '20180113',
         'start_dt': '20180101',
@@ -39,15 +26,15 @@ def getDartInfo():
         'page_set': 100,
     }
 
-    response = httpRequest(search_url, dartSearchDict)
+    response = httpRequest(config.dart.search_url, dartSearchDict)
     result = xmltodict.parse(response.decode('utf-8'))
     IndexDataStore(result['result'])
     if result['result']['err_code'] == '000':
         ResultDataStore(result['result']['list'])
         if int(result['result']['total_page']) > 1:
-            for page in range(int(result['result']['page_no'])+1, int(result['result']['total_page'])+1):
+            for page in range(int(result['result']['page_no']) + 1, int(result['result']['total_page']) + 1):
                 dartSearchDict['page_no'] = page
-                response = httpRequest(search_url, dartSearchDict)
+                response = httpRequest(config.dart.search_url, dartSearchDict)
                 result = xmltodict.parse(response.decode('utf-8'))
                 IndexDataStore(result['result'])
                 if result['result']['err_code'] == '000':
@@ -55,37 +42,37 @@ def getDartInfo():
     else:
         pass
 
-    print(result['result']['total_page'], result['result']['total_count'], result['result']['page_no'])
+    print(result['result']['total_page'], result['result']
+    ['total_count'], result['result']['page_no'])
 
 
 def IndexDataStore(retDict):
-    import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Wver\MainBoard')
-    sys.path.append(r'E:\Github\Wver\MainBoard\MainBoard')
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
     try:
         info = detective_db.DartRequestIndex.objects.update_or_create(err_code=retDict['err_code'],
                                                                       err_msg=retDict['err_msg'],
-                                                                      page_no=int(retDict['page_no']),
-                                                                      total_page=int(retDict['total_page']),
-                                                                      total_count=int(retDict['total_count']),
+                                                                      page_no=int(
+                                                                          retDict['page_no']),
+                                                                      total_page=int(
+                                                                          retDict['total_page']),
+                                                                      total_count=int(
+                                                                          retDict['total_count']),
                                                                       req_time=datetime.now(),
                                                                       )
-        print("%s / %s request stored successfully" % (retDict['page_no'], retDict['total_page']))
+        print("%s / %s request stored successfully" %
+              (retDict['page_no'], retDict['total_page']))
     except Exception as e:
-        print('[Error on IndexDataStore]\n', '*'*50, e)
+        print('[Error on IndexDataStore]\n', '*' * 50, e)
 
 
 def ResultDataStore(retDict):
     import sys
     import os
     import django
-    sys.path.append(r'E:\Github\Wver\MainBoard')
-    sys.path.append(r'E:\Github\Wver\MainBoard\MainBoard')
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -102,7 +89,8 @@ def ResultDataStore(retDict):
                                                                                'rmk': dicData['rmk'],
                                                                            }
                                                                            )
-            print("[%s][%s][%s] information stored successfully" % (dicData['rcp_no'], dicData['crp_nm'], dicData['rpt_nm']))
+            print("[%s][%s][%s] information stored successfully" %
+                  (dicData['rcp_no'], dicData['crp_nm'], dicData['rpt_nm']))
     except Exception as e:
         print('[Error on ResultDataStore]\n', '*' * 50, e)
 

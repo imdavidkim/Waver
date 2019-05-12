@@ -1,5 +1,6 @@
 from fredapi import Fred
 import detective.crawler as tool
+from detective.settings import config
 import json
 
 # 각종 필요지표
@@ -15,21 +16,11 @@ import json
 # https://fred.stlouisfed.org/series/BAMLEMCBPIOAS
 db_fred_category = []
 
-def getConfig():
-    import configparser
-    global path, django_path, main_path, api_key
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    path = config['COMMON']['PROJECT_PATH']
-    django_path = path + r'\MainBoard'
-    main_path = django_path + r'\MainBoard'
-    api_key = config['FRED']['FREDAPI_KEY']
 
 def getRootDataFromFRED():
-    getConfig()
-    fred = Fred(api_key=api_key)
+    fred = Fred(api_key=config.fred.api_key)
     # result = fred.search_by_category(33446, limit=5, order_by="popularity")
-    url = 'https://api.stlouisfed.org/fred/category/children?api_key={}&file_type={}'.format(api_key, 'json')
+    url = 'https://api.stlouisfed.org/fred/category/children?api_key={}&file_type={}'.format(config.fred.api_key, 'json')
     print(url)
     # result = fred.get_series('T10Y2Y')
     result = tool.httpRequest(url, None, None, 'GET')
@@ -47,10 +38,9 @@ def getRootDataFromFRED():
 def getDataFromParentId(parent_id, check=None):
     global db_fred_category
     # import ast
-    getConfig()
-    fred = Fred(api_key=api_key)
+    fred = Fred(api_key=config.fred.api_key)
     # result = fred.search_by_category(33446, limit=5, order_by="popularity")
-    url = 'https://api.stlouisfed.org/fred/category/children?category_id={}&api_key={}&file_type={}'.format(parent_id, api_key, 'json')
+    url = 'https://api.stlouisfed.org/fred/category/children?category_id={}&api_key={}&file_type={}'.format(parent_id, config.fred.api_key, 'json')
     print(url)
     # result = fred.get_series('T10Y2Y')
     result = tool.httpRequest(url, None, None, 'GET')
@@ -80,9 +70,6 @@ def FredStatisticCategoryStore(id, name, parent_id, notes=None):
     import sys
     import os
     import django
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
@@ -102,9 +89,6 @@ def getFredStatisticCategory(id=None):
     import sys
     import os
     import django
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
