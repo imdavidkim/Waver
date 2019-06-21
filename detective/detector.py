@@ -143,13 +143,24 @@ def messeage_to_telegram(txt):
     my_token = '577949495:AAFk3JWQjHlbJr2_AtZeonjqQS7buu8cYG4'
     chat_id = '568559695'
     bot = telegram.Bot(token=my_token)
-    bot.sendMessage(chat_id=chat_id, text=txt)
+    print(txt)
+    if txt is not None and txt != '':
+        bot.sendMessage(chat_id=chat_id, text=txt)
     # 진오 =====================================================
     # my_token = '781845768:AAEG55_jbdDIDlmGXWHl8Ag2aDUg-YAA8fc'
     # chat_id = '84410715'
     # bot = telegram.Bot(token=my_token)
-    # bot.sendMessage(chat_id=chat_id, text=txt)
+    # if txt is not None and txt != '':
+    #         bot.sendMessage(chat_id=chat_id, text=txt)
     # ==========================================================
+    # 아부지====================================================
+    # my_token = '866257502:AAH3zxEzlNT-venJnI-ZacJBwrnh2nxLsNk'
+    # chat_id = '869289245'
+    # bot = telegram.Bot(token=my_token)
+    # if txt is not None and txt != '':
+    #         bot.sendMessage(chat_id=chat_id, text=txt)
+    # ==========================================================
+
     # my_token = '781845768:AAEG55_jbdDIDlmGXWH18Ag2aDUg-YAA8fc'
     # bot = telegram.Bot(token=my_token)
     # updates = bot.getUpdates()
@@ -353,7 +364,7 @@ def new_find_hidden_pearl():
     # USE_JSON = False
     USE_JSON = True
     stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code='007630', listing='Y') # 제일파마홀딩스
+    # stockInfo = detective_db.Stocks.objects.filter(code='950180', listing='Y') # 제일파마홀딩스
     # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
@@ -382,6 +393,7 @@ def new_find_hidden_pearl():
                 # print(treasure)
         for ii, stock in enumerate(stockInfo):
             if stock.code in treasure.keys():
+                # print("stock.code in treasure.keys()")
                 continue
             data = {}
             info_lack = False
@@ -411,8 +423,7 @@ def new_find_hidden_pearl():
                             data['요구수익률'] = 0 if dic[key][-1]['VAL3'] == '-' else float(dic[key][-1]['VAL3'])
                             data['요구수익률2'] = data['요구수익률']
                         if DEBUG: print(data['요구수익률'], data['요구수익률2'])
-            if info_lack:
-                continue
+
             data['회사명'] = stock.name
             data['발행주식수'] = stock.issued_shares
             data['자본금'] = stock.capital
@@ -420,10 +431,22 @@ def new_find_hidden_pearl():
             data['통화'] = 'KRW' if stock.curr == '' else stock.curr
             soup = get_soup_from_file('snapshot', yyyymmdd, stock.name, stock.code, 'html')
 
-            marketTxt = fnguide.select_by_attr(soup, 'span', 'id', 'strMarketTxt').text.replace(' ', '') # 업종분류
+            # marketTxt = fnguide.select_by_attr(soup, 'span', 'id', 'strMarketTxt').text.replace(' ', '') # 업종분류
+            # data['업종구분'] = marketTxt.replace('\n', '')
+            # # print(data['업종구분'], stock.market_text)
+            # if data['업종구분'] != '' and stock.market_text is None:
+            #     fnguide.StockMarketTextUpdate(stock.code, marketTxt)
+            marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt1').text.replace(' ', '')  # 업종분류
             data['업종구분'] = marketTxt.replace('\n', '')
-            if data['업종구분'] != '' and stock.market_text is None:
-                fnguide.StockMarketTextUpdate(stock.code, marketTxt)
+            marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt2').text.replace(' ', '')  # 업종분류
+            data['업종구분상세'] = marketTxt.replace('\n', '')
+            # print(data['업종구분'], stock.market_text)
+            if (data['업종구분'] != '' and stock.market_text is None) or (data['업종구분상세'] != '' and stock.market_text_detail is None):
+                fnguide.StockMarketTextUpdate(stock.code, data['업종구분'], data['업종구분상세'])
+            # 업종구분까지 업데이트 한 후 Valuation 정보가 부족한 종목은 Pass
+            if info_lack:
+                # print("Lack of information")
+                continue
             yearly_highlight = fnguide.select_by_attr(soup, 'div', 'id', 'highlight_D_Y')  # Snapshot FinancialHighlight
             if yearly_highlight:
                 # print(len(fnguide.get_table_contents(yearly_highlight, 'table thead tr th')))
@@ -442,6 +465,11 @@ def new_find_hidden_pearl():
                             if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
                                 data['Period'] = yyyymm
                                 data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
+                                if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                        values[idx][idx2 - 1].replace(',', '')):
+                                    data['X' + i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
+                                else:
+                                    data['X' + i] = 0
                                 break
                             elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
                                 if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2 - 1] == '':
@@ -487,10 +515,10 @@ def new_find_hidden_pearl():
                     fnguide.get_table_contents(daily, 'table tbody tr td'))
                 if DEBUG: print(columns, items, values)
                 for idx, col in enumerate(columns):
-                    if col in ['종가']:
-                        # print(col, values[idx])
-                        data[col] = float(values[idx].replace(',', ''))
-                        break
+                    # print(col, values[idx])
+                    if col in ['종가', '외국인 보유비중', '비율', '거래량']:
+                        data[col] = float(values[idx].replace(',', '')) if (values[idx] is not None and values[idx] != '') else 0.0
+                        # break
                 # 20190419 요구수익률을 다른곳에서 가져오면서 주석처리
                 # daily = fnguide.select_by_attr(soup, 'div', 'id', 'svdMainGrid10D')  # Snapshot 업종비교
                 # columns, items, values = fnguide.setting(
@@ -590,6 +618,7 @@ def new_find_hidden_pearl():
                     data['매출액'] = data['이자수익'] if '이자수익' in data.keys() else data[
                         '보험료수익'] if '보험료수익' in data.keys() else data['순영업수익'] if '순영업수익' in data.keys() else data[
                         '영업수익']
+                if 'X지배주주순이익' not in data.keys(): data['X지배주주순이익'] = 0.0
                 data['ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
                 # if data['ROE'] > 20 and (data['금융수익-금융수익'] / data['지배주주순이익'] > 0.7 or data['기타수익-기타수익'] / data['지배주주순이익'] > 0.7 ):
                 #     # data['ROE'] = (data['지배주주순이익'] - data['금융수익-금융수익'] - data['기타수익-기타수익'] - data['중단영업이익']) / data['지배주주지분'] * 100
@@ -606,6 +635,8 @@ def new_find_hidden_pearl():
         print(align_string('L', 'No.', 5),
               align_string('R', 'Code', 10),
               align_string('R', 'Name', 20),
+              # align_string('R', 'X지배주주순이익', 20),
+              align_string('R', '요구수익률', 15),
               align_string('R', 'ROE', 20),
               align_string('R', 'ROS', 20),
               align_string('R', '12M PER', 8),
@@ -645,18 +676,22 @@ def new_find_hidden_pearl():
             #             #     # or treasure[d]['NPV'] < 0 or treasure[d]['12M PER'] == 0 or \
             #             #    # treasure[d]['NPV']/treasure[d]['종가']*100 < 100 \
             # if treasure[d]['12M PER'] > treasure[d]['업종 PER'] * 0.7 or \
-            if treasure[d]['ROS'] < 10 or \
-               treasure[d]['ROE'] < 10 or \
-               treasure[d]['ROE'] / treasure[d]['ROS'] < 0.2 or \
-               treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.33 or \
+            #    treasure[d]['ROS'] < 10 or \
+            #    treasure[d]['ROE'] / treasure[d]['ROS'] < 0.2 or \
+            #    treasure[d]['12M PER'] == 0 or
+            if treasure[d]['X지배주주순이익'] < 1 or \
+               treasure[d]['ROE'] < 15 or \
+               treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
                treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
                treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
-               treasure[d]['NPV'] < 0 or treasure[d]['12M PER'] == 0 or \
+               treasure[d]['NPV'] < 0 or \
                treasure[d]['NPV']/treasure[d]['종가']*100 < 105:
                 cnt += 1
                 print(align_string('L', cnt, 5),
                       align_string('R', d, 10),
                       align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
+                      # align_string(',', round(treasure[d]['X지배주주순이익'], 2), 20),
+                      align_string(',', round(treasure[d]['요구수익률'], 2), 20),
                       align_string(',', round(treasure[d]['ROE'], 2), 20),
                       align_string(',', round(treasure[d]['ROS'], 2), 20),
                       align_string(',', treasure[d]['12M PER'], 8),
@@ -671,6 +706,8 @@ def new_find_hidden_pearl():
             print(align_string('L', cnt, 5),
                   align_string('R', d, 10),
                   align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
+                  # align_string(',', round(treasure[d]['X지배주주순이익'], 2), 20),
+                  align_string(',', round(treasure[d]['요구수익률'], 2), 20),
                   align_string(',', round(treasure[d]['ROE'], 2), 20),
                   align_string(',', round(treasure[d]['ROS'], 2), 20),
                   align_string(',', treasure[d]['12M PER'], 8),
@@ -760,6 +797,9 @@ def TargetStockDataStore(crp_cd, data):
                                                                       'issued_shares': data['발행주식수'],
                                                                       # 'valuation_date': yyyymmdd,
                                                                       'return_on_sales': data['ROS'],
+                                                                      'liquidity_rate': data['비율'],
+                                                                      'foreign_holding': data['외국인 보유비중'],
+                                                                      'trade_amount': data['거래량'],
                                                                       # 'impairment_profit': data['중단영업이익'],
                                                                   }
                                                                   )
