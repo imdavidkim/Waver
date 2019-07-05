@@ -69,7 +69,7 @@ def get_list_day():
       <systemHeader></systemHeader>
     <BISComDspDatDTO><val1>"""
     xml = xml + target_date
-    # xml = xml + '20190401'
+    # xml = xml + '20190703'
     xml = xml + """</val1></BISComDspDatDTO></message>"""
     headers = {'Content-Type': 'application/xml'}
     print("Making request Done...")
