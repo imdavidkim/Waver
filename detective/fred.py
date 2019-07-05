@@ -2,6 +2,11 @@ from fredapi import Fred
 import detective.crawler as tool
 import json
 
+import pandas
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import font_manager, rc
+
 # 각종 필요지표
 # 10-Year Treasury Constant Maturity Minus 2-Year Treasury Constant Maturity
 # https://fred.stlouisfed.org/series/T10Y2Y
@@ -24,6 +29,14 @@ def getConfig():
     django_path = path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
     api_key = config['FRED']['FREDAPI_KEY']
+
+
+def getSeriesDataFromFRED(key):
+    getConfig()
+    fred = Fred(api_key=api_key)
+    result = fred.get_series(key)
+    return result
+
 
 def getRootDataFromFRED():
     getConfig()
@@ -118,6 +131,10 @@ def getFredStatisticCategory(id=None):
         print('[Error on FredStatisticCategoryStore]\n', '*' * 50, e)
 
 if __name__ == '__main__':
-    for id in getFredStatisticCategory():
-        db_fred_category.append(id[0])
-    getRootDataFromFRED()
+    retVal = getSeriesDataFromFRED('BAMLEMCBPIOAS')
+    # print(retVal)
+    retVal.tail(180).plot()
+    plt.show()
+    # for id in getFredStatisticCategory():
+    #     db_fred_category.append(id[0])
+    # getRootDataFromFRED()
