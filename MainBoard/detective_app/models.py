@@ -17,6 +17,7 @@ class Stocks(models.Model):
     tel = models.CharField(max_length=20)
     address = models.TextField()
     market_text = models.TextField(null=True)
+    market_text_detail = models.TextField(null=True)
     listing = models.CharField(max_length=1, default='N')
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -52,8 +53,10 @@ class USStocks(models.Model):
 class TargetStocks(models.Model):
     class Meta:
         unique_together = (('valuation_date', 'code'),)
+    id = models.AutoField(primary_key=True)
     valuation_date = models.CharField(max_length=10, default=str(datetime.now())[:10])
-    code = models.CharField(max_length=20, unique=True, primary_key=True)
+    # code = models.CharField(max_length=20, unique=True, primary_key=True)
+    code = models.CharField(max_length=20)
     name = models.TextField()
     curr = models.CharField(max_length=3)
     last_price = models.FloatField(null=True)
@@ -74,6 +77,9 @@ class TargetStocks(models.Model):
     holders_value = models.FloatField(null=True)
     impairment_profit = models.FloatField(null=True)
     issued_shares = models.FloatField(null=True)
+    return_on_sales = models.FloatField(null=True)
+    foreign_holding = models.FloatField(null=True)
+    trade_amount = models.FloatField(null=True)
 
 
 class DartRequestIndex(models.Model):
@@ -244,3 +250,26 @@ class FredStatisticCategory(models.Model):
     name = models.CharField(max_length=100)
     parent_id = models.IntegerField()
     notes = models.TextField(default=None, null=True)
+
+
+class Instrument(models.Model):
+    id = models.AutoField(primary_key=True)
+    external_id = models.IntegerField(default=0)
+    name = models.TextField()
+    in_use = models.BooleanField(default=True)
+
+
+class Market(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.TextField()
+    in_use = models.BooleanField(default=True)
+
+
+class MarketDataValue(models.Model):
+    id = models.AutoField(primary_key=True)
+    base_date = models.DateTimeField()
+    instrument_id = models.ForeignKey(Instrument, on_delete=models.CASCADE)
+    market_id = models.ForeignKey(Market, on_delete=models.CASCADE)
+    value = models.FloatField()
+    create_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
