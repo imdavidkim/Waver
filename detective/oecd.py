@@ -4,6 +4,10 @@ from collections import OrderedDict
 
 # http://stats.oecd.org/sdmx-json/data/FFS_BRA/all/all
 
+# https://stats.oecd.org/RESTSDMX/sdmx.ashx/GetDataStructure/ALL
+# https://stats.oecd.org/RESTSDMX/sdmx.ashx/GetDataStructure/MEI_CLI/ALL
+# https://stats.oecd.org/SDMX-JSON/data/MEI_CLI/LOLI+LOLITOTR_STSA.KOR+USA+OECD./all?startTime=2018
+
 # generator of empty lists
 def create(n, constructor=list):
     for _ in range(n):
@@ -92,7 +96,7 @@ if __name__ == '__main__':
     oecd = Request('OECD')
 
     try:
-        data_response = oecd.data(resource_id='FFS_BRA', key='all/all')
+        data_response = oecd.data(resource_id='MEI_CLI', key='LOLI+LOLITOTR_STSA.KOR+USA+OECD./all?startTime=2018')
     except UnicodeDecodeError:
         pass
     except KeyError:
