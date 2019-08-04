@@ -59,6 +59,7 @@ def get_list_day():
 
     server_date = ET.fromstring(str(get_date(url_date)))
     target_date = server_date[1].text
+    # target_date = '20190723'
     xml = """<?xml version='1.0' encoding='utf-8'?>
     <message>
       <proframeHeader>
@@ -69,7 +70,6 @@ def get_list_day():
       <systemHeader></systemHeader>
     <BISComDspDatDTO><val1>"""
     xml = xml + target_date
-    # xml = xml + '20190703'
     xml = xml + """</val1></BISComDspDatDTO></message>"""
     headers = {'Content-Type': 'application/xml'}
     print("Making request Done...")
