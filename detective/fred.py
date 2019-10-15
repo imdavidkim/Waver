@@ -4,7 +4,11 @@ import json
 
 import pandas
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+import os
+from datetime import datetime
+import detective.messenger as msgr
+
 from matplotlib import font_manager, rc
 
 # 각종 필요지표
@@ -22,13 +26,15 @@ db_fred_category = []
 
 def getConfig():
     import configparser
-    global path, django_path, main_path, api_key
+
+    global path, django_path, main_path, api_key, yyyymmdd
     config = configparser.ConfigParser()
     config.read('config.ini')
-    path = config['COMMON']['PROJECT_PATH']
+    path = config['COMMON']['REPORT_PATH']
     django_path = path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
     api_key = config['FRED']['FREDAPI_KEY']
+    yyyymmdd = str(datetime.now())[:10]
 
 
 def getSeriesDataFromFRED(key):
@@ -130,11 +136,32 @@ def getFredStatisticCategory(id=None):
     except Exception as e:
         print('[Error on FredStatisticCategoryStore]\n', '*' * 50, e)
 
-if __name__ == '__main__':
+
+def make_graph():
+    import matplotlib.pyplot as plt
+    getConfig()
     retVal = getSeriesDataFromFRED('BAMLEMCBPIOAS')
-    # print(retVal)
-    retVal.tail(180).plot()
-    plt.show()
+    retVal2 = getSeriesDataFromFRED('T10Y2Y')
+    retVal3 = getSeriesDataFromFRED('T10YIE')
+    fig = plt.figure()
+    BAMLEMCBPIOAS = fig.add_subplot(3, 1, 1)
+    T10Y2Y = fig.add_subplot(3, 1, 2)
+    T10YIE = fig.add_subplot(3, 1, 3)
+    BAMLEMCBPIOAS.plot(retVal.tail(180), label="EM OAS")
+    BAMLEMCBPIOAS.legend(loc='upper left')
+    T10Y2Y.plot(retVal2.tail(180), label="10Y-2Y")
+    T10Y2Y.legend(loc='upper left')
+    T10YIE.plot(retVal3.tail(180), label="10Y BEI")
+    T10YIE.legend(loc='upper left')
+    # plt.show()
     # for id in getFredStatisticCategory():
     #     db_fred_category.append(id[0])
     # getRootDataFromFRED()
+    # import Image
+    img_path = r'{}\{}\{}'.format(path, 'FRED', yyyymmdd)
+    print(img_path)
+    if not os.path.exists(img_path):
+        os.makedirs(img_path)
+    plt.savefig(img_path+'\\result.png')
+    msgr.img_messeage_to_telegram(img_path+'\\result.png')
+    plt = None
