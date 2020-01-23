@@ -7,7 +7,9 @@ from io import BytesIO
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import csv
-
+import sys
+import time
+sys.path.append(r'C:\ProgramData\Anaconda3\envs\Waver\DLLs')
 
 def getConfig():
     import configparser
@@ -31,7 +33,7 @@ def getStockInfo():
        'isu_nm': '',
        'isu_srt_cd': '',
        'sort_type': 'A',
-       'std_ind_cd': '01',
+       'std_ind_cd': '',
        'par_pr': '',
        'cpta_scl': '',
        'sttl_trm': '',
@@ -41,29 +43,30 @@ def getStockInfo():
        'cpt': '1',
        'in_cpt': '',
        'in_cpt2': '',
-       'isu_cdnm': '전체',
-       'isu_cd': '',
        'mktpartc_no': '',
-       'isu_srt_cd': '',
        'pagePath': '/contents/MKD/04/0406/04060100/MKD04060100.jsp',
-   }
-    # gen_otp_data = {
-    #     'name': 'fileDown',
-    #     'filetype': 'csv',
-    #     'url': 'MKD/04/0406/04060200/mkd04060200',
-    #     'market_gubun': 'ALL',
-    #     'indx_ind_cd': '',
-    #     'sect_tp_cd': 'ALL',
-    #     'isu_cdnm': '전체',
-    #     'isu_cd': '',
-    #     'isu_nm': '',
-    #     'isu_srt_cd': '',
-    #     'secugrp':'ST',
-    #     'stock_gubun':'on',
-    #     'schdate': str(datetime.now().strftime('%Y%m%d')),
-    #     'pagePath': '/contents/MKD/04/0406/04060200/MKD04060200.jsp',
-    # }
-    code = httpRequest(gen_otp_url, gen_otp_data)
+    }
+    down_header = {'User-Agent': 'User-Agent: Mozilla/5.0'
+                   , 'Accept-Encoding': 'gzip, deflate'
+                   , 'Referer': 'http://marketdata.krx.co.kr/mdi'
+                   , 'Content-Type': 'application/x-www-form-urlencoded'
+                   }
+    # code = httpRequest(gen_otp_url, gen_otp_data)
+    code = httpRequest(gen_otp_url, gen_otp_data, down_header)
+    fail_count = 0
+    while True:
+        if code is not b'':
+            print("[Crawler] OTP Code generate success!!")
+            break
+        elif fail_count == 10:
+            print("[Crawler] OTP Code generate Failed 10 times!!")
+            break
+        fail_count += 1
+        time.sleep(5)
+        print("[Crawler] Try again OTP Code generation. {}".format(fail_count))
+        code = httpRequest(gen_otp_url, gen_otp_data, down_header)
+    print("[Crawler] Requesting Stock Information...")
+    # print("code : ", code)
     # r = requests.post(gen_otp_url, gen_otp_data)
     # code = r.content
 
@@ -73,12 +76,13 @@ def getStockInfo():
     }
 
     # r = requests.post(down_url, down_data)
-    down_header = {'User-Agent': 'User-Agent: Mozilla/5.0'
-                   , 'Accept-Encoding': 'gzip, deflate'
-                   , 'Referer': 'http://marketdata.krx.co.kr/mdi'
-                   , 'Content-Type': 'application/x-www-form-urlencoded'
-                   }
+    # down_header = {'User-Agent': 'User-Agent: Mozilla/5.0'
+    #                , 'Accept-Encoding': 'gzip, deflate'
+    #                , 'Referer': 'http://marketdata.krx.co.kr/mdi'
+    #                , 'Content-Type': 'application/x-www-form-urlencoded'
+    #                }
     response = httpRequest(down_url, down_data, down_header)
+    # print(response)
     dic = dataCleansing(response)
     dataInit()
     dataStore(dic)
