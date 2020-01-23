@@ -12,7 +12,7 @@ import json
 # import xmltodict
 # import os
 import detective.fnguide_collector as fnguide
-
+import detective.messenger as msgr
 DEBUG = True
 
 
@@ -27,7 +27,7 @@ def getConfig():
     main_path = django_path + r'\MainBoard'
     filename = r'\financeData_%s_%s_%s.%s'
     yyyymmdd = str(datetime.now())[:10]
-    # yyyymmdd = '2019-02-21'
+    # yyyymmdd = '2019-12-12'
     # print(path, filename)
 
 
@@ -127,6 +127,55 @@ def get_high_ranked_stock():
             idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
     return retStr
 
+
+def get_high_ranked_stock_with_closeprice():
+    from yahoofinancials import YahooFinancials
+    import sys
+    import os
+    import django
+    import matplotlib.pyplot as plt
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    from django.db import connection
+    cursor = connection.cursor()
+    sql = """select t.code, t.market_text, t.name, t.curr, t.last_price, t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
+                select s.code, s.market_text, ts.name, ts.curr, ts.last_price, ts.target_price, ts.target_price2, ts.return_on_equity, ts.ratio, ts.target_price2/ts.last_price*100 as ratio2 from detective_app_targetstocks ts, detective_app_stocks s
+                where ts.ratio > 100
+                and s.code = ts.code
+                --and return_on_equity > 14
+                and ts.valuation_date = '%s'
+                order by ratio2 desc, return_on_equity desc, ratio desc
+                limit 30) as t
+             --where last_price > 14000
+             --and ratio2 > 100
+             order by t.ratio desc""" % yyyymmdd
+    cursor.execute(sql)
+    # retStr = ''
+    fig = plt.figure()
+    todaydate = datetime.strptime(yyyymmdd, "%Y-%m-%d")
+    before30date = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=30)
+    print(str(todaydate)[:10], str(before30date)[:10])
+    for idx, d in enumerate(dictfetchall(cursor)):
+        dates = []
+        prcs = []
+        ins_ticker = '{}.KS'.format(d['code']) if d['market_text'].split("\xa0")[0].strip() == 'KSE' else '{}.KQ'.format(d['code'])
+        print(idx, ins_ticker)
+        instrument = YahooFinancials(ins_ticker)
+        prices = instrument.get_historical_price_data(str(before30date)[:10], str(todaydate)[:10], "daily")
+        if "prices" not in prices[ins_ticker].keys(): print(prices)
+        for info in prices[ins_ticker]['prices']:
+            dates.append(info['formatted_date'])
+            prcs.append(info['close'])
+        print(dates)
+        print(prcs)
+
+    #     retStr += '%d. %s\t%s => %s[%s%%]\n' % (
+    #         idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
+    # return retStr
+
 def align_string(switch, text, digit):
     if switch == 'L':
         return format(text, " <%d" % digit)
@@ -138,34 +187,34 @@ def align_string(switch, text, digit):
         return None
 
 
-def messeage_to_telegram(txt):
-    import telegram
-    my_token = '577949495:AAFk3JWQjHlbJr2_AtZeonjqQS7buu8cYG4'
-    chat_id = '568559695'
-    bot = telegram.Bot(token=my_token)
-    print(txt)
-    if txt is not None and txt != '':
-        bot.sendMessage(chat_id=chat_id, text=txt)
-    # 진오 =====================================================
-    # my_token = '781845768:AAEG55_jbdDIDlmGXWHl8Ag2aDUg-YAA8fc'
-    # chat_id = '84410715'
-    # bot = telegram.Bot(token=my_token)
-    # if txt is not None and txt != '':
-    #         bot.sendMessage(chat_id=chat_id, text=txt)
-    # ==========================================================
-    # 아부지====================================================
-    # my_token = '866257502:AAH3zxEzlNT-venJnI-ZacJBwrnh2nxLsNk'
-    # chat_id = '869289245'
-    # bot = telegram.Bot(token=my_token)
-    # if txt is not None and txt != '':
-    #         bot.sendMessage(chat_id=chat_id, text=txt)
-    # ==========================================================
-
-    # my_token = '781845768:AAEG55_jbdDIDlmGXWH18Ag2aDUg-YAA8fc'
-    # bot = telegram.Bot(token=my_token)
-    # updates = bot.getUpdates()
-    # for u in updates:
-    #     print(u.message)
+# def messeage_to_telegram(txt):
+#     import telegram
+#     my_token = '577949495:AAFk3JWQjHlbJr2_AtZeonjqQS7buu8cYG4'
+#     chat_id = '568559695'
+#     bot = telegram.Bot(token=my_token)
+#     print(txt)
+#     if txt is not None and txt != '':
+#         bot.sendMessage(chat_id=chat_id, text=txt)
+#     # 진오 =====================================================
+#     # my_token = '781845768:AAEG55_jbdDIDlmGXWHl8Ag2aDUg-YAA8fc'
+#     # chat_id = '84410715'
+#     # bot = telegram.Bot(token=my_token)
+#     # if txt is not None and txt != '':
+#     #         bot.sendMessage(chat_id=chat_id, text=txt)
+#     # ==========================================================
+#     # 아부지====================================================
+#     # my_token = '866257502:AAH3zxEzlNT-venJnI-ZacJBwrnh2nxLsNk'
+#     # chat_id = '869289245'
+#     # bot = telegram.Bot(token=my_token)
+#     # if txt is not None and txt != '':
+#     #         bot.sendMessage(chat_id=chat_id, text=txt)
+#     # ==========================================================
+#
+#     # my_token = '781845768:AAEG55_jbdDIDlmGXWH18Ag2aDUg-YAA8fc'
+#     # bot = telegram.Bot(token=my_token)
+#     # updates = bot.getUpdates()
+#     # for u in updates:
+#     #     print(u.message)
 
 
 def telegram_test():
@@ -364,7 +413,7 @@ def new_find_hidden_pearl():
     # USE_JSON = False
     USE_JSON = True
     stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code='950180', listing='Y') # 제일파마홀딩스
+    # stockInfo = detective_db.Stocks.objects.filter(code='299900', listing='Y') # 제일파마홀딩스
     # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
@@ -392,6 +441,7 @@ def new_find_hidden_pearl():
                 treasure = json.loads(data)
                 # print(treasure)
         for ii, stock in enumerate(stockInfo):
+            # if ii > 10: break
             if stock.code in treasure.keys():
                 # print("stock.code in treasure.keys()")
                 continue
@@ -407,7 +457,7 @@ def new_find_hidden_pearl():
                   align_string('R', stock.curr, 10),
                   )
             dic = get_soup_from_file('ROE', yyyymmdd, stock.name, stock.code, 'json')
-            if DEBUG: print(dic)
+            # if DEBUG: print(dic)
             for key in dic:
                 if '04' == key:
                     # 해당 종목의 ROE 가 없으면 당해년 Estimation 이 없는 것으로 정확한 가치평가 불가하므로 제외
@@ -422,7 +472,7 @@ def new_find_hidden_pearl():
                         else:
                             data['요구수익률'] = 0 if dic[key][-1]['VAL3'] == '-' else float(dic[key][-1]['VAL3'])
                             data['요구수익률2'] = data['요구수익률']
-                        if DEBUG: print(data['요구수익률'], data['요구수익률2'])
+                        # if DEBUG: print(data['요구수익률'], data['요구수익률2'])
 
             data['회사명'] = stock.name
             data['발행주식수'] = stock.issued_shares
@@ -452,11 +502,11 @@ def new_find_hidden_pearl():
                 # print(len(fnguide.get_table_contents(yearly_highlight, 'table thead tr th')))
                 # print(len(fnguide.get_table_contents(yearly_highlight, 'table tbody tr th')))
                 # print(fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
-                if DEBUG: print(yearly_highlight)
+                # if DEBUG: print(yearly_highlight)
                 columns, items, values = fnguide.setting(fnguide.get_table_contents(yearly_highlight, 'table thead tr th')[1:],
                                                          fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
                                                          fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
-                if DEBUG: print(columns, items, values)
+                # if DEBUG: print(columns, items, values)
                 for idx, i in enumerate(items):
                     if i in ['지배주주순이익', '지배주주지분', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익']:
                         for idx2, yyyymm in enumerate(columns):
@@ -471,20 +521,20 @@ def new_find_hidden_pearl():
                                 else:
                                     data['X' + i] = 0
                                 break
-                            elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
-                                if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2 - 1] == '':
-                                    if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2 - 2] == '':
-                                        continue
-                                        # data['Period'] = columns[idx2 - 3]
-                                        # data[i] = float(values[idx][idx2 - 3].replace(',', '')) * 100000000
-                                    else:
-                                        # print("data['Period'] = columns[idx2 - 2]")
-                                        data['Period'] = columns[idx2 - 2]
-                                        data[i] = float(values[idx][idx2 - 2].replace(',', '')) * 100000000
-                                else:
-                                    # print("data['Period'] = columns[idx2-1]")
-                                    data['Period'] = columns[idx2-1]
-                                    data[i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
+                            # elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
+                            #     if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2 - 1] == '':
+                            #         if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2 - 2] == '':
+                            #             continue
+                            #             # data['Period'] = columns[idx2 - 3]
+                            #             # data[i] = float(values[idx][idx2 - 3].replace(',', '')) * 100000000
+                            #         else:
+                            #             # print("data['Period'] = columns[idx2 - 2]")
+                            #             data['Period'] = columns[idx2 - 2]
+                            #             data[i] = float(values[idx][idx2 - 2].replace(',', '')) * 100000000
+                            #     else:
+                            #         # print("data['Period'] = columns[idx2-1]")
+                            #         data['Period'] = columns[idx2-1]
+                            #         data[i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
                             else:
                                 continue
                     elif i in ['ROE(%)']:
@@ -513,12 +563,15 @@ def new_find_hidden_pearl():
                     fnguide.get_table_contents(daily, 'table thead tr th')[1:],
                     fnguide.get_table_contents(daily, 'table tbody tr th'),
                     fnguide.get_table_contents(daily, 'table tbody tr td'))
-                if DEBUG: print(columns, items, values)
+                # if DEBUG: print(columns, items, values)
                 for idx, col in enumerate(columns):
                     # print(col, values[idx])
                     if col in ['종가', '외국인 보유비중', '비율', '거래량']:
                         data[col] = float(values[idx].replace(',', '')) if (values[idx] is not None and values[idx] != '') else 0.0
                         # break
+                    if col in ['발행주식수-보통주'] and data['발행주식수'] != float(values[idx].replace(',', '')):
+                        print("[{}][{}]발행주식수가 다릅니다. {} <> {}".format(stock.code, stock.name, stock.issued_shares, float(values[idx].replace(',', ''))))
+                        data['발행주식수'] = float(values[idx].replace(',', ''))
                 # 20190419 요구수익률을 다른곳에서 가져오면서 주석처리
                 # daily = fnguide.select_by_attr(soup, 'div', 'id', 'svdMainGrid10D')  # Snapshot 업종비교
                 # columns, items, values = fnguide.setting(
@@ -614,10 +667,18 @@ def new_find_hidden_pearl():
                 # if '금융수익-금융수익' not in data.keys(): data['금융수익-금융수익'] = 0.0
                 # if '기타수익-기타수익' not in data.keys(): data['기타수익-기타수익'] = 0.0
                 # data['ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
+                # print(data)
                 if '매출액' not in data.keys():
                     data['매출액'] = data['이자수익'] if '이자수익' in data.keys() else data[
                         '보험료수익'] if '보험료수익' in data.keys() else data['순영업수익'] if '순영업수익' in data.keys() else data[
-                        '영업수익']
+                        '영업수익'] if '영업수익' in data.keys() else 0
+                if data['매출액'] == 0: continue
+                if data['요구수익률'] == 0: data['요구수익률'] = 10.0
+                if DEBUG: print("data['지배주주지분']", data['지배주주지분'])
+                if DEBUG: print("data['요구수익률']", data['요구수익률'])
+                if DEBUG: print("data['발행주식수']", data['발행주식수'])
+                if DEBUG: print("data['자산총계']", data['자산총계'])
+                if DEBUG: print("data['매출액']", data['매출액'])
                 if 'X지배주주순이익' not in data.keys(): data['X지배주주순이익'] = 0.0
                 data['ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
                 # if data['ROE'] > 20 and (data['금융수익-금융수익'] / data['지배주주순이익'] > 0.7 or data['기타수익-기타수익'] / data['지배주주순이익'] > 0.7 ):
@@ -649,6 +710,7 @@ def new_find_hidden_pearl():
               )
         if not DEBUG: dataInit()
         cnt = 0
+        print(treasure)
         TargetStockDataDelete(yyyymmdd)
         for d in treasure.keys():
             # print(d)
@@ -810,12 +872,13 @@ def TargetStockDataStore(crp_cd, data):
         print('[Error on TargetStockDataStore]\n', '*' * 50, e)
 
 if __name__ == '__main__':
+    # get_high_ranked_stock_with_closeprice()
     # find_hidden_pearl()
     # messeage_to_telegram()
     # find_hidden_pearl()
     # test_find_hidden_pearl()
     new_find_hidden_pearl()
-    messeage_to_telegram(get_high_ranked_stock())
+    # msgr.messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
     # report_type = 'financeRatio'
