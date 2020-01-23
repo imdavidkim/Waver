@@ -10,7 +10,6 @@ import pprint
 import csv
 import xmltodict
 import os
-from multiprocessing import pool, Process
 
 marketTxt = None
 
@@ -117,7 +116,7 @@ def getFinanceData(cmd=None):
 
     try:
         stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-        # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
+        # stockInfo = detective_db.Stocks.objects.filter(code='192080', listing='Y')
         for key in reportType.keys():
             # print(cmd, cmd and key != cmd)
             if cmd and key != cmd:
@@ -156,10 +155,15 @@ def getFinanceData(cmd=None):
 
                     # File 처리 끝
                     # DB 처리
-                    # marketTxt = select_by_attr(soup, 'span', 'id', 'strMarketTxt').text
-                    # if marketTxt and key == 'snapshot':
-                    #     StockMarketTextUpdate(s.code, marketTxt)
-                    #     marketTxt = None
+                    marketTxt = select_by_attr(soup, 'span', 'class', 'stxt stxt1').text
+                    marketTxtDetail = select_by_attr(soup, 'span', 'class', 'stxt stxt2').text
+                    settlementMonth = select_by_attr(soup, 'span', 'class', 'stxt stxt3').text
+
+                    if marketTxt and reportType[key] == 'snapshot':
+                        StockMarketTextUpdate(s.code, marketTxt, marketTxtDetail, settlementMonth)
+                        print('[%d/%d][%s][%s][%s] MarketInformation Updated to %s | %s | %s' % (
+                        idx + 1, len(stockInfo), reportType[key], s.code, s.name, marketTxt, marketTxtDetail, settlementMonth))
+                        marketTxt = None
                     # divs = soup.find_all('div')
                     # if reportType[key] in ['snapshot', 'financeReport']:
                     #     for d in divs:
@@ -201,8 +205,12 @@ def getFinanceData(cmd=None):
                     file.close()
             '''
         print("FnGuideDataCollection job finished")
+        driver.close()
+        driver.quit()
     except Exception as e:
         print(e)
+        driver.close()
+        driver.quit()
 
     # result = xmltodict.parse(xml)
     # print(result)
@@ -449,7 +457,7 @@ def is_exist_more_information(rs, hierarchy, level):
     return len(rs.find_all(hierarchy[level]))
 
 
-def StockMarketTextUpdate(crp_cd, market_text):
+def StockMarketTextUpdate(crp_cd, market_text, market_text_detail, sttl_month):
     import sys
     import os
     import django
@@ -463,7 +471,7 @@ def StockMarketTextUpdate(crp_cd, market_text):
     django.setup()
     import detective_app.models as detective_db
     try:
-        detective_db.Stocks.objects.filter(code=crp_cd).update(market_text=market_text)
+        detective_db.Stocks.objects.filter(code=crp_cd).update(market_text=market_text, market_text_detail=market_text_detail, settlement_month=sttl_month)
     except Exception as e:
         print('[Error on StockDataUpdate]\n', '*' * 50, e)
 
@@ -1002,8 +1010,8 @@ def getUSFinanceData(cmd=None):
 
 
 if __name__ == '__main__':
-    # getFinanceData(101)
-    getFinanceData(200)
+    getFinanceData(101)
+    # getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
     # getFinanceData(104)
