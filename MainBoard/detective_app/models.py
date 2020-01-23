@@ -18,6 +18,7 @@ class Stocks(models.Model):
     address = models.TextField()
     market_text = models.TextField(null=True)
     market_text_detail = models.TextField(null=True)
+    settlement_month = models.TextField(null=True)
     listing = models.CharField(max_length=1, default='N')
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
