@@ -129,11 +129,13 @@ def get_high_ranked_stock():
 
 
 def get_high_ranked_stock_with_closeprice():
-    from yahoofinancials import YahooFinancials
+    # from yahoofinancials import YahooFinancials
+    from detective.naver_api import getNaverPrice
     import sys
     import os
     import django
     import matplotlib.pyplot as plt
+    from matplotlib import rc, font_manager
     getConfig()
     sys.path.append(django_path)
     sys.path.append(main_path)
@@ -154,23 +156,49 @@ def get_high_ranked_stock_with_closeprice():
              order by t.ratio desc""" % yyyymmdd
     cursor.execute(sql)
     # retStr = ''
-    fig = plt.figure()
-    todaydate = datetime.strptime(yyyymmdd, "%Y-%m-%d")
-    before30date = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=30)
-    print(str(todaydate)[:10], str(before30date)[:10])
+    fig = None
+    # 폰트 경로
+    font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
+    # 폰트 이름 얻어오기
+    font_name = font_manager.FontProperties(fname=font_path).get_name()
+    # font 설정
+    plt.rc('font', family=font_name)
+    plt.close('all')
+    # plt.clf()
     for idx, d in enumerate(dictfetchall(cursor)):
-        dates = []
-        prcs = []
-        ins_ticker = '{}.KS'.format(d['code']) if d['market_text'].split("\xa0")[0].strip() == 'KSE' else '{}.KQ'.format(d['code'])
-        print(idx, ins_ticker)
-        instrument = YahooFinancials(ins_ticker)
-        prices = instrument.get_historical_price_data(str(before30date)[:10], str(todaydate)[:10], "daily")
-        if "prices" not in prices[ins_ticker].keys(): print(prices)
-        for info in prices[ins_ticker]['prices']:
-            dates.append(info['formatted_date'])
-            prcs.append(info['close'])
-        print(dates)
-        print(prcs)
+        fig = plt.figure(clear=True)
+        price = getNaverPrice(d['code'], 36)
+        SP = fig.add_subplot(1, 1, 1)
+        SP.plot(price, label="{}".format(d['name']))
+        SP.legend(loc='upper left')
+        img_path = r'{}\{}\{}'.format(path, 'StockPriceTrace', yyyymmdd)
+        print(img_path)
+        if not os.path.exists(img_path):
+            os.makedirs(img_path)
+        plt.savefig(img_path + '\\{}_{}.png'.format(d['name'], d['code']))
+        plt.xticks(rotation=45)
+        # plt.show()
+        msgr.img_messeage_to_telegram(img_path + '\\{}_{}.png'.format(d['name'], d['code']))
+        fig = None
+        plt.close('all')
+
+    plt = None
+    # todaydate = datetime.strptime(yyyymmdd, "%Y-%m-%d")
+    # before30date = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=30)
+    # print(str(todaydate)[:10], str(before30date)[:10])
+    # for idx, d in enumerate(dictfetchall(cursor)):
+    #     dates = []
+    #     prcs = []
+    #     ins_ticker = '{}.KS'.format(d['code']) if d['market_text'].split("\xa0")[0].strip() == 'KSE' else '{}.KQ'.format(d['code'])
+    #     print(idx, ins_ticker)
+    #     instrument = YahooFinancials(ins_ticker)
+    #     prices = instrument.get_historical_price_data(str(before30date)[:10], str(todaydate)[:10], "daily")
+    #     if "prices" not in prices[ins_ticker].keys(): print(prices)
+    #     for info in prices[ins_ticker]['prices']:
+    #         dates.append(info['formatted_date'])
+    #         prcs.append(info['close'])
+    #     print(dates)
+    #     print(prcs)
 
     #     retStr += '%d. %s\t%s => %s[%s%%]\n' % (
     #         idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
@@ -872,12 +900,12 @@ def TargetStockDataStore(crp_cd, data):
         print('[Error on TargetStockDataStore]\n', '*' * 50, e)
 
 if __name__ == '__main__':
-    # get_high_ranked_stock_with_closeprice()
+    get_high_ranked_stock_with_closeprice()
     # find_hidden_pearl()
     # messeage_to_telegram()
     # find_hidden_pearl()
     # test_find_hidden_pearl()
-    new_find_hidden_pearl()
+    # new_find_hidden_pearl()
     # msgr.messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
