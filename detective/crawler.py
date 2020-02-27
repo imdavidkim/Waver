@@ -98,6 +98,22 @@ def getSnP500StockInfo():
     USDataStore(dic)
 
 
+def getYieldCurveInfo():
+    import detective.fnguide_collector as fnguide
+    url = 'http://www.worldgovernmentbonds.com'
+    response = httpRequest(url)
+    # print(response.decode())
+
+    soup = BeautifulSoup(response.decode(), 'lxml')
+    # print(soup)
+    for i in soup.select('thead tr th'):
+        print(i)
+    # print(soup.find_all('tbody'))
+    # url = 'https://tradingeconomics.com/bonds'
+    # ycinfo_nation = fnguide.select_by_attr(soup, 'div', 'class', 'table-responsive')
+    # print(ycinfo_nation)
+
+
 def wikiDataCleansing(content):
     import detective.fnguide_collector as fnguide
     retDict = {}
@@ -326,5 +342,7 @@ def httpRequest(url, data=None, header=None, method='POST'):
         return None
 
 if __name__ == '__main__':
-    getStockInfo()
+    # getStockInfo()
     # getSnP500StockInfo()
+    getYieldCurveInfo()
+
