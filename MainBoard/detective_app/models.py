@@ -274,3 +274,9 @@ class MarketDataValue(models.Model):
     value = models.FloatField()
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+class OECDServiceCatalog(models.Model):
+    id = models.AutoField(primary_key=True)
+    type = models.TextField()
+    key_family = models.TextField()
+    key_description = models.TextField()
