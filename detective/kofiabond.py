@@ -43,7 +43,7 @@ def get_beautiful_soup(url, headers, xml):
 def get_date(url):
     return bs4.BeautifulSoup(requests.get(url).text, "html5lib")
 
-def get_list_day():
+def get_list_day(target_date):
     import sys
     import os
     import django
@@ -58,8 +58,8 @@ def get_list_day():
     url_date = 'http://www.kofiabond.or.kr/websquare//serverTime.wq?pattern=yyyyMMdd'
 
     server_date = ET.fromstring(str(get_date(url_date)))
-    target_date = server_date[1].text
-    # target_date = '20190723'
+    if target_date is None: target_date = server_date[1].text
+    # target_date = '20190806'
     xml = """<?xml version='1.0' encoding='utf-8'?>
     <message>
       <proframeHeader>
@@ -215,4 +215,5 @@ if __name__ == '__main__':
     start_date = '20150101'
     end_date = '20190612'
     # get_list_term(start_date, end_date)
-    get_list_day()
+    # get_list_day(None)
+    get_list_day('20200303')
