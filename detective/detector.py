@@ -115,7 +115,7 @@ def get_high_ranked_stock():
                 where ratio > 100
                 --and return_on_equity > 14
                 and valuation_date = '%s'
-                order by ratio2 desc, return_on_equity desc, ratio desc
+                order by ratio2 desc
                 limit 30) as t
              --where last_price > 14000
              --and ratio2 > 100
@@ -149,7 +149,7 @@ def get_high_ranked_stock_with_closeprice():
                 and s.code = ts.code
                 --and return_on_equity > 14
                 and ts.valuation_date = '%s'
-                order by ratio2 desc, return_on_equity desc, ratio desc
+                order by ratio2 desc
                 limit 30) as t
              --where last_price > 14000
              --and ratio2 > 100
@@ -213,36 +213,6 @@ def align_string(switch, text, digit):
         return format(format(float(text), ','), " >%d" % digit)
     else:
         return None
-
-
-# def messeage_to_telegram(txt):
-#     import telegram
-#     my_token = '577949495:AAFk3JWQjHlbJr2_AtZeonjqQS7buu8cYG4'
-#     chat_id = '568559695'
-#     bot = telegram.Bot(token=my_token)
-#     print(txt)
-#     if txt is not None and txt != '':
-#         bot.sendMessage(chat_id=chat_id, text=txt)
-#     # 진오 =====================================================
-#     # my_token = '781845768:AAEG55_jbdDIDlmGXWHl8Ag2aDUg-YAA8fc'
-#     # chat_id = '84410715'
-#     # bot = telegram.Bot(token=my_token)
-#     # if txt is not None and txt != '':
-#     #         bot.sendMessage(chat_id=chat_id, text=txt)
-#     # ==========================================================
-#     # 아부지====================================================
-#     # my_token = '866257502:AAH3zxEzlNT-venJnI-ZacJBwrnh2nxLsNk'
-#     # chat_id = '869289245'
-#     # bot = telegram.Bot(token=my_token)
-#     # if txt is not None and txt != '':
-#     #         bot.sendMessage(chat_id=chat_id, text=txt)
-#     # ==========================================================
-#
-#     # my_token = '781845768:AAEG55_jbdDIDlmGXWH18Ag2aDUg-YAA8fc'
-#     # bot = telegram.Bot(token=my_token)
-#     # updates = bot.getUpdates()
-#     # for u in updates:
-#     #     print(u.message)
 
 
 def telegram_test():
@@ -429,9 +399,34 @@ def new_find_hidden_pearl():
     django.setup()
     import detective_app.models as detective_db
     import json
+    import logging
 
+    logfile = 'detector'
+    if not os.path.exists('./logs'):
+        os.makedirs('./logs')
+    now = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('[%(asctime)s][%(filename)s:%(lineno)s] >> %(message)s')
+
+    streamHandler = logging.StreamHandler()
+    fileHandler = logging.FileHandler("./logs/{}_{}.log".format(logfile, now))
+
+    streamHandler.setFormatter(formatter)
+    fileHandler.setFormatter(formatter)
+
+    logger.addHandler(streamHandler)
+    logger.addHandler(fileHandler)
+    logger.setLevel(level=logging.INFO)
+
+    # logging
+    # logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
+    # logging.debug("Log started at %s", str(datetime.datetime.now()))
+
+    pass_reason = ''
     req_rate = 8.0
     treasure = {}
+    trash = {}
     data = {}
     # 날짜 정보 셋팅
     dateDict = new_get_dateDict()
@@ -468,11 +463,22 @@ def new_find_hidden_pearl():
                 data = f.read()
                 treasure = json.loads(data)
                 # print(treasure)
+        if os.path.exists(r'%s\trash.%s.json' % (JsonDir, yyyymmdd)) and USE_JSON:
+            with open(r'%s\trash.%s.json' % (JsonDir, yyyymmdd), "r") as f:
+                data = f.read()
+                trash = json.loads(data)
+                # print(treasure)
         for ii, stock in enumerate(stockInfo):
             # if ii > 10: break
             if stock.code in treasure.keys():
-                # print("stock.code in treasure.keys()")
+                print("stock.code in treasure.keys()")
                 continue
+            else:
+                if stock.code in trash.keys():
+                    print("stock.code in trash.keys()")
+                    continue
+                else:
+                    pass
             data = {}
             info_lack = False
             # print(dir(stock))
@@ -489,18 +495,19 @@ def new_find_hidden_pearl():
             for key in dic:
                 if '04' == key:
                     # 해당 종목의 ROE 가 없으면 당해년 Estimation 이 없는 것으로 정확한 가치평가 불가하므로 제외
-                    if dic[key][0]['VAL3'] == '-':
-                        # print("정보부족")
-                        info_lack = True
-                        break
+                    # if dic[key][0]['VAL3'] == '-':
+                    #     # print("정보부족")
+                    #     info_lack = True
+                    #     pass_reason = '[{}][{}] 종목의 당해년 Estimation 이 없는 것으로 정확한 가치평가 불가 1차'.format(stock.code, stock.name)
+                    #     break
+                    # else:
+                    if len(dic[key]) == 3:
+                        data['요구수익률'] = 0 if dic[key][-2]['VAL3'] == '-' else float(dic[key][-2]['VAL3'])
+                        data['요구수익률2'] = 0 if dic[key][-1]['VAL3'] == '-' else float(dic[key][-1]['VAL3'])
                     else:
-                        if len(dic[key]) == 3:
-                            data['요구수익률'] = 0 if dic[key][-2]['VAL3'] == '-' else float(dic[key][-2]['VAL3'])
-                            data['요구수익률2'] = 0 if dic[key][-1]['VAL3'] == '-' else float(dic[key][-1]['VAL3'])
-                        else:
-                            data['요구수익률'] = 0 if dic[key][-1]['VAL3'] == '-' else float(dic[key][-1]['VAL3'])
-                            data['요구수익률2'] = data['요구수익률']
-                        # if DEBUG: print(data['요구수익률'], data['요구수익률2'])
+                        data['요구수익률'] = 0 if dic[key][-1]['VAL3'] == '-' else float(dic[key][-1]['VAL3'])
+                        data['요구수익률2'] = data['요구수익률']
+                    # if DEBUG: print(data['요구수익률'], data['요구수익률2'])
 
             data['회사명'] = stock.name
             data['발행주식수'] = stock.issued_shares
@@ -508,7 +515,7 @@ def new_find_hidden_pearl():
             data['액면가'] = stock.par_value
             data['통화'] = 'KRW' if stock.curr == '' else stock.curr
             soup = get_soup_from_file('snapshot', yyyymmdd, stock.name, stock.code, 'html')
-
+            # print(soup)
             # marketTxt = fnguide.select_by_attr(soup, 'span', 'id', 'strMarketTxt').text.replace(' ', '') # 업종분류
             # data['업종구분'] = marketTxt.replace('\n', '')
             # # print(data['업종구분'], stock.market_text)
@@ -518,14 +525,17 @@ def new_find_hidden_pearl():
             data['업종구분'] = marketTxt.replace('\n', '')
             marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt2').text.replace(' ', '')  # 업종분류
             data['업종구분상세'] = marketTxt.replace('\n', '')
-            # print(data['업종구분'], stock.market_text)
+            # print(data['업종구분'], data['업종구분상세'], stock.market_text)
             if (data['업종구분'] != '' and stock.market_text is None) or (data['업종구분상세'] != '' and stock.market_text_detail is None):
                 fnguide.StockMarketTextUpdate(stock.code, data['업종구분'], data['업종구분상세'])
-            # 업종구분까지 업데이트 한 후 Valuation 정보가 부족한 종목은 Pass
-            if info_lack:
-                # print("Lack of information")
-                continue
+            # # 업종구분까지 업데이트 한 후 Valuation 정보가 부족한 종목은 Pass
+            # if info_lack:
+            #     # print("Lack of information")
+            #     logger.info(pass_reason)
+            #     pass_reason = ""
+            #     continue
             yearly_highlight = fnguide.select_by_attr(soup, 'div', 'id', 'highlight_D_Y')  # Snapshot FinancialHighlight
+            # print(yearly_highlight)
             if yearly_highlight:
                 # print(len(fnguide.get_table_contents(yearly_highlight, 'table thead tr th')))
                 # print(len(fnguide.get_table_contents(yearly_highlight, 'table tbody tr th')))
@@ -585,7 +595,11 @@ def new_find_hidden_pearl():
                                 break
                             else:
                                 continue
-                if not set(['지배주주순이익', '지배주주지분', '자산총계']).issubset(data.keys()): continue
+                if not set(['지배주주순이익', '지배주주지분', '자산총계']).issubset(data.keys()):
+                    pass_reason = '[{}][{}] Not enough Information for valuation 2차'.format(stock.code, stock.name)
+                    logger.info(pass_reason)
+                    trash[stock.code] = data
+                    continue
                 daily = fnguide.select_by_attr(soup, 'div', 'id', 'svdMainGrid1')  # Snapshot 시세현황1
                 columns, items, values = fnguide.setting(
                     fnguide.get_table_contents(daily, 'table thead tr th')[1:],
@@ -769,11 +783,11 @@ def new_find_hidden_pearl():
             #    treasure[d]['ROS'] < 10 or \
             #    treasure[d]['ROE'] / treasure[d]['ROS'] < 0.2 or \
             #    treasure[d]['12M PER'] == 0 or
-            if treasure[d]['X지배주주순이익'] < 1 or \
-               treasure[d]['ROE'] < 15 or \
-               treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
+            # if treasure[d]['X지배주주순이익'] < 1 or \
+            #      treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
+            #      treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
+            if treasure[d]['ROE'] < 15 or \
                treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
-               treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
                treasure[d]['NPV'] < 0 or \
                treasure[d]['NPV']/treasure[d]['종가']*100 < 105:
                 cnt += 1
@@ -792,6 +806,12 @@ def new_find_hidden_pearl():
                       align_string(',', treasure[d]['종가'], 10),
                       align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                       )
+                pass_reason = "[{}][{}]전기지배주주순이익 : {}\n지배주주지분 : {}\n자산총계 : {}\nROE : {:.2f} < 15\n업종구분 : {}\nNPV : {:.2f}\n종가 : {}".format(
+                    d, treasure[d]['회사명'], treasure[d]['X지배주주순이익'], treasure[d]['지배주주지분'], treasure[d]['자산총계'],
+                    treasure[d]['ROE'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''), treasure[d]['NPV'],
+                    treasure[d]['종가'])
+                logger.info(pass_reason)
+                pass_reason = ""
                 continue
             print(align_string('L', cnt, 5),
                   align_string('R', d, 10),
@@ -814,12 +834,20 @@ def new_find_hidden_pearl():
             os.remove(r'%s\result.%s.json' % (JsonDir, yyyymmdd))
         with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
             json.dump(treasure, fp)
+        if os.path.exists(r'%s\trash.%s.json' % (JsonDir, yyyymmdd)):
+            os.remove(r'%s\trash.%s.json' % (JsonDir, yyyymmdd))
+        with open(r'%s\trash.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(trash, fp)
     except Exception as e:
         print('error', e, '\n', stock)
         if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)):
             os.remove(r'%s\result.%s.json' % (JsonDir, yyyymmdd))
         with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
             json.dump(treasure, fp)
+        if os.path.exists(r'%s\trash.%s.json' % (JsonDir, yyyymmdd)):
+            os.remove(r'%s\trash.%s.json' % (JsonDir, yyyymmdd))
+        with open(r'%s\trash.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(trash, fp)
 
 
 def dataInit():
@@ -900,12 +928,12 @@ def TargetStockDataStore(crp_cd, data):
         print('[Error on TargetStockDataStore]\n', '*' * 50, e)
 
 if __name__ == '__main__':
-    get_high_ranked_stock_with_closeprice()
+    # get_high_ranked_stock_with_closeprice()
     # find_hidden_pearl()
     # messeage_to_telegram()
     # find_hidden_pearl()
     # test_find_hidden_pearl()
-    # new_find_hidden_pearl()
+    new_find_hidden_pearl()
     # msgr.messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
