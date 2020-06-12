@@ -98,6 +98,13 @@ def getSnP500StockInfo():
     USDataStore(dic)
 
 
+def getNasdaq100StockInfo():
+    url = 'https://indexes.nasdaqomx.com/Index/Weighting/NDX'
+    response = httpRequest(url)
+    soup = BeautifulSoup(response.decode(), 'lxml')
+    print(soup)
+
+
 def getYieldCurveInfo():
     import detective.fnguide_collector as fnguide
     url = 'http://www.worldgovernmentbonds.com'
@@ -290,11 +297,12 @@ def USDataStore(retDict):
     import detective_app.models as detective_db
     try:
         count = 0
-        print("USStock Information crawling started")
+        print("USStock Information crawled data storing started!!")
         for key in retDict.keys():
+            # print(retDict[key])
             info = detective_db.USStocks.objects.update_or_create(cik=retDict[key]['CIK'],
-                                                                  security=retDict[key]['Security'],
                                                                   defaults={
+                                                                      'security': retDict[key]['Security'],
                                                                       'ticker': retDict[key]['Ticker'],
                                                                       'ticker_symbol_link': retDict[key]['TickerLink'],
                                                                       'security_wiki_link': retDict[key]['SecurityLink'],
@@ -303,7 +311,7 @@ def USDataStore(retDict):
                                                                       'sec_filing': retDict[key]['SecurityFiling'],
                                                                       'location': retDict[key]['Address'],
                                                                       'location_link': retDict[key]['AddressLink'],
-                                                                      'date_first_added': None if retDict[key]['DateFirstAdded'] == '' else datetime.strptime(retDict[key]['DateFirstAdded'], '%Y-%m-%d'),
+                                                                      'date_first_added': retDict[key]['DateFirstAdded'],
                                                                       'founded': retDict[key]['Founded'],
                                                                       'listing': 'Y'
                                                                 }
@@ -344,5 +352,6 @@ def httpRequest(url, data=None, header=None, method='POST'):
 if __name__ == '__main__':
     # getStockInfo()
     # getSnP500StockInfo()
-    getYieldCurveInfo()
+    # getYieldCurveInfo()
+    getNasdaq100StockInfo()
 
