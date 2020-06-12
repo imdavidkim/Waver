@@ -454,6 +454,7 @@ def new_find_hidden_pearl():
     # fix_or_prov_or_estm = 'E'
     # # ----------------------------------
     HIGH_ROS = []
+    HIGH_RESERVE = []
     try:
         JsonDir = '%s\ResultJson' % path
         if not os.path.exists(JsonDir):
@@ -546,19 +547,28 @@ def new_find_hidden_pearl():
                                                          fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
                 # if DEBUG: print(columns, items, values)
                 for idx, i in enumerate(items):
-                    if i in ['지배주주순이익', '지배주주지분', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익']:
+                    if i in ['지배주주순이익', '지배주주지분', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)']:
                         for idx2, yyyymm in enumerate(columns):
                             # print(idx2, yyyymm)
                             # print(yyyymm[:4], dateDict['yyyy'], i, values[idx][idx2])
                             if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
                                 data['Period'] = yyyymm
-                                data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
-                                if values[idx][idx2 - 1] != '' and fnguide.is_float(
-                                        values[idx][idx2 - 1].replace(',', '')):
-                                    data['X' + i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
+                                if i[-3:] == '(%)':
+                                    data[i] = float(values[idx][idx2].replace(',', ''))
+                                    if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                            values[idx][idx2 - 1].replace(',', '')):
+                                        data['X' + i] = float(values[idx][idx2-1].replace(',', ''))
+                                    else:
+                                        data['X' + i] = 0
+                                    break
                                 else:
-                                    data['X' + i] = 0
-                                break
+                                    data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
+                                    if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                            values[idx][idx2 - 1].replace(',', '')):
+                                        data['X' + i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
+                                    else:
+                                        data['X' + i] = 0
+                                    break
                             # elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
                             #     if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2 - 1] == '':
                             #         if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2 - 2] == '':
@@ -574,7 +584,14 @@ def new_find_hidden_pearl():
                             #         data['Period'] = columns[idx2-1]
                             #         data[i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
                             else:
-                                continue
+                                if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                        values[idx][idx2 - 1].replace(',', '')):
+                                    if i[-3:] == '(%)':
+                                        data['X' + i] = float(values[idx][idx2 - 1].replace(',', ''))
+                                    else:
+                                        data['X' + i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
+                                else:
+                                    continue
                     elif i in ['ROE(%)']:
                         for idx2, yyyymm in enumerate(columns):
                             # print(idx2, yyyymm)
@@ -595,6 +612,7 @@ def new_find_hidden_pearl():
                                 break
                             else:
                                 continue
+
                 if not set(['지배주주순이익', '지배주주지분', '자산총계']).issubset(data.keys()):
                     pass_reason = '[{}][{}] Not enough Information for valuation 2차'.format(stock.code, stock.name)
                     logger.info(pass_reason)
@@ -721,6 +739,8 @@ def new_find_hidden_pearl():
                 if DEBUG: print("data['발행주식수']", data['발행주식수'])
                 if DEBUG: print("data['자산총계']", data['자산총계'])
                 if DEBUG: print("data['매출액']", data['매출액'])
+                if DEBUG: print("data['유보율']", data['X유보율(%)'])
+                if DEBUG: print("data['부채비율']", data['부채비율(%)'])
                 if 'X지배주주순이익' not in data.keys(): data['X지배주주순이익'] = 0.0
                 data['ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
                 # if data['ROE'] > 20 and (data['금융수익-금융수익'] / data['지배주주순이익'] > 0.7 or data['기타수익-기타수익'] / data['지배주주순이익'] > 0.7 ):
@@ -732,6 +752,7 @@ def new_find_hidden_pearl():
                 data['NPV2'] = (data['주주가치'] * (data['지배주주지분'] / data['자산총계'])) / data['발행주식수']
                 data['ROS'] = data['지배주주순이익'] / data['매출액'] * 100
                 if data['ROS'] > 15: HIGH_ROS.append(data['회사명'])
+                if 'X유보율(%)' in data.keys() and data['X유보율(%)'] > 1000: HIGH_RESERVE.append(data['회사명'])
                 if DEBUG: print(data)
                 treasure[stock.code] = data
         print('='*50, '마이너스', '='*50)
@@ -788,6 +809,8 @@ def new_find_hidden_pearl():
             #      treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
             if treasure[d]['ROE'] < 15 or \
                treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
+               treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
+               treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
                treasure[d]['NPV'] < 0 or \
                treasure[d]['NPV']/treasure[d]['종가']*100 < 105:
                 cnt += 1
@@ -806,11 +829,22 @@ def new_find_hidden_pearl():
                       align_string(',', treasure[d]['종가'], 10),
                       align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                       )
-                pass_reason = "[{}][{}]전기지배주주순이익 : {}\n지배주주지분 : {}\n자산총계 : {}\nROE : {:.2f} < 15\n업종구분 : {}\nNPV : {:.2f}\n종가 : {}".format(
-                    d, treasure[d]['회사명'], treasure[d]['X지배주주순이익'], treasure[d]['지배주주지분'], treasure[d]['자산총계'],
-                    treasure[d]['ROE'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''), treasure[d]['NPV'],
-                    treasure[d]['종가'])
-                logger.info(pass_reason)
+                if treasure[d]['ROE'] < 15 or treasure[d]['ROE'] < treasure[d]['요구수익률']:
+                    pass_reason = "[{}][{}]['ROE'] < 15 또는 ['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d, treasure[d]['회사명'], treasure[d]['ROE'], treasure[d]['요구수익률'])
+                elif treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설']:
+                    pass_reason = "[{}][{}][업종구분이 제조 또는 건설] => 업종구분 : {}".format(d, treasure[d]['회사명'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''))
+                elif treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51:
+                    pass_reason = "[{}][{}][지배주주 자산지분 비율이 51% 미만] => 지배주주지분 / 자산총계 : {:.2f}".format(d, treasure[d]['회사명'], treasure[d]['지배주주지분'] / treasure[d]['자산총계'])
+                else:
+                    pass_reason = "[{}][{}]전기지배주주순이익 : {}\n지배주주지분 : {}\n자산총계 : {}\nROE : {:.2f} < 15\n업종구분 : {}\nNPV : {:.2f}\n종가 : {}".format(
+                        d, treasure[d]['회사명'], treasure[d]['X지배주주순이익'], treasure[d]['지배주주지분'], treasure[d]['자산총계'],
+                        treasure[d]['ROE'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''), treasure[d]['NPV'],
+                        treasure[d]['종가'])
+
+                if treasure[d]['ROE'] >= 30 or treasure[d]['NPV']/treasure[d]['종가']*100 > 200:
+                    logger.info("[NEED TO CHECK]" + pass_reason)
+                else:
+                    logger.error(pass_reason)
                 pass_reason = ""
                 continue
             print(align_string('L', cnt, 5),
@@ -829,7 +863,9 @@ def new_find_hidden_pearl():
                   align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                   )
             TargetStockDataStore(d, treasure[d])
-        print(HIGH_ROS)
+        # print(HIGH_ROS)
+        # print(HIGH_RESERVE)
+        logger.info(HIGH_RESERVE)
         if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)):
             os.remove(r'%s\result.%s.json' % (JsonDir, yyyymmdd))
         with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
