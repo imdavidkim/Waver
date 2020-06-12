@@ -26,8 +26,8 @@ class Stocks(models.Model):
 
 class USStocks(models.Model):
     class Meta:
-        unique_together = (('cik', 'security'),)
-    cik = models.CharField(max_length=10, unique=True, primary_key=True)
+        unique_together = (('cik', 'security', 'listing'),)
+    cik = models.CharField(max_length=10, primary_key=True)
     security = models.TextField()
     security_wiki_link = models.URLField(null=True)
     ticker = models.CharField(max_length=20, default='')
@@ -44,7 +44,7 @@ class USStocks(models.Model):
     address = models.TextField(null=True)
     location = models.TextField(null=True)
     location_link = models.URLField(null=True)
-    date_first_added = models.DateField(null=True)
+    date_first_added = models.TextField(null=True)
     listing = models.CharField(max_length=1, default='Y')
     founded = models.TextField(null=True)
     create_at = models.DateTimeField(auto_now_add=True)
