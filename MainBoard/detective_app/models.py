@@ -51,6 +51,32 @@ class USStocks(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+class USNasdaqStocks(models.Model):
+    class Meta:
+        unique_together = (('security', 'listing'),)
+    security = models.TextField(primary_key=True)
+    security_wiki_link = models.URLField(null=True)
+    ticker = models.CharField(max_length=20, default='')
+    ticker_symbol_link = models.URLField(null=True)
+    category_code = models.CharField(max_length=20, null=True)
+    category_name = models.TextField()
+    category_detail = models.TextField()
+    sec_filing = models.URLField()
+    issued_shares = models.FloatField(null=True)
+    capital = models.FloatField(null=True)
+    par_value = models.IntegerField(null=True)
+    curr = models.CharField(max_length=3, null=True)
+    tel = models.CharField(max_length=20, null=True)
+    address = models.TextField(null=True)
+    location = models.TextField(null=True)
+    location_link = models.URLField(null=True)
+    date_first_added = models.TextField(null=True)
+    listing = models.CharField(max_length=1, default='Y')
+    founded = models.TextField(null=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
 class TargetStocks(models.Model):
     class Meta:
         unique_together = (('valuation_date', 'code'),)
