@@ -11,7 +11,17 @@ import csv
 import xmltodict
 import os
 
+
 marketTxt = None
+
+
+class jobs:
+    jobtype = ''
+    workDir = ''
+    url = ''
+    filetype = ''
+    reqdata = None
+    # driver = None
 
 
 def getConfig():
@@ -54,24 +64,132 @@ def saveFile(workDir, code, name, type, xml, mode='wb', encoding='utf8'):
     file.write(xml)
     file.close()
 
+def generateEncCode():
+    import numpy as np
+    yyyymmdd = str(datetime.now())[:10]
+    mm = yyyymmdd[5:7]
+    dd = yyyymmdd[-2:]
+    en = ''
+    n = 5
+    en += ''.join(["{}".format(np.random.randint(0, 9)) for num in range(0, n)])
+    en += mm
+    en += ''.join(["{}".format(np.random.randint(0, 9)) for num in range(0, n)])
+    en += dd
+    return en
+
+
+def dictfetchall(cursor):
+    # "Return all rows from a cursor as a dict"
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in cursor.fetchall()
+    ]
+
+
+def getTargetFile(j, c):
+    import json
+    try:
+        retResult = ''
+        # print(c)
+        if fileCheck(j.workDir, c['code'], c['name'], j.jobtype, j.filetype):
+            retResult = '[{}][{}][{}]|Skipped'.format(j.jobtype, c['code'], c['name'])
+            pass
+        else:
+            print('[{}][{}][{}] File is on process...'.format(j.jobtype, c['code'], c['name']))
+            if j.url is None or j.url == '':
+                url = 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}'.format(
+                    c['code'], generateEncCode())
+                response = httpRequest(url, None, 'GET')
+                with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, c['name'], c['code'], j.jobtype, j.filetype),
+                          'w') as fp:
+                    json.dump(json.loads(response), fp)
+                retResult = "[{}][{}][{}]|Done".format(j.jobtype, c['code'], c['name'])
+            elif j.url:
+                if j.reqdata is None:
+                    url = j.url.format(c['code'])
+                    response = httpRequest(url, None, 'GET')
+                    with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, c['name'], c['code'], j.jobtype, j.filetype),
+                              'w') as fp:
+                        json.dump(json.loads(response), fp)
+                    retResult = "[{}][{}][{}]|Done".format(j.jobtype, c['code'], c['name'])
+                else:
+                    url = j.url
+                    j.reqdata['gicode'] = 'A{}'.format(c['code'])
+                    response = httpRequestWithDriver(None, url, j.reqdata)
+                    # print(response)
+                    soup = BeautifulSoup(response.decode('utf-8'), "lxml")
+                    # File 처리
+                    xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
+                    saveFile(j.workDir, c['code'], c['name'], j.jobtype, xml)
+
+                    # File 처리 끝
+                    # DB 처리
+                    marketTxt = select_by_attr(soup, 'span', 'class', 'stxt stxt1').text
+                    marketTxtDetail = select_by_attr(soup, 'span', 'class', 'stxt stxt2').text
+                    settlementMonth = select_by_attr(soup, 'span', 'class', 'stxt stxt3').text
+                    retResult = "{}|{}|{}|{}|{}|{}".format(j.jobtype, c['code'], c['name'], marketTxt, marketTxtDetail,
+                                                               settlementMonth)
+    except Exception as e:
+        print(e)
+    return retResult
+
+
+def getUSFinanceData():
+    import sys
+    import os
+    import django
+    from multiprocessing import Pool
+    from functools import partial
+    getConfig()
+
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+
+    yyyymmdd = str(datetime.now())[:10]
+    workDir = r'{}\{}\{}'.format(path, 'GlobalSnapshot', yyyymmdd)
+    if not os.path.exists(workDir):
+        os.makedirs(workDir)
+
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("""
+        select ticker as 'code', max(replace(replace(replace(replace(replace(replace(security, ' ', ''), '&', 'AND'), ',', ''), '.', ''), '!', ''), '*', '')) as 'name'
+        from (
+            select security, ticker from detective_app_usstocks where listing = 'Y'
+            union
+            select security, ticker from detective_app_usnasdaqstocks where listing = 'Y'
+        )
+        group by ticker
+        order by ticker""")
+        s = dictfetchall(cursor)
+
+        agents = 3
+        j = jobs()
+        j.workDir = workDir
+        j.url = None
+        j.jobtype = 'GlobalSnapshot'
+        j.filetype = 'json'
+
+        func = partial(getTargetFile, j)
+        with Pool(processes=agents) as pool:
+            result = pool.map(func, iter(s))
+        print(len(result), result)
+
+
 
 def getFinanceData(cmd=None):
     import sys
     import os
     import django
-    import json
-    # from seleniumrequests import Chrome
-    # from selenium.webdriver.chrome.options import Options
-    # getConfig()
-    # CHROMEDRIVER_PATH = chrome_path
-    # options = Options()
-    # options.headless = True
-    # driver = Chrome(CHROMEDRIVER_PATH, chrome_options=options)
-    # driver.implicitly_wait(3)
-    # ----Original Source
+    from multiprocessing import Pool
+    from functools import partial
+    getConfig()
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
-    getConfig()
+
     CHROMEDRIVER_PATH = chrome_path
     options = Options()
     options.headless = True
@@ -99,7 +217,7 @@ def getFinanceData(cmd=None):
         103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp',
         104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp',
         108: 'http://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp',
-        200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A%s_D.json',
+        200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A{}_D.json',
     }
 
     data = {
@@ -127,83 +245,79 @@ def getFinanceData(cmd=None):
 
             data['NewMenuID'] = key
             ext = 'json' if cmd == 200 else 'html'
-            for idx, s in enumerate(stockInfo):
-                # print(fileCheck(workDir, s.code, s.name, reportType[key]))
 
-                if fileCheck(workDir, s.code, s.name, reportType[key], ext):
-                    print('[%d/%d][%s][%s][%s] File is already exist. Skipped...' % (idx+1, len(stockInfo), reportType[key], s.code, s.name))
-                    continue
-                print('[%d/%d][%s][%s][%s] File is on process...' % (idx+1, len(stockInfo), reportType[key], s.code, s.name))
-                data['gicode'] = 'A%s' % s.code
-                # response = httpRequest(urlInfo[key], data)
-                if cmd == 200:
-                    url = urlInfo[key] % s.code
-                    response = httpRequest(url, None, 'GET')
-                    with open(r'%s\financeData_%s_%s_%s.json' % (workDir, s.name, s.code, reportType[key]), 'w') as fp:
-                        json.dump(json.loads(response), fp)
-                else:
-                    response = httpRequestWithDriver(driver, urlInfo[key], data)
-                    # print(response)
-                    soup = BeautifulSoup(response.decode('utf-8'), "lxml")
-                    # File 처리
-                    xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-                    # p = Process(target=saveFile, args=(workDir, s, reportType[key], xml))
-                    # p = Process(target=saveFile, args=(workDir, s.code, s.name, reportType[key], xml))
-                    # p.start()
-                    # p.join()
-                    saveFile(workDir, s.code, s.name, reportType[key], xml)
+            if cmd == 200:
+                agents = 2
+                j = jobs()
+                j.filetype = ext
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                s = stockInfo.values()
 
-                    # File 처리 끝
-                    # DB 처리
-                    marketTxt = select_by_attr(soup, 'span', 'class', 'stxt stxt1').text
-                    marketTxtDetail = select_by_attr(soup, 'span', 'class', 'stxt stxt2').text
-                    settlementMonth = select_by_attr(soup, 'span', 'class', 'stxt stxt3').text
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+            else:
+                agents = 3
+                j = jobs()
+                j.filetype = ext
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                j.reqdata = data
+                # j.driver = driver
+                s = stockInfo.values()
 
-                    if marketTxt and reportType[key] == 'snapshot':
-                        StockMarketTextUpdate(s.code, marketTxt, marketTxtDetail, settlementMonth)
-                        print('[%d/%d][%s][%s][%s] MarketInformation Updated to %s | %s | %s' % (
-                        idx + 1, len(stockInfo), reportType[key], s.code, s.name, marketTxt, marketTxtDetail, settlementMonth))
-                        marketTxt = None
-                    # divs = soup.find_all('div')
-                    # if reportType[key] in ['snapshot', 'financeReport']:
-                    #     for d in divs:
-                    #         if 'id' in d.attrs.keys():
-                    #             # if ('div' in d.attrs['id'] or 'highlight' in d.attrs['id']) and 'um_table' in d.attrs['class']:
-                    #             if 'div' in d.attrs['id'] and 'um_table' in d.attrs['class']:
-                    #                 # print(d.attrs['id'], d.attrs['class'])
-                    #                 # if d.attrs['id'] == 'divSonikY':
-                    #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
-                    #                 # print('\n\n\n\n\n')
-                    #             # 20180418
-                    #             elif 'highlight_D' in d.attrs['id'] and 'um_table' in d.attrs['class']:
-                    #                 if 'highlight_D_A' == d.attrs['id']:
-                    #                     continue
-                    #                 # print(d.attrs['id'], d.attrs['class'])
-                    #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
-                    #             elif 'svdMainGrid' in d.attrs['id'] and 'um_table' in d.attrs['class']:
-                    #                 # print(d.attrs['id'], d.attrs['class'])
-                    #                 dynamic_parse_table(d.attrs['id'], d.table, s.code, s.name)
-                    #     # DB 처리 끝
-                    # else:
-                    #     static_parse_table(divs, s.code, s.name)
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+
+                for r in result:
+                    retArr = r.split('|')
+                    if retArr[3] != '' and retArr[1] == 'snapshot':
+                        StockMarketTextUpdate(retArr[1], retArr[3], retArr[4], retArr[5])
+                # print(len(result), result)
+            # for idx, s in enumerate(stockInfo):
+            #     # print(fileCheck(workDir, s.code, s.name, reportType[key]))
+            #
+            #     if fileCheck(workDir, s.code, s.name, reportType[key], ext):
+            #         print('[%d/%d][%s][%s][%s] File is already exist. Skipped...' % (idx+1, len(stockInfo), reportType[key], s.code, s.name))
+            #         continue
+            #     print('[%d/%d][%s][%s][%s] File is on process...' % (idx+1, len(stockInfo), reportType[key], s.code, s.name))
+            #     data['gicode'] = 'A%s' % s.code
+            #     # response = httpRequest(urlInfo[key], data)
+            #     if cmd == 200:
+            #         url = urlInfo[key] % s.code
+            #         response = httpRequest(url, None, 'GET')
+            #         with open(r'%s\financeData_%s_%s_%s.json' % (workDir, s.name, s.code, reportType[key]), 'w') as fp:
+            #             json.dump(json.loads(response), fp)
+            #     else:
+            #         response = httpRequestWithDriver(driver, urlInfo[key], data)
+            #         # print(response)
+            #         soup = BeautifulSoup(response.decode('utf-8'), "lxml")
+            #         # File 처리
+            #         xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
+            #         # p = Process(target=saveFile, args=(workDir, s, reportType[key], xml))
+            #         # p = Process(target=saveFile, args=(workDir, s.code, s.name, reportType[key], xml))
+            #         # p.start()
+            #         # p.join()
+            #         saveFile(workDir, s.code, s.name, reportType[key], xml)
+            #
+            #         # File 처리 끝
+            #         # DB 처리
+            #         marketTxt = select_by_attr(soup, 'span', 'class', 'stxt stxt1').text
+            #         marketTxtDetail = select_by_attr(soup, 'span', 'class', 'stxt stxt2').text
+            #         settlementMonth = select_by_attr(soup, 'span', 'class', 'stxt stxt3').text
+            #
+            #         if marketTxt and reportType[key] == 'snapshot':
+            #             StockMarketTextUpdate(s.code, marketTxt, marketTxtDetail, settlementMonth)
+            #             print('[%d/%d][%s][%s][%s] MarketInformation Updated to %s | %s | %s' % (
+            #             idx + 1, len(stockInfo), reportType[key], s.code, s.name, marketTxt, marketTxtDetail, settlementMonth))
+            #             marketTxt = None
+
             # FinanceReport 성공 끝
 
-            '''
-            stockInfo = detective_db.Stocks.objects.all()
-            for key in reportType.keys():
-                data['NewMenuID'] = key
-                for idx, s in enumerate(stockInfo):
-                    data['gicode'] = 'A%s' % s.code
-                    response = httpRequest(urlInfo[key], data)
-                    soup = BeautifulSoup(response.decode('utf-8'), "lxml")
-                    xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-                    file = open(r"%s\financeData_%s_%s_%s.txt" % (rootDir,
-                                                                  s.name,
-                                                                  s.code,
-                                                                  reportType[key]), "wb")
-                    file.write(xml)
-                    file.close()
-            '''
         print("FnGuideDataCollection job finished")
         driver.close()
         driver.quit()
@@ -958,7 +1072,7 @@ def httpRequest(url, data, method='POST'):
         return None
 
 
-def getUSFinanceData(cmd=None):
+def getUSFinanceDataNotUse(cmd=None):
     import sys
     import os
     import django
@@ -1010,8 +1124,9 @@ def getUSFinanceData(cmd=None):
 
 
 if __name__ == '__main__':
-    getFinanceData(101)
-    # getFinanceData(200)
+    # print(getUSFinanceData())
+    # getFinanceData(101)
+    getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
     # getFinanceData(104)
