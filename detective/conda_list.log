@@ -74,3 +74,80 @@ wheel                     0.33.4                   py36_0
 wincertstore              0.2              py36h7fe50ca_0
 xmltodict                 0.12.0                   pypi_0    pypi
 yahoofinancials           1.5                      pypi_0    pypi
+
+
+amqp                      1.4.9                    pypi_0    pypi
+anyjson                   0.3.3                    pypi_0    pypi
+asn1crypto                0.24.0                   pypi_0    pypi
+beautifulsoup4            4.8.0                    pypi_0    pypi
+billiard                  3.3.0.23                 pypi_0    pypi
+bs4                       0.0.1                    pypi_0    pypi
+celery                    3.1.26.post2             pypi_0    pypi
+certifi                   2019.6.16                py36_1
+cffi                      1.12.3                   pypi_0    pypi
+chardet                   3.0.4                    pypi_0    pypi
+cryptography              2.7                      pypi_0    pypi
+cycler                    0.10.0                   pypi_0    pypi
+cython                    0.29.13                  pypi_0    pypi
+decorator                 4.4.0                    pypi_0    pypi
+django                    2.2.1                    py36_0
+django-celery             3.3.0                    pypi_0    pypi
+django-pandas             0.6.1                    pypi_0    pypi
+edgar                     1.0.0                    pypi_0    pypi
+fredapi                   0.4.2                    pypi_0    pypi
+future                    0.17.1                   pypi_0    pypi
+html5lib                  1.0.1                    pypi_0    pypi
+idna                      2.8                      pypi_0    pypi
+intel-openmp              2019.0                   pypi_0    pypi
+jsonpath-rw               1.4.0                    pypi_0    pypi
+kiwisolver                1.1.0                    pypi_0    pypi
+kombu                     3.0.37                   pypi_0    pypi
+lxml                      4.4.0                    pypi_0    pypi
+matplotlib                3.1.1                    pypi_0    pypi
+mechanize                 0.4.2                    pypi_0    pypi
+mkl                       2019.0                   pypi_0    pypi
+numpy                     1.17.0                   pypi_0    pypi
+oauthlib                  3.0.2                    pypi_0    pypi
+pandas                    0.25.0                   pypi_0    pypi
+pandasdmx                 0.9                      pypi_0    pypi
+patsy                     0.5.1                    pypi_0    pypi
+pip                       19.1.1                   py36_0
+ply                       3.11                     pypi_0    pypi
+pycparser                 2.19                     pypi_0    pypi
+pyparsing                 2.4.2                    pypi_0    pypi
+pypdf                     1.13                     pypi_0    pypi
+pypiwin32                 223                      pypi_0    pypi
+pysocks                   1.7.0                    pypi_0    pypi
+python                    3.6.9                h5500b2f_0
+python-dateutil           2.8.0                    pypi_0    pypi
+python-telegram-bot       12.2.0                   pypi_0    pypi
+pytrends                  4.6.0                    pypi_0    pypi
+pytz                      2019.1                     py_0
+pywin32                   227                      pypi_0    pypi
+requests                  2.22.0                   pypi_0    pypi
+requests-file             1.4.3                    pypi_0    pypi
+requests-oauthlib         1.2.0                    pypi_0    pypi
+scipy                     1.3.0                    pypi_0    pypi
+selenium                  3.141.0                  pypi_0    pypi
+selenium-requests         1.3                      pypi_0    pypi
+setuptools                41.0.1                   py36_0
+simplejson                3.16.0                   pypi_0    pypi
+six                       1.12.0                   pypi_0    pypi
+soupsieve                 1.9.2                    pypi_0    pypi
+sqlite                    3.29.0               he774522_0
+sqlparse                  0.3.0                    pypi_0    pypi
+statsmodels               0.10.1                   pypi_0    pypi
+tldextract                2.2.1                    pypi_0    pypi
+tornado                   6.0.3                    pypi_0    pypi
+tradingeconomics          0.2.953                  pypi_0    pypi
+tweepy                    3.8.0                    pypi_0    pypi
+urllib3                   1.25.3                   pypi_0    pypi
+vc                        14.1                 h0510ff6_4
+vine                      1.3.0                    pypi_0    pypi
+vs2015_runtime            14.15.26706          h3a45250_4
+webencodings              0.5.1                    pypi_0    pypi
+websocket-client          0.56.0                   pypi_0    pypi
+wheel                     0.33.4                   py36_0
+wincertstore              0.2              py36h7fe50ca_0
+xmltodict                 0.12.0                   pypi_0    pypi
+yahoofinancials           1.5                      pypi_0    pypi
