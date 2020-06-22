@@ -231,10 +231,11 @@ def getFinanceData(cmd=None):
     }
 
     xmlString = ''
+    result = None
 
     try:
-        stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-        # stockInfo = detective_db.Stocks.objects.filter(code='192080', listing='Y')
+        # stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+        stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
         for key in reportType.keys():
             # print(cmd, cmd and key != cmd)
             if cmd and key != cmd:
@@ -245,7 +246,7 @@ def getFinanceData(cmd=None):
 
             data['NewMenuID'] = key
             ext = 'json' if cmd == 200 else 'html'
-
+            # 신규코드(multiprocessing) 시작
             if cmd == 200:
                 agents = 2
                 j = jobs()
@@ -275,9 +276,17 @@ def getFinanceData(cmd=None):
 
                 for r in result:
                     retArr = r.split('|')
-                    if retArr[3] != '' and retArr[1] == 'snapshot':
-                        StockMarketTextUpdate(retArr[1], retArr[3], retArr[4], retArr[5])
-                # print(len(result), result)
+                    if retArr[3] != '' and retArr[0] == 'snapshot':
+                        StockMarketTextUpdate(retArr[1], retArr[3].replace('\xa0', ' '), retArr[4].replace('\xa0', ' '),
+                                              retArr[5].replace('\xa0', ' '))
+                if len(stockInfo) != len(result):
+                    print(
+                        "Total target stocks : {}\n requested stocks : {}\nPlease check out the process.\nTerminating this program.".format(
+                            len(stockInfo), len(result)))
+                    exit(0)
+            # 신규코드(multiprocessing) 끝
+
+            # 20200622 원래 코드임 - 위 코드 자꾸 에러나면 원복필요
             # for idx, s in enumerate(stockInfo):
             #     # print(fileCheck(workDir, s.code, s.name, reportType[key]))
             #
@@ -1125,8 +1134,8 @@ def getUSFinanceDataNotUse(cmd=None):
 
 if __name__ == '__main__':
     # print(getUSFinanceData())
-    # getFinanceData(101)
-    getFinanceData(200)
+    getFinanceData(101)
+    # getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
     # getFinanceData(104)
