@@ -99,10 +99,11 @@ def getSnP500StockInfo():
 
 
 def getNasdaq100StockInfo():
-    url = 'https://indexes.nasdaqomx.com/Index/Weighting/NDX'
+    url = 'https://en.wikipedia.org/wiki/NASDAQ-100'
     response = httpRequest(url)
-    soup = BeautifulSoup(response.decode(), 'lxml')
-    print(soup)
+    dic = wikiDataCleansing2(response)
+    USNasdaqDataInit()
+    USNasdaqDataStore(dic)
 
 
 def getYieldCurveInfo():
@@ -119,6 +120,25 @@ def getYieldCurveInfo():
     # url = 'https://tradingeconomics.com/bonds'
     # ycinfo_nation = fnguide.select_by_attr(soup, 'div', 'class', 'table-responsive')
     # print(ycinfo_nation)
+
+
+def wikiDataCleansing2(content):
+    import detective.fnguide_collector as fnguide
+    retDict = {}
+    soup = BeautifulSoup(content, 'lxml')
+    # print(soup)
+    nasdaq100_companies = fnguide.select_by_attr(soup, 'table', 'id', 'constituents')  # Snapshot FinancialHighlight
+    if nasdaq100_companies:
+        header = fnguide.get_table_contents(nasdaq100_companies, 'tr th')
+        datas = fnguide.get_table_contents(nasdaq100_companies, 'tr td')
+        for i in range(0, len(datas)-1, len(header)):
+            retDict[datas[i][:datas[i].find('(')].strip()] = {
+                'Security': datas[i][:datas[i].find('(')].strip(),
+                'SecurityLink': datas[i][datas[i].find('(')+1:datas[i].find(')')].strip(),
+                'Ticker': datas[i+1].strip(),
+                'TickerLink': 'http://www.nasdaq.com/symbol/{}'.format(datas[i+1].strip().lower())
+            }
+    return retDict
 
 
 def wikiDataCleansing(content):
@@ -241,6 +261,24 @@ def USDataInit():
         print("USStocks data initialization Failed with", e)
 
 
+def USNasdaqDataInit():
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        detective_db.USNasdaqStocks.objects.update(listing='N')
+    except Exception as e:
+        print("USNasdaqStocks data initialization Failed with", e)
+
+
 def dataStore(retDict):
     import sys
     import os
@@ -319,6 +357,39 @@ def USDataStore(retDict):
             count += 1
             if count % 100 == 0:
                 print("%d USStock Information on processing..." % count)
+        print("Total %d" % count)
+    except Exception as e:
+        print(e, key, retDict[key])
+
+
+def USNasdaqDataStore(retDict):
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        count = 0
+        print("USNasdaqStock Information crawled data storing started!!")
+        for key in retDict.keys():
+            # print(retDict[key])
+            info = detective_db.USNasdaqStocks.objects.update_or_create(security=retDict[key]['Security'],
+                                                                        defaults={
+                                                                      'ticker': retDict[key]['Ticker'],
+                                                                      'ticker_symbol_link': retDict[key]['TickerLink'],
+                                                                      'security_wiki_link': retDict[key]['SecurityLink'],
+                                                                      'listing': 'Y'
+                                                                }
+                                                                )
+            count += 1
+            if count % 100 == 0:
+                print("%d USNasdaqStock Information on processing..." % count)
         print("Total %d" % count)
     except Exception as e:
         print(e, key, retDict[key])
