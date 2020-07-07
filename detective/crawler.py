@@ -422,7 +422,7 @@ def httpRequest(url, data=None, header=None, method='POST'):
 
 if __name__ == '__main__':
     # getStockInfo()
-    # getSnP500StockInfo()
+    getSnP500StockInfo()
     # getYieldCurveInfo()
-    getNasdaq100StockInfo()
+    # getNasdaq100StockInfo()
 
