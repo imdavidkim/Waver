@@ -87,6 +87,7 @@ class TargetStocks(models.Model):
     name = models.TextField()
     curr = models.CharField(max_length=3)
     last_price = models.FloatField(null=True)
+    price_gap = models.TextField(null=True)
     target_price = models.FloatField(null=True)
     target_price2 = models.FloatField(null=True)
     ratio = models.FloatField(null=True)
