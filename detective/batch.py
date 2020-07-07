@@ -33,8 +33,8 @@ class NonDaemonicPool(multiprocessing.pool.Pool):
 
 
 if __name__ == '__main__':
-    getStockInfo()
-    getSnP500StockInfo()
+    # getStockInfo()
+    # getSnP500StockInfo()
     getNasdaq100StockInfo()
     get_list_day(None)
     # get_list_day('20200413')
@@ -43,8 +43,9 @@ if __name__ == '__main__':
 
     run_info = [101, 200]
     agents = 2
-    with NonDaemonicPool(processes=agents) as pool:
+
     # with Pool(processes=agents) as pool:
+    with NonDaemonicPool(processes=agents) as pool:
         result = pool.map(getFinanceData, run_info)
     new_find_hidden_pearl()
     messeage_to_telegram(get_high_ranked_stock())
