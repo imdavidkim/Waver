@@ -110,8 +110,8 @@ def get_high_ranked_stock():
     django.setup()
     from django.db import connection
     cursor = connection.cursor()
-    sql = """select t.code, t.name, t.curr, t.last_price, t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
-                select code, name, curr, last_price, target_price, target_price2, return_on_equity, ratio, target_price2/last_price*100 as ratio2 from detective_app_targetstocks
+    sql = """select t.code, t.name, t.curr, cast(t.last_price as INTEGER)|| '(' || case when t.price_gap is NULL then '' else t.price_gap end || ')', t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
+                select code, name, curr, last_price, price_gap, target_price, target_price2, return_on_equity, ratio, target_price2/last_price*100 as ratio2 from detective_app_targetstocks
                 where ratio > 100
                 --and return_on_equity > 14
                 and valuation_date = '%s'
@@ -554,7 +554,10 @@ def new_find_hidden_pearl():
                             if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
                                 data['Period'] = yyyymm
                                 if i[-3:] == '(%)':
-                                    data[i] = float(values[idx][idx2].replace(',', ''))
+                                    if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                        data[i] = float(values[idx][idx2].replace(',', ''))
+                                    else:
+                                        data[i] = 0
                                     if values[idx][idx2 - 1] != '' and fnguide.is_float(
                                             values[idx][idx2 - 1].replace(',', '')):
                                         data['X' + i] = float(values[idx][idx2-1].replace(',', ''))
@@ -562,7 +565,10 @@ def new_find_hidden_pearl():
                                         data['X' + i] = 0
                                     break
                                 else:
-                                    data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
+                                    if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                        data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
+                                    else:
+                                        data[i] = 0
                                     if values[idx][idx2 - 1] != '' and fnguide.is_float(
                                             values[idx][idx2 - 1].replace(',', '')):
                                         data['X' + i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
@@ -626,8 +632,17 @@ def new_find_hidden_pearl():
                 # if DEBUG: print(columns, items, values)
                 for idx, col in enumerate(columns):
                     # print(col, values[idx])
-                    if col in ['종가', '외국인 보유비중', '비율', '거래량']:
-                        data[col] = float(values[idx].replace(',', '')) if (values[idx] is not None and values[idx] != '') else 0.0
+                    if col.strip() in ['종가', '외국인 보유비중', '비율', '거래량', '전일대비']:
+                        if col.strip() == '전일대비':
+                            tmp = values[idx].replace(' ', '').replace('+', '△ ').replace('-', '▽ ').replace(',', '')
+                            tmp2 = tmp.split(' ')
+                            if tmp2[1] == '0':
+                                data[col.strip()] = "-"
+                            else:
+                                pct = round(float(tmp2[1]) / (data['종가'] - float(tmp2[1])) * 100, 2)
+                                data[col.strip()] = "{}{}%".format(tmp2[0], pct)
+                        else:
+                            data[col] = float(values[idx].replace(',', '')) if (values[idx] is not None and values[idx] != '') else 0.0
                         # break
                     if col in ['발행주식수-보통주'] and data['발행주식수'] != float(values[idx].replace(',', '')):
                         print("[{}][{}]발행주식수가 다릅니다. {} <> {}".format(stock.code, stock.name, stock.issued_shares, float(values[idx].replace(',', ''))))
@@ -742,7 +757,10 @@ def new_find_hidden_pearl():
                 if DEBUG: print("data['유보율']", data['X유보율(%)'])
                 if DEBUG: print("data['부채비율']", data['부채비율(%)'])
                 if 'X지배주주순이익' not in data.keys(): data['X지배주주순이익'] = 0.0
-                data['ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
+                if data['지배주주지분'] == 0:
+                    data['ROE'] = 0.0
+                else:
+                    data['ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
                 # if data['ROE'] > 20 and (data['금융수익-금융수익'] / data['지배주주순이익'] > 0.7 or data['기타수익-기타수익'] / data['지배주주순이익'] > 0.7 ):
                 #     # data['ROE'] = (data['지배주주순이익'] - data['금융수익-금융수익'] - data['기타수익-기타수익'] - data['중단영업이익']) / data['지배주주지분'] * 100
                 #     data['ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
@@ -939,6 +957,7 @@ def TargetStockDataStore(crp_cd, data):
                                                                       'name': data['회사명'],
                                                                       'curr': data['통화'],
                                                                       'last_price': data['종가'],
+                                                                      'price_gap': data['전일대비'],
                                                                       'target_price': data['NPV'],
                                                                       'target_price2': data['NPV2'],
                                                                       'required_yield': data['요구수익률'],
@@ -963,13 +982,311 @@ def TargetStockDataStore(crp_cd, data):
     except Exception as e:
         print('[Error on TargetStockDataStore]\n', '*' * 50, e)
 
+
+def test():
+    import sys
+    import os
+    import django
+
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    DEBUG = True
+    dateDict = new_get_dateDict()
+    treasure = {}
+
+    import detective_app.models as detective_db
+    stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')  # 삼성전자
+    print(align_string('L', 'No.', 10),
+          align_string('R', 'Code', 10),
+          align_string('R', 'Name', 20),
+          align_string('R', 'Issued Shares', 20),
+          align_string('R', 'Capital', 20),
+          align_string('R', 'ParValue', 10),
+          align_string('R', 'Currency', 10),
+          '\n')
+
+    for ii, stock in enumerate(stockInfo):
+        data = {}
+        print(align_string('L', ii + 1, 10),
+              align_string('R', stock.code, 10),
+              align_string('R', stock.name, 20 - len(stock.name)),
+              align_string(',', stock.issued_shares, 20),
+              align_string(',', stock.capital, 20),
+              align_string('R', stock.par_value, 10),
+              align_string('R', stock.curr, 10),
+              )
+        dic = get_soup_from_file('ROE', yyyymmdd, stock.name, stock.code, 'json')
+        # if DEBUG: print(dic)
+        for key in dic:
+            if '04' == key:
+                # 해당 종목의 ROE 가 없으면 당해년 Estimation 이 없는 것으로 정확한 가치평가 불가하므로 제외
+                if len(dic[key]) == 3:
+                    data['요구수익률'] = 0 if dic[key][-2]['VAL3'] == '-' else float(dic[key][-2]['VAL3'])
+                    data['요구수익률2'] = 0 if dic[key][-1]['VAL3'] == '-' else float(dic[key][-1]['VAL3'])
+                else:
+                    data['요구수익률'] = 0 if dic[key][-1]['VAL3'] == '-' else float(dic[key][-1]['VAL3'])
+                    data['요구수익률2'] = data['요구수익률']
+                # if DEBUG: print(data['요구수익률'], data['요구수익률2'])
+
+        data['회사명'] = stock.name
+        data['발행주식수'] = stock.issued_shares
+        data['자본금'] = stock.capital
+        data['액면가'] = stock.par_value
+        data['통화'] = 'KRW' if stock.curr == '' else stock.curr
+        soup = get_soup_from_file('snapshot', yyyymmdd, stock.name, stock.code, 'html')
+
+        marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt1').text.replace(' ', '')  # 업종분류
+        data['업종구분'] = marketTxt.replace('\n', '')
+        marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt2').text.replace(' ', '')  # 업종분류
+        data['업종구분상세'] = marketTxt.replace('\n', '')
+        # print(data['업종구분'], data['업종구분상세'], stock.market_text)
+        if (data['업종구분'] != '' and stock.market_text is None) or (
+                data['업종구분상세'] != '' and stock.market_text_detail is None):
+            fnguide.StockMarketTextUpdate(stock.code, data['업종구분'], data['업종구분상세'])
+
+        yearly_highlight = fnguide.select_by_attr(soup, 'div', 'id', 'highlight_D_Y')  # Snapshot FinancialHighlight
+        # print(yearly_highlight)
+        if yearly_highlight:
+            columns, items, values = fnguide.setting(
+                fnguide.get_table_contents(yearly_highlight, 'table thead tr th')[1:],
+                fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
+                fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
+            # if DEBUG: print(columns, items, values)
+            for idx, i in enumerate(items):
+                if i in ['지배주주순이익', '지배주주지분', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)']:
+                    for idx2, yyyymm in enumerate(columns):
+                        # print(idx2, yyyymm)
+                        # print(yyyymm[:4], dateDict['yyyy'], i, values[idx][idx2])
+                        if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
+                            data['Period'] = yyyymm
+                            if i[-3:] == '(%)':
+                                if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                    data[i] = float(values[idx][idx2].replace(',', ''))
+                                else:
+                                    data[i] = 0
+                                if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                        values[idx][idx2 - 1].replace(',', '')):
+                                    data['X' + i] = float(values[idx][idx2 - 1].replace(',', ''))
+                                else:
+                                    data['X' + i] = 0
+                                break
+                            else:
+                                if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                    data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
+                                else:
+                                    data[i] = 0
+                                if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                        values[idx][idx2 - 1].replace(',', '')):
+                                    data['X' + i] = float(values[idx][idx2 - 1].replace(',', '')) * 100000000
+                                else:
+                                    data['X' + i] = 0
+                                break
+
+                        else:
+                            if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                    values[idx][idx2 - 1].replace(',', '')):
+                                if i[-3:] == '(%)':
+                                    data['X' + i] = float(values[idx][idx2 - 1].replace(',', ''))
+                                else:
+                                    data['X' + i] = float(values[idx][idx2 - 1].replace(',', '')) * 100000000
+                            else:
+                                continue
+                elif i in ['ROE(%)']:
+                    for idx2, yyyymm in enumerate(columns):
+                        # print(idx2, yyyymm)
+                        # print(yyyymm[:4], dateDict['yyyy'], values[idx][idx2])
+                        if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
+                            data['Period'] = yyyymm
+                            if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                pass
+                            else:
+                                data['확인사항'] = values[idx][idx2].replace(',', '')
+                            break
+                        elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
+                            data['Period'] = columns[idx2 - 1]
+                            if fnguide.is_float(values[idx][idx2 - 1].replace(',', '')):
+                                pass
+                            else:
+                                data['확인사항'] = values[idx][idx2 - 1].replace(',', '')
+                            break
+                        else:
+                            continue
+
+            if not set(['지배주주순이익', '지배주주지분', '자산총계']).issubset(data.keys()):
+                pass_reason = '[{}][{}] Not enough Information for valuation 2차'.format(stock.code, stock.name)
+                continue
+            daily = fnguide.select_by_attr(soup, 'div', 'id', 'svdMainGrid1')  # Snapshot 시세현황1
+            columns, items, values = fnguide.setting(
+                fnguide.get_table_contents(daily, 'table thead tr th')[1:],
+                fnguide.get_table_contents(daily, 'table tbody tr th'),
+                fnguide.get_table_contents(daily, 'table tbody tr td'))
+            # if DEBUG: print(columns, items, values)
+            for idx, col in enumerate(columns):
+                print(col, values[idx])
+                if col.strip() in ['종가', '외국인 보유비중', '비율', '거래량', '전일대비']:
+                    if col.strip() == '전일대비':
+                        tmp = values[idx].replace(' ', '').replace('+', '△ ').replace('-', '▽ ').replace(',', '')
+                        tmp2 = tmp.split(' ')
+                        if tmp2[1] == '0':
+                            data[col.strip()] = "-"
+                        else:
+                            pct = round(float(tmp2[1]) / (data['종가'] - float(tmp2[1])) * 100, 2)
+                            data[col.strip()] = "{}{}%".format(tmp2[0], pct)
+                    else:
+                        data[col] = float(values[idx].replace(',', '')) if (
+                                    values[idx] is not None and values[idx] != '') else 0.0
+                    # break
+                if col in ['발행주식수-보통주'] and data['발행주식수'] != float(values[idx].replace(',', '')):
+                    print("[{}][{}]발행주식수가 다릅니다. {} <> {}".format(stock.code, stock.name, stock.issued_shares,
+                                                                 float(values[idx].replace(',', ''))))
+                    data['발행주식수'] = float(values[idx].replace(',', ''))
+
+            fwd_summary = fnguide.select_by_attr(soup, 'div', 'id', 'corp_group2')  # Snapshot section ul_corpinfo
+            summary_title = []
+            summary_data = []
+            if fwd_summary:
+                for tag in fwd_summary.select('dl'):
+                    if tag.dt.text.strip() != '' and tag.dt.text.strip() != '\n':
+                        # print(tag.dt.text.strip())
+                        summary_title.append(tag.dt.text.strip())
+                for tag in fwd_summary.select('dl dd'):
+                    try:
+                        # print(tag.text.strip())
+                        float(tag.text.strip().replace(',', ''))
+                        summary_data.append(float(tag.text.strip().replace(',', '')))
+                    except Exception as e:
+                        # print('[Error]', tag.text.strip())
+                        if '%' in tag.text.strip():
+                            summary_data.append(tag.text.strip())
+                            # summary_data.append(float(tag.text.strip().replace('%', '')) * 0.01)
+                        elif '-' == tag.text.strip():
+                            summary_data.append(0)
+                        else:
+                            continue
+            # print(fwd_summary)
+            # print(summary_title)
+            # print(summary_data)
+            if fwd_summary and summary_title:
+                for idx, title in enumerate(summary_title):
+                    data[title] = summary_data[idx]
+                    # print(title, summary_data[idx])
+            adjval = data['업종 PER'] * data['PBR(Price Book-value Ratio)']
+            if '매출액' not in data.keys():
+                data['매출액'] = data['이자수익'] if '이자수익' in data.keys() else data[
+                    '보험료수익'] if '보험료수익' in data.keys() else data['순영업수익'] if '순영업수익' in data.keys() else data[
+                    '영업수익'] if '영업수익' in data.keys() else 0
+            if data['매출액'] == 0: continue
+            if data['요구수익률'] == 0: data['요구수익률'] = 10.0
+            if DEBUG: print("data['지배주주지분']", data['지배주주지분'])
+            if DEBUG: print("data['요구수익률']", data['요구수익률'])
+            if DEBUG: print("data['발행주식수']", data['발행주식수'])
+            if DEBUG: print("data['자산총계']", data['자산총계'])
+            if DEBUG: print("data['매출액']", data['매출액'])
+            if DEBUG: print("data['유보율']", data['X유보율(%)'])
+            if DEBUG: print("data['부채비율']", data['부채비율(%)'])
+            if 'X지배주주순이익' not in data.keys(): data['X지배주주순이익'] = 0.0
+            if data['지배주주지분'] == 0:
+                data['ROE'] = 0.0
+            else:
+                data['ROE'] = data['지배주주순이익'] / data['지배주주지분'] * 100
+
+            data['주주가치'] = data['지배주주지분'] + (
+                    data['지배주주지분'] * (data['ROE'] - data['요구수익률']) / (data['요구수익률']))
+            data['NPV'] = data['주주가치'] / data['발행주식수']
+            data['NPV2'] = (data['주주가치'] * (data['지배주주지분'] / data['자산총계'])) / data['발행주식수']
+            data['ROS'] = data['지배주주순이익'] / data['매출액'] * 100
+
+            print(data)
+            treasure[stock.code] = data
+    print('=' * 50, '마이너스', '=' * 50)
+    print(align_string('L', 'No.', 5),
+          align_string('R', 'Code', 10),
+          align_string('R', 'Name', 20),
+          # align_string('R', 'X지배주주순이익', 20),
+          align_string('R', '요구수익률', 15),
+          align_string('R', 'ROE', 20),
+          align_string('R', 'ROS', 20),
+          align_string('R', '12M PER', 8),
+          align_string('R', '업종 PER', 8),
+          align_string('R', '지배주주지분', 14),
+          align_string('R', '주주가치', 16),
+          align_string('R', 'NPV', 20),
+          align_string('R', '종가', 10),
+          align_string('R', '확인사항', 16),
+          )
+    cnt = 0
+    print(treasure)
+    for d in treasure.keys():
+        if treasure[d]['ROE'] < 15 or \
+                treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
+                treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
+                treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
+                treasure[d]['NPV'] < 0 or \
+                treasure[d]['NPV'] / treasure[d]['종가'] * 100 < 105:
+            cnt += 1
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
+                  # align_string(',', round(treasure[d]['X지배주주순이익'], 2), 20),
+                  align_string(',', round(treasure[d]['요구수익률'], 2), 20),
+                  align_string(',', round(treasure[d]['ROE'], 2), 20),
+                  align_string(',', round(treasure[d]['ROS'], 2), 20),
+                  align_string(',', treasure[d]['12M PER'], 8),
+                  align_string(',', treasure[d]['업종 PER'], 8),
+                  align_string(',', round(treasure[d]['지배주주지분'], 0), 20),
+                  align_string(',', round(treasure[d]['주주가치'], 0), 20),
+                  align_string(',', round(treasure[d]['NPV'], 0), 20),
+                  align_string(',', treasure[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
+                  )
+            if treasure[d]['ROE'] < 15 or treasure[d]['ROE'] < treasure[d]['요구수익률']:
+                pass_reason = "[{}][{}]['ROE'] < 15 또는 ['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d,
+                                                                                                            treasure[d][
+                                                                                                                '회사명'],
+                                                                                                            treasure[d][
+                                                                                                                'ROE'],
+                                                                                                            treasure[d][
+                                                                                                                '요구수익률'])
+            elif treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설']:
+                pass_reason = "[{}][{}][업종구분이 제조 또는 건설] => 업종구분 : {}".format(d, treasure[d]['회사명'],
+                                                                             treasure[d]['업종구분'].replace(u'\xa0',
+                                                                                                         '').replace(
+                                                                                 '\n', ''))
+            elif treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51:
+                pass_reason = "[{}][{}][지배주주 자산지분 비율이 51% 미만] => 지배주주지분 / 자산총계 : {:.2f}".format(d, treasure[d]['회사명'],
+                                                                                                treasure[d]['지배주주지분'] /
+                                                                                                treasure[d]['자산총계'])
+            else:
+                pass_reason = "[{}][{}]전기지배주주순이익 : {}\n지배주주지분 : {}\n자산총계 : {}\nROE : {:.2f} < 15\n업종구분 : {}\nNPV : {:.2f}\n종가 : {}".format(
+                    d, treasure[d]['회사명'], treasure[d]['X지배주주순이익'], treasure[d]['지배주주지분'], treasure[d]['자산총계'],
+                    treasure[d]['ROE'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''), treasure[d]['NPV'],
+                    treasure[d]['종가'])
+            continue
+        print(align_string('L', cnt, 5),
+              align_string('R', d, 10),
+              align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
+              align_string(',', round(treasure[d]['요구수익률'], 2), 20),
+              align_string(',', round(treasure[d]['ROE'], 2), 20),
+              align_string(',', round(treasure[d]['ROS'], 2), 20),
+              align_string(',', treasure[d]['12M PER'], 8),
+              align_string(',', treasure[d]['업종 PER'], 8),
+              align_string(',', round(treasure[d]['지배주주지분'], 0), 20),
+              align_string(',', round(treasure[d]['주주가치'], 0), 20),
+              align_string(',', round(treasure[d]['NPV'], 0), 20),
+              align_string(',', treasure[d]['종가'], 10),
+              align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
+              )
+
 if __name__ == '__main__':
     # get_high_ranked_stock_with_closeprice()
     # find_hidden_pearl()
     # messeage_to_telegram()
     # find_hidden_pearl()
     # test_find_hidden_pearl()
-    new_find_hidden_pearl()
+    # new_find_hidden_pearl()
     # msgr.messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
@@ -978,3 +1295,4 @@ if __name__ == '__main__':
     # crp_cd = '005930'
     # aa = get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd)
     # print(len(aa.find_all('div')))
+    test()
