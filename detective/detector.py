@@ -110,7 +110,7 @@ def get_high_ranked_stock():
     django.setup()
     from django.db import connection
     cursor = connection.cursor()
-    sql = """select t.code, t.name, t.curr, cast(t.last_price as INTEGER)|| '(' || case when t.price_gap is NULL then '' else t.price_gap end || ')', t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
+    sql = """select t.code, t.name, t.curr, t.last_price, t.price_gap, t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
                 select code, name, curr, last_price, price_gap, target_price, target_price2, return_on_equity, ratio, target_price2/last_price*100 as ratio2 from detective_app_targetstocks
                 where ratio > 100
                 --and return_on_equity > 14
@@ -123,8 +123,8 @@ def get_high_ranked_stock():
     cursor.execute(sql)
     retStr = ''
     for idx, d in enumerate(dictfetchall(cursor)):
-        retStr += '%d. %s\t%s => %s[%s%%]\n' % (
-            idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
+        retStr += '{}. {}({})\t{} => {}[{}%]\n'.format(
+            idx + 1, d['name'], d['price_gap'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
     return retStr
 
 
@@ -639,7 +639,10 @@ def new_find_hidden_pearl():
                             if tmp2[1] == '0':
                                 data[col.strip()] = "-"
                             else:
-                                pct = round(float(tmp2[1]) / (data['종가'] - float(tmp2[1])) * 100, 2)
+                                if tmp2[0] == '△':
+                                    pct = round(float(tmp2[1]) / (data['종가'] - float(tmp2[1])) * 100, 2)
+                                else:
+                                    pct = round(float(tmp2[1]) / (data['종가'] + float(tmp2[1])) * 100, 2)
                                 data[col.strip()] = "{}{}%".format(tmp2[0], pct)
                         else:
                             data[col] = float(values[idx].replace(',', '')) if (values[idx] is not None and values[idx] != '') else 0.0
