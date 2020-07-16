@@ -1001,7 +1001,7 @@ def test():
     treasure = {}
 
     import detective_app.models as detective_db
-    stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')  # 삼성전자
+    stockInfo = detective_db.Stocks.objects.filter(code='040160', listing='Y')  # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
