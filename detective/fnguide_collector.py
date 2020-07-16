@@ -10,7 +10,8 @@ import pprint
 import csv
 import xmltodict
 import os
-
+import detective.chromecrawler as cc
+import time
 
 marketTxt = None
 
@@ -21,12 +22,12 @@ class jobs:
     url = ''
     filetype = ''
     reqdata = None
-    # driver = None
+    driver = None
 
 
 def getConfig():
     import configparser
-    global path, django_path, main_path, chrome_path
+    global path, django_path, main_path, chrome_path  #, phantomjs_path
     config = configparser.ConfigParser()
     config.read('config.ini')
     path = config['COMMON']['REPORT_PATH']
@@ -34,6 +35,7 @@ def getConfig():
     django_path = proj_path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
     chrome_path = config['COMMON']['CHROME_PATH']
+    # phantomjs_path = config['COMMON']['PHANTOMJS_PATH']
 
 
 def fileCheck(workDir, code, name, type, ext):
@@ -97,13 +99,32 @@ def getTargetFile(j, c):
             pass
         else:
             print('[{}][{}][{}] File is on process...'.format(j.jobtype, c['code'], c['name']))
-            if j.url is None or j.url == '':
-                url = 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}'.format(
-                    c['code'], generateEncCode())
-                response = httpRequest(url, None, 'GET')
-                with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, c['name'], c['code'], j.jobtype, j.filetype),
-                          'w') as fp:
-                    json.dump(json.loads(response), fp)
+            if j.jobtype.startswith('Global'):
+                url = j.url.format(c['code'], generateEncCode())
+                if j.filetype == 'html':
+                    drv = j.driver
+                    drv.set_path()
+                    drv.set_option()
+                    drv.set_driver()
+                    drv.set_waiting()
+                    # drv.implicitly_wait(15)
+                    drv.set_url(url)
+                    # time.sleep(1)
+                    response = drv.driver.page_source
+                    # print(response)
+                    # soup = BeautifulSoup(response.decode('utf-8'), "lxml")
+                    soup = BeautifulSoup(response, "lxml")
+                    # File 처리
+                    xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
+                    saveFile(j.workDir, c['code'], c['name'], j.jobtype, xml)
+                    # drv.driverClose()
+                    # drv.driverQuit()
+                elif j.filetype == 'json':
+                    response = httpRequest(url, None, 'GET')
+                    with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, c['name'], c['code'], j.jobtype,
+                                                                   j.filetype),
+                              'w') as fp:
+                        json.dump(json.loads(response), fp)
                 retResult = "[{}][{}][{}]|Done".format(j.jobtype, c['code'], c['name'])
             elif j.url:
                 if j.reqdata is None:
@@ -135,13 +156,15 @@ def getTargetFile(j, c):
     return retResult
 
 
-def getUSFinanceData():
+def getUSFinanceData(j_type, t_url):
     import sys
     import os
     import django
     from multiprocessing import Pool
+    from concurrent.futures import ThreadPoolExecutor
     from functools import partial
     getConfig()
+    # from selenium import webdriver
 
     sys.path.append(django_path)
     sys.path.append(main_path)
@@ -149,35 +172,49 @@ def getUSFinanceData():
     django.setup()
 
     yyyymmdd = str(datetime.now())[:10]
-    workDir = r'{}\{}\{}'.format(path, 'GlobalSnapshot', yyyymmdd)
+    workDir = r'{}\{}\{}'.format(path, j_type, yyyymmdd)
     if not os.path.exists(workDir):
         os.makedirs(workDir)
+    try:
 
-    from django.db import connection
-    with connection.cursor() as cursor:
-        cursor.execute("""
-        select ticker as 'code', max(replace(replace(replace(replace(replace(replace(security, ' ', ''), '&', 'AND'), ',', ''), '.', ''), '!', ''), '*', '')) as 'name'
-        from (
-            select security, ticker from detective_app_usstocks where listing = 'Y'
-            union
-            select security, ticker from detective_app_usnasdaqstocks where listing = 'Y'
-        )
-        group by ticker
-        order by ticker""")
-        s = dictfetchall(cursor)
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("""
+            select ticker as 'code', max(replace(replace(replace(replace(replace(replace(security, ' ', ''), '&', 'AND'), ',', ''), '.', ''), '!', ''), '*', '')) as 'name'
+            from (
+                select security, ticker from detective_app_usstocks where listing = 'Y'
+                union
+                select security, ticker from detective_app_usnasdaqstocks where listing = 'Y'
+            )
+            group by ticker
+            order by ticker""")
+            s = dictfetchall(cursor)
 
-        agents = 3
-        j = jobs()
-        j.workDir = workDir
-        j.url = None
-        j.jobtype = 'GlobalSnapshot'
-        j.filetype = 'json'
+            agents = 3
+            j = jobs()
+            j.workDir = workDir
+            j.url = t_url
+            j.jobtype = j_type
+            j.driver = cc.ChromeDriver()
+            # j.driver = webdriver.PhantomJS(phantomjs_path)
+            if j.jobtype == 'GlobalSnapshot':
+                # agents = 2
+                j.filetype = 'html'
+            elif j.jobtype == 'GlobalSummary':
+                # agents = 3
+                j.filetype = 'json'
 
-        func = partial(getTargetFile, j)
-        with Pool(processes=agents) as pool:
-            result = pool.map(func, iter(s))
-        print(len(result), result)
-
+            func = partial(getTargetFile, j)
+            # with Pool(processes=agents) as pool:
+            with ThreadPoolExecutor(max_workers=agents) as pool:
+                result = pool.map(func, iter(s))
+            print(len(result), result)
+            j.driver.driverClose()
+            j.driver.driverQuit()
+    except Exception as e:
+        print(e)
+        j.driver.driverClose()
+        j.driver.driverQuit()
 
 
 def getFinanceData(cmd=None):
@@ -194,7 +231,7 @@ def getFinanceData(cmd=None):
     options = Options()
     options.headless = True
     driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
-    # driver.implicitly_wait(3)
+    driver.implicitly_wait(3)
 
     sys.path.append(django_path)
     sys.path.append(main_path)
@@ -211,6 +248,8 @@ def getFinanceData(cmd=None):
         104: 'financeRatio',
         108: 'consensus',
         200: 'ROE',
+        300: 'GlobalSnapshot',
+        301: 'GlobalSummary',
     }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
     urlInfo = {
         101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
@@ -218,6 +257,8 @@ def getFinanceData(cmd=None):
         104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp',
         108: 'http://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp',
         200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A{}_D.json',
+        300: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd={}-US&en={}',
+        301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}'
     }
 
     data = {
@@ -234,12 +275,17 @@ def getFinanceData(cmd=None):
     result = None
 
     try:
-        # stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-        stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
         for key in reportType.keys():
             # print(cmd, cmd and key != cmd)
             if cmd and key != cmd:
                 continue
+            if cmd >= 300:
+                jobtype = reportType[key]
+                url = urlInfo[key]
+                getUSFinanceData(jobtype, url)
+                continue
+            stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+            # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
             workDir = r'%s\%s\%s' % (path, reportType[key], yyyymmdd)
             if not os.path.exists(workDir):
                 os.makedirs(workDir)
@@ -255,10 +301,12 @@ def getFinanceData(cmd=None):
                 j.jobtype = reportType[key]
                 j.url = urlInfo[key]
                 s = stockInfo.values()
-
+                # j.driver = cc.ChromeDriver()
                 func = partial(getTargetFile, j)
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
+                # j.driver.driverClose()
+                # j.driver.driverQuit()
             else:
                 agents = 3
                 j = jobs()
@@ -269,13 +317,14 @@ def getFinanceData(cmd=None):
                 j.reqdata = data
                 # j.driver = driver
                 s = stockInfo.values()
-
+                # j.driver = cc.ChromeDriver()
                 func = partial(getTargetFile, j)
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
 
                 for r in result:
                     retArr = r.split('|')
+                    if len(retArr) < 2: continue
                     if retArr[3] != '' and retArr[0] == 'snapshot':
                         StockMarketTextUpdate(retArr[1], retArr[3].replace('\xa0', ' '), retArr[4].replace('\xa0', ' '),
                                               retArr[5].replace('\xa0', ' '))
@@ -284,6 +333,8 @@ def getFinanceData(cmd=None):
                         "Total target stocks : {}\n requested stocks : {}\nPlease check out the process.\nTerminating this program.".format(
                             len(stockInfo), len(result)))
                     exit(0)
+
+                # j.driver.driverQuit()
             # 신규코드(multiprocessing) 끝
 
             # 20200622 원래 코드임 - 위 코드 자꾸 에러나면 원복필요
@@ -328,12 +379,12 @@ def getFinanceData(cmd=None):
             # FinanceReport 성공 끝
 
         print("FnGuideDataCollection job finished")
-        driver.close()
-        driver.quit()
+        # driver.close()
+        # driver.quit()
     except Exception as e:
         print(e)
-        driver.close()
-        driver.quit()
+        # driver.close()
+        # driver.quit()
 
     # result = xmltodict.parse(xml)
     # print(result)
@@ -594,6 +645,7 @@ def StockMarketTextUpdate(crp_cd, market_text, market_text_detail, sttl_month):
     django.setup()
     import detective_app.models as detective_db
     try:
+        print("Updating market info...{}-{}-{}-{}".format(crp_cd, market_text, market_text_detail, sttl_month))
         detective_db.Stocks.objects.filter(code=crp_cd).update(market_text=market_text, market_text_detail=market_text_detail, settlement_month=sttl_month)
     except Exception as e:
         print('[Error on StockDataUpdate]\n', '*' * 50, e)
@@ -1134,9 +1186,10 @@ def getUSFinanceDataNotUse(cmd=None):
 
 if __name__ == '__main__':
     # print(getUSFinanceData())
-    getFinanceData(101)
-    # getFinanceData(200)
+    # getFinanceData(101)
+    getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
     # getFinanceData(104)
     # getUSFinanceData()
+    print(generateEncCode())
