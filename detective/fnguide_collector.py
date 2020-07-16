@@ -22,7 +22,7 @@ class jobs:
     url = ''
     filetype = ''
     reqdata = None
-    driver = None
+    # driver = None
 
 
 def getConfig():
@@ -102,7 +102,7 @@ def getTargetFile(j, c):
             if j.jobtype.startswith('Global'):
                 url = j.url.format(c['code'], generateEncCode())
                 if j.filetype == 'html':
-                    drv = j.driver
+                    drv = cc.ChromeDriver()
                     drv.set_path()
                     drv.set_option()
                     drv.set_driver()
@@ -117,8 +117,8 @@ def getTargetFile(j, c):
                     # File 처리
                     xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
                     saveFile(j.workDir, c['code'], c['name'], j.jobtype, xml)
-                    # drv.driverClose()
-                    # drv.driverQuit()
+                    drv.driverClose()
+                    drv.driverQuit()
                 elif j.filetype == 'json':
                     response = httpRequest(url, None, 'GET')
                     with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, c['name'], c['code'], j.jobtype,
@@ -195,7 +195,7 @@ def getUSFinanceData(j_type, t_url):
             j.workDir = workDir
             j.url = t_url
             j.jobtype = j_type
-            j.driver = cc.ChromeDriver()
+            # j.driver = cc.ChromeDriver()
             # j.driver = webdriver.PhantomJS(phantomjs_path)
             if j.jobtype == 'GlobalSnapshot':
                 # agents = 2
@@ -209,8 +209,8 @@ def getUSFinanceData(j_type, t_url):
             with ThreadPoolExecutor(max_workers=agents) as pool:
                 result = pool.map(func, iter(s))
             print(len(result), result)
-            j.driver.driverClose()
-            j.driver.driverQuit()
+            # j.driver.driverClose()
+            # j.driver.driverQuit()
     except Exception as e:
         print(e)
         j.driver.driverClose()
@@ -227,11 +227,11 @@ def getFinanceData(cmd=None):
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
 
-    CHROMEDRIVER_PATH = chrome_path
+    # CHROMEDRIVER_PATH = chrome_path
     options = Options()
     options.headless = True
-    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
-    driver.implicitly_wait(3)
+    # driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
+    # driver.implicitly_wait(3)
 
     sys.path.append(django_path)
     sys.path.append(main_path)
