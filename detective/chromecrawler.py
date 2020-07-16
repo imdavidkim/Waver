@@ -2,9 +2,7 @@
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options
-from bs4 import BeautifulSoup
 import time
-import scrapy
 
 class ChromeDriver:
     chrome_path = ""
@@ -66,10 +64,18 @@ if __name__ == '__main__':
         drv.set_driver()
         drv.set_waiting()
         # drv.implicitly_wait(15)
-        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=MSFT-US&en=08854076681207")
-        time.sleep(1)
-        print(drv.driver.page_source)
+        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=MSFT-US&en=08854076681216")
+        time.sleep(5)
+        # print(drv.driver.window_handles)
+        # drv.driver.switch_to.window(drv.driver.window_handles[-1])
+        # drv.driverClose()
+        # # print(drv.driver.window_handles)
+        # drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=AMZN-US&en=08854076681215")
+        # time.sleep(5)
+        # print(drv.driver.window_handles)
+        # drv.driver.switch_to.window(drv.driver.window_handles[-1])
         drv.driverClose()
+        # print(drv.driver.window_handles)
         drv.driverQuit()
     except Exception as e:
         print(e)
