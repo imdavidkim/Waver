@@ -13,6 +13,7 @@ import json
 # import os
 import detective.fnguide_collector as fnguide
 import detective.messenger as msgr
+from detective.messenger import err_messeage_to_telegram
 DEBUG = True
 
 
@@ -108,24 +109,28 @@ def get_high_ranked_stock():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    from django.db import connection
-    cursor = connection.cursor()
-    sql = """select t.code, t.name, t.curr, t.last_price, t.price_gap, t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
-                select code, name, curr, last_price, price_gap, target_price, target_price2, return_on_equity, ratio, target_price2/last_price*100 as ratio2 from detective_app_targetstocks
-                where ratio > 100
-                --and return_on_equity > 14
-                and valuation_date = '%s'
-                order by ratio2 desc
-                limit 30) as t
-             --where last_price > 14000
-             --and ratio2 > 100
-             order by t.ratio desc""" % yyyymmdd
-    cursor.execute(sql)
-    retStr = ''
-    for idx, d in enumerate(dictfetchall(cursor)):
-        retStr += '{}. {}({})\t{} => {}[{}%]\n'.format(
-            idx + 1, d['name'], d['price_gap'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
-    return retStr
+    try:
+        from django.db import connection
+        cursor = connection.cursor()
+        sql = """select t.code, t.name, t.curr, t.last_price, t.price_gap, t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
+                    select code, name, curr, last_price, price_gap, target_price, target_price2, return_on_equity, ratio, target_price2/last_price*100 as ratio2 from detective_app_targetstocks
+                    where ratio > 100
+                    --and return_on_equity > 14
+                    and valuation_date = '%s'
+                    order by ratio2 desc
+                    limit 30) as t
+                 --where last_price > 14000
+                 --and ratio2 > 100
+                 order by t.ratio desc""" % yyyymmdd
+        cursor.execute(sql)
+        retStr = ''
+        for idx, d in enumerate(dictfetchall(cursor)):
+            retStr += '{}. {}({})\t{} => {}[{}%]\n'.format(
+                idx + 1, d['name'], d['price_gap'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
+        return retStr
+    except Exception as e:
+        errmsg = '{}\n{}'.format('get_high_ranked_stock', str(e))
+        err_messeage_to_telegram(errmsg)
 
 
 def get_high_ranked_stock_with_closeprice():
@@ -141,48 +146,55 @@ def get_high_ranked_stock_with_closeprice():
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    from django.db import connection
-    cursor = connection.cursor()
-    sql = """select t.code, t.market_text, t.name, t.curr, t.last_price, t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
-                select s.code, s.market_text, ts.name, ts.curr, ts.last_price, ts.target_price, ts.target_price2, ts.return_on_equity, ts.ratio, ts.target_price2/ts.last_price*100 as ratio2 from detective_app_targetstocks ts, detective_app_stocks s
-                where ts.ratio > 100
-                and s.code = ts.code
-                --and return_on_equity > 14
-                and ts.valuation_date = '%s'
-                order by ratio2 desc
-                limit 30) as t
-             --where last_price > 14000
-             --and ratio2 > 100
-             order by t.ratio desc""" % yyyymmdd
-    cursor.execute(sql)
-    # retStr = ''
-    fig = None
-    # 폰트 경로
-    font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
-    # 폰트 이름 얻어오기
-    font_name = font_manager.FontProperties(fname=font_path).get_name()
-    # font 설정
-    plt.rc('font', family=font_name)
-    plt.close('all')
-    # plt.clf()
-    for idx, d in enumerate(dictfetchall(cursor)):
-        fig = plt.figure(clear=True)
-        price = getNaverPrice(d['code'], 36)
-        SP = fig.add_subplot(1, 1, 1)
-        SP.plot(price, label="{}".format(d['name']))
-        SP.legend(loc='upper left')
-        img_path = r'{}\{}\{}'.format(path, 'StockPriceTrace', yyyymmdd)
-        print(img_path)
-        if not os.path.exists(img_path):
-            os.makedirs(img_path)
-        plt.savefig(img_path + '\\{}_{}.png'.format(d['name'], d['code']))
-        plt.xticks(rotation=45)
-        # plt.show()
-        msgr.img_messeage_to_telegram(img_path + '\\{}_{}.png'.format(d['name'], d['code']))
+    try:
+        from django.db import connection
+        cursor = connection.cursor()
+        sql = """select t.code, t.market_text, t.name, t.curr, t.last_price, t.target_price, t.target_price2, t.return_on_equity, t.ratio, t.ratio2, (t.ratio + t.ratio2) / 2 as average_ratio  from (
+                    select s.code, s.market_text, ts.name, ts.curr, ts.last_price, ts.target_price, ts.target_price2, ts.return_on_equity, ts.ratio, ts.target_price2/ts.last_price*100 as ratio2 from detective_app_targetstocks ts, detective_app_stocks s
+                    where ts.ratio > 100
+                    and s.code = ts.code
+                    --and return_on_equity > 14
+                    and ts.valuation_date = '%s'
+                    order by ratio2 desc
+                    limit 30) as t
+                 --where last_price > 14000
+                 --and ratio2 > 100
+                 order by t.ratio desc""" % yyyymmdd
+        cursor.execute(sql)
+        # retStr = ''
+        fig = None
+        # 폰트 경로
+        font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
+        # 폰트 이름 얻어오기
+        font_name = font_manager.FontProperties(fname=font_path).get_name()
+        # font 설정
+        plt.rc('font', family=font_name)
+        plt.close('all')
+        # plt.clf()
+        for idx, d in enumerate(dictfetchall(cursor)):
+            fig = plt.figure(clear=True)
+            price = getNaverPrice(d['code'], 36)
+            SP = fig.add_subplot(1, 1, 1)
+            SP.plot(price, label="{}".format(d['name']))
+            SP.legend(loc='upper left')
+            img_path = r'{}\{}\{}'.format(path, 'StockPriceTrace', yyyymmdd)
+            print(img_path)
+            if not os.path.exists(img_path):
+                os.makedirs(img_path)
+            plt.savefig(img_path + '\\{}_{}.png'.format(d['name'], d['code']))
+            plt.xticks(rotation=45)
+            # plt.show()
+            msgr.img_messeage_to_telegram(img_path + '\\{}_{}.png'.format(d['name'], d['code']))
+            fig = None
+            plt.close('all')
+
+        plt = None
+    except Exception as e:
+        errmsg = '{}\n{}'.format('get_high_ranked_stock_with_closeprice', str(e))
+        err_messeage_to_telegram(errmsg)
         fig = None
         plt.close('all')
-
-    plt = None
+        plt = None
     # todaydate = datetime.strptime(yyyymmdd, "%Y-%m-%d")
     # before30date = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=30)
     # print(str(todaydate)[:10], str(before30date)[:10])
@@ -897,6 +909,8 @@ def new_find_hidden_pearl():
             json.dump(trash, fp)
     except Exception as e:
         print('error', e, '\n', stock)
+        errmsg = '{}\n{}\n[{}][{}]'.format('new_find_hidden_pearl', str(e), stock.code, stock.name)
+        err_messeage_to_telegram(errmsg)
         if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)):
             os.remove(r'%s\result.%s.json' % (JsonDir, yyyymmdd))
         with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
