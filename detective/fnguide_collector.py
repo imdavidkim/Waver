@@ -153,7 +153,8 @@ def getTargetFile(j, c):
                     retResult = "{}|{}|{}|{}|{}|{}".format(j.jobtype, c['code'], c['name'], marketTxt, marketTxtDetail,
                                                                settlementMonth)
     except Exception as e:
-        print(e)
+        errmsg = '{}\n{}'.format('getTargetFile', str(e))
+        err_messeage_to_telegram(errmsg)
     return retResult
 
 
@@ -196,8 +197,7 @@ def getUSFinanceData(j_type, t_url):
             j.workDir = workDir
             j.url = t_url
             j.jobtype = j_type
-            # j.driver = cc.ChromeDriver()
-            # j.driver = webdriver.PhantomJS(phantomjs_path)
+
             if j.jobtype == 'GlobalSnapshot':
                 # agents = 2
                 j.filetype = 'html'
@@ -210,12 +210,95 @@ def getUSFinanceData(j_type, t_url):
             with ThreadPoolExecutor(max_workers=agents) as pool:
                 result = pool.map(func, iter(s))
             print(result)
-            # j.driver.driverClose()
-            # j.driver.driverQuit()
     except Exception as e:
-        print(e)
-        # j.driver.driverClose()
-        # j.driver.driverQuit()
+        errmsg = '{}\n{}'.format('getUSFinanceData', str(e))
+        err_messeage_to_telegram(errmsg)
+
+
+def getUSFinanceDataStandalone(j_type, t_url):
+    import sys
+    import os
+    import django
+    from multiprocessing import Pool
+    from concurrent.futures import ThreadPoolExecutor
+    from functools import partial
+    getConfig()
+    # from selenium import webdriver
+
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+
+    yyyymmdd = str(datetime.now())[:10]
+    workDir = r'{}\{}\{}'.format(path, j_type, yyyymmdd)
+    if not os.path.exists(workDir):
+        os.makedirs(workDir)
+    try:
+
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("""
+            select ticker as 'code', max(replace(replace(replace(replace(replace(replace(security, ' ', ''), '&', 'AND'), ',', ''), '.', ''), '!', ''), '*', '')) as 'name'
+            from (
+                select security, ticker from detective_app_usstocks where listing = 'Y'
+                union
+                select security, ticker from detective_app_usnasdaqstocks where listing = 'Y'
+            )
+            group by ticker
+            order by ticker""")
+            s = dictfetchall(cursor)
+
+            if j_type == 'GlobalSnapshot':
+                filetype = 'html'
+                drv = cc.ChromeDriver()
+                drv.set_path()
+                drv.set_option()
+                drv.set_driver()
+                drv.set_waiting()
+
+                for i in iter(s):
+                    if fileCheck(workDir, i['code'], i['name'], j_type, filetype):
+                        retResult = '[{}][{}][{}]|Skipped'.format(j_type, i['code'], i['name'])
+                        print(retResult)
+                        pass
+                    else:
+                        print('[{}][{}][{}] File is on process...'.format(j_type, i['code'], i['name']))
+                        url = t_url.format(i['code'], generateEncCode())
+                        drv.set_url(url)
+                        response = drv.driver.page_source
+                        soup = BeautifulSoup(response, "lxml")
+                        xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
+                        saveFile(workDir, i['code'], i['name'], j_type, xml)
+                drv.driverClose()
+                drv.driverQuit()
+            elif j_type == 'GlobalGlobalSummary':
+                import json
+                filetype = 'json'
+                for i in iter(s):
+                    url = t_url.format(i['code'], generateEncCode())
+                    response = httpRequest(url, None, 'GET')
+                    with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, i['name'], i['code'], j_type,
+                                                                   filetype),
+                              'w') as fp:
+                        json.dump(json.loads(response), fp)
+
+                # j = jobs()
+                # j.workDir = workDir
+                # j.url = t_url
+                # j.jobtype = j_type
+                #
+                # if j.jobtype == 'GlobalSnapshot':
+                #     # agents = 2
+                #     j.filetype = 'html'
+                # elif j.jobtype == 'GlobalSummary':
+                #     # agents = 3
+                #     j.filetype = 'json'
+
+
+    except Exception as e:
+        errmsg = '{}\n{}'.format('getUSFinanceData', str(e))
+        err_messeage_to_telegram(errmsg)
 
 
 def getFinanceData(cmd=None):
@@ -283,7 +366,8 @@ def getFinanceData(cmd=None):
             if cmd >= 300:
                 jobtype = reportType[key]
                 url = urlInfo[key]
-                getUSFinanceData(jobtype, url)
+                # getUSFinanceData(jobtype, url)
+                getUSFinanceDataStandalone(jobtype, url)
                 continue
             stockInfo = detective_db.Stocks.objects.filter(listing='Y')
             # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
@@ -383,20 +467,10 @@ def getFinanceData(cmd=None):
         # driver.close()
         # driver.quit()
     except Exception as e:
-        print(e)
+        errmsg = '{}\n{}'.format('getFinanceData', str(e))
+        err_messeage_to_telegram(errmsg)
         # driver.close()
         # driver.quit()
-
-    # result = xmltodict.parse(xml)
-    # print(result)
-    # print(type(tagList), type(tagList[0]), dir(tagList[0]))
-    # ll = soup.find_all()
-    # for l in ll:
-    #     print(type(l))
-    # print(xmlString)
-    # print(soup.find_all())
-    # result = xmltodict.parse(soup.getText())
-    # print(result)
 
 
 def dynamic_parse_table(table_id, table, crp_cd, crp_nm, t_hierarchy=None, c_hierarchy=None):
