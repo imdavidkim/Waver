@@ -37,12 +37,12 @@ if __name__ == '__main__':
     # getSnP500StockInfo()
     # getNasdaq100StockInfo()
     # get_list_day(None)
-    # # get_list_day('20200708')
+    # get_list_day('20200708')
     # kofia_make_graph()
     # fred_make_graph()
-    #
-    # run_info = [101, 200]
-    # agents = 2
+
+    # run_info = [101, 200, 300]
+    # agents = 3
     run_info = [300]
     agents = 1
 
