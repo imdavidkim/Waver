@@ -12,6 +12,7 @@ import xmltodict
 import os
 import detective.chromecrawler as cc
 import time
+from detective.messenger import err_messeage_to_telegram
 
 marketTxt = None
 
@@ -208,13 +209,13 @@ def getUSFinanceData(j_type, t_url):
             # with Pool(processes=agents) as pool:
             with ThreadPoolExecutor(max_workers=agents) as pool:
                 result = pool.map(func, iter(s))
-            print(len(result), result)
+            print(result)
             # j.driver.driverClose()
             # j.driver.driverQuit()
     except Exception as e:
         print(e)
-        j.driver.driverClose()
-        j.driver.driverQuit()
+        # j.driver.driverClose()
+        # j.driver.driverQuit()
 
 
 def getFinanceData(cmd=None):
