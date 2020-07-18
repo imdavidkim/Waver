@@ -263,6 +263,7 @@ def getUSFinanceDataStandalone(j_type, t_url):
                         print(retResult)
                         pass
                     else:
+                        data = {}
                         print('[{}][{}][{}] File is on process...'.format(j_type, i['code'], i['name']))
                         url = t_url.format(i['code'], generateEncCode())
                         drv.set_url(url)
@@ -270,6 +271,20 @@ def getUSFinanceDataStandalone(j_type, t_url):
                         soup = BeautifulSoup(response, "lxml")
                         xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
                         saveFile(workDir, i['code'], i['name'], j_type, xml)
+                        # File 처리 끝
+                        # DB 처리
+                        data['결산월'] = select_by_attr(soup, 'ul', 'class', 'row2').find_all('li')[4].text
+                        # marketTxt = tmp[2].text
+                        # marketTxtDetail = tmp[3].text
+                        # settlementMonth = tmp[4].text
+                        tmp = select_by_attr(soup, 'ul', 'class', 'row2').find_all('li')
+                        tmp = select_by_attr(soup, 'div', 'class', 'row02').find_all('tr')
+                        for t in tmp:
+                            tmp2 = t.find_all('td')
+                            print(tmp2[0].text, tmp2[1].text.replace('\n', '').replace('\t', '').replace(' ', ''))
+
+
+
                 drv.driverClose()
                 drv.driverQuit()
             elif j_type == 'GlobalGlobalSummary':
