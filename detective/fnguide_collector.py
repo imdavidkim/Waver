@@ -277,7 +277,9 @@ def getUSFinanceDataStandalone(j_type, t_url):
                         # marketTxt = tmp[2].text
                         # marketTxtDetail = tmp[3].text
                         # settlementMonth = tmp[4].text
-                        tmp = select_by_attr(soup, 'ul', 'class', 'row2').find_all('li')
+                        tmp = select_by_attr(soup, 'ul', 'class', 'row1').find_all('li')
+                        for t in tmp:
+                            print(t.text)
                         tmp = select_by_attr(soup, 'div', 'class', 'row02').find_all('tr')
                         for t in tmp:
                             tmp2 = t.find_all('td')
