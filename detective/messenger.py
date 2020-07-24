@@ -54,6 +54,7 @@ def sendImage(token, chatid, img_path):
 
 def messeage_to_telegram(txt):
     import time
+    getConfig()
     DEBUG = False
     if txt is not None and txt != '':
         if not DEBUG:
@@ -67,6 +68,7 @@ def messeage_to_telegram(txt):
 
 def img_messeage_to_telegram(img_path):
     import time
+    getConfig()
     DEBUG = False
     if img_path is not None and img_path != '':
         if not DEBUG:
@@ -81,6 +83,7 @@ def img_messeage_to_telegram(img_path):
 
 
 def err_messeage_to_telegram(txt):
+    getConfig()
     sendMessage(error, chat_id_kh, txt)
 
 
