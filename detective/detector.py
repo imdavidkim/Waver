@@ -648,7 +648,7 @@ def new_find_hidden_pearl():
                         if col.strip() == '전일대비':
                             tmp = values[idx].replace(' ', '').replace('+', '△ ').replace('-', '▽ ').replace(',', '')
                             tmp2 = tmp.split(' ')
-                            if tmp2[1] == '0':
+                            if tmp == '' or tmp2[1] == '0':
                                 data[col.strip()] = "-"
                             else:
                                 if tmp2[0] == '△':
@@ -1015,7 +1015,7 @@ def test():
     treasure = {}
 
     import detective_app.models as detective_db
-    stockInfo = detective_db.Stocks.objects.filter(code='040160', listing='Y')  # 삼성전자
+    stockInfo = detective_db.Stocks.objects.filter(code='304100', listing='Y')  # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
@@ -1147,7 +1147,7 @@ def test():
                     if col.strip() == '전일대비':
                         tmp = values[idx].replace(' ', '').replace('+', '△ ').replace('-', '▽ ').replace(',', '')
                         tmp2 = tmp.split(' ')
-                        if tmp2[1] == '0':
+                        if tmp == '' or tmp2[1] == '0':
                             data[col.strip()] = "-"
                         else:
                             pct = round(float(tmp2[1]) / (data['종가'] - float(tmp2[1])) * 100, 2)
@@ -1296,6 +1296,64 @@ def test():
               align_string(',', treasure[d]['종가'], 10),
               align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
               )
+
+
+def ustest(j_type, t_url):
+    import sys
+    import os
+    import django
+    from detective.fnguide_collector import fileCheck, saveFile
+    from detective.fnguide_collector import generateEncCode
+    import detective.chromecrawler as cc
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    DEBUG = True
+    dateDict = new_get_dateDict()
+    treasure = {}
+
+    yyyymmdd = str(datetime.now())[:10]
+    workDir = r'{}\{}\{}'.format(path, j_type, '2020-07-20')
+
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("""
+                select ticker as 'code', max(replace(replace(replace(replace(replace(replace(security, ' ', ''), '&', 'AND'), ',', ''), '.', ''), '!', ''), '*', '')) as 'name'
+                from (
+                    select security, ticker from detective_app_usstocks where listing = 'Y'
+                    union
+                    select security, ticker from detective_app_usnasdaqstocks where listing = 'Y'
+                )
+                group by ticker
+                order by ticker""")
+        s = dictfetchall(cursor)
+
+        for i in iter(s):
+            if fileCheck(workDir, i['code'], i['name'], j_type, 'html'):
+                retResult = '[{}][{}][{}] File exist'.format(j_type, i['code'], i['name'])
+                print(retResult)
+                pass
+            else:
+                print('[{}][{}][{}] File is on process...'.format(j_type, i['code'], i['name']))
+                url = t_url.format(i['code'], generateEncCode())
+                drv = cc.ChromeDriver()
+                drv.set_path()
+                drv.set_option()
+                drv.set_driver()
+                drv.set_waiting()
+                drv.set_url(url)
+                response = drv.driver.page_source
+                soup = BeautifulSoup(response, "lxml")
+                xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
+                saveFile(workDir, i['code'], i['name'], j_type, xml)
+                retResult = '[{}][{}][{}] File down completed'.format(j_type, i['code'], i['name'])
+                print(retResult)
+
+
+
+
 
 if __name__ == '__main__':
     # get_high_ranked_stock_with_closeprice()
