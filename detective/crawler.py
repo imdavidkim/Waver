@@ -106,6 +106,15 @@ def getNasdaq100StockInfo():
     USNasdaqDataStore(dic)
 
 
+def getNasdaqStockInfo():
+    import string
+    alphabets = string.ascii_uppercase
+    for code in alphabets:
+        url = 'http://eoddata.com/stocklist/NASDAQ/{}.htm'.format(code)
+        response = httpRequest(url)
+        stocklistCleansing(response)
+
+
 def getYieldCurveInfo():
     import detective.fnguide_collector as fnguide
     url = 'http://www.worldgovernmentbonds.com'
@@ -120,6 +129,27 @@ def getYieldCurveInfo():
     # url = 'https://tradingeconomics.com/bonds'
     # ycinfo_nation = fnguide.select_by_attr(soup, 'div', 'class', 'table-responsive')
     # print(ycinfo_nation)
+
+
+def stocklistCleansing(content):
+    import detective.fnguide_collector as fnguide
+    retDict = {}
+    soup = BeautifulSoup(content, 'lxml')
+    # print(soup)
+    usstocks = fnguide.select_by_attr(soup, 'div', 'id', 'ctl00_cph1_divSymbols')  # Snapshot FinancialHighlight
+    datas = usstocks.find_all('tr td')
+    print(datas)
+    # if usstocks:
+    #     header = fnguide.get_table_contents(usstocks, 'tr th')
+    #     datas = fnguide.get_table_contents(usstocks, 'tr td')
+    #     for i in range(0, len(datas) - 1, len(header)):
+    #         retDict[datas[i][:datas[i].find('(')].strip()] = {
+    #             'Security': datas[i][:datas[i].find('(')].strip(),
+    #             'SecurityLink': datas[i][datas[i].find('(') + 1:datas[i].find(')')].strip(),
+    #             'Ticker': datas[i + 1].strip(),
+    #             'TickerLink': 'http://www.nasdaq.com/symbol/{}'.format(datas[i + 1].strip().lower())
+    #         }
+    # return retDict
 
 
 def wikiDataCleansing2(content):
@@ -422,7 +452,7 @@ def httpRequest(url, data=None, header=None, method='POST'):
 
 if __name__ == '__main__':
     # getStockInfo()
-    getSnP500StockInfo()
+    # getSnP500StockInfo()
     # getYieldCurveInfo()
     # getNasdaq100StockInfo()
-
+    getNasdaqStockInfo()
