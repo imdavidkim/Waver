@@ -3,24 +3,21 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 import time
-import random
+
 class ChromeDriver:
     chrome_path = ""
     options = Options()
     driver = None
     wait = None
-    ua = [
-        'user-agent=Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko'
-        ,
-        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36'
-        ,
-        'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36 Edg/84.0.522.40'
-    ]
+
     def set_path(self):
-        self.chrome_path = "D:\Waver\chromedriver_win32\chromedriver.exe"
+        self.chrome_path = r"C:\Users\imkhk\Waver\chromedriver_win32\chromedriver.exe"
 
     def set_option(self):
         self.options.headless = True
+
+    def set_user_agent(self):
+        self.options.add_argument("User-Agent=Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.2; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; .NET CLR 2.0.50727; .NET CLR 3.0.30729; .NET CLR 3.5.30729; iftNxParam=1.0.1)")
 
     def set_driver(self):
         self.driver = webdriver.Chrome(self.chrome_path, chrome_options=self.options)
@@ -66,13 +63,28 @@ if __name__ == '__main__':
     try:
         drv = ChromeDriver()
         drv.set_path()
-        drv.options.add_argument(drv.ua[(int(0 / 5) % len(drv.ua))])
+        drv.options.add_argument("User-Agent=Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.2; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; .NET CLR 2.0.50727; .NET CLR 3.0.30729; .NET CLR 3.5.30729; iftNxParam=1.0.1)")
         drv.set_option()
         drv.set_driver()
         drv.set_waiting()
         # drv.implicitly_wait(15)
-        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=AMZN-US&en=57304072434524")
-        # time.sleep(5)
+        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=MSFT-US&en=08854076681227")
+        ck = drv.driver.get_cookies()
+        drv.driver.delete_all_cookies()
+        for k in ck:
+            print(k)
+            drv.driver.add_cookie(k)
+        # drv.driver.add_cookie(ck)
+
+        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=AMZN-US&en=08854076681227")
+        ck = drv.driver.get_cookies()
+
+        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=PTON-US&en=08854076681227")
+        ck = drv.driver.get_cookies()
+
+        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=ADP-US&en=08854076681227")
+
+        # time.sleep(1)
         # print(drv.driver.window_handles)
         # drv.driver.switch_to.window(drv.driver.window_handles[-1])
         # drv.driverClose()
