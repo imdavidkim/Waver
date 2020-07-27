@@ -219,8 +219,11 @@ def getUSFinanceDataStandalone(j_type, t_url):
     import sys
     import os
     import django
-    import time
+    from multiprocessing import Pool
+    from concurrent.futures import ThreadPoolExecutor
+    from functools import partial
     getConfig()
+    # from selenium import webdriver
 
     sys.path.append(django_path)
     sys.path.append(main_path)
@@ -231,8 +234,6 @@ def getUSFinanceDataStandalone(j_type, t_url):
     workDir = r'{}\{}\{}'.format(path, j_type, yyyymmdd)
     if not os.path.exists(workDir):
         os.makedirs(workDir)
-
-
     try:
 
         from django.db import connection
@@ -253,31 +254,29 @@ def getUSFinanceDataStandalone(j_type, t_url):
                 drv = cc.ChromeDriver()
                 drv.set_path()
                 drv.set_option()
+                drv.set_user_agent()
                 drv.set_driver()
                 drv.set_waiting()
+                ck = None
+                for i in iter(s):
 
-                for idx, i in enumerate(iter(s)):
                     if fileCheck(workDir, i['code'], i['name'], j_type, filetype):
                         retResult = '[{}][{}][{}]|Skipped'.format(j_type, i['code'], i['name'])
                         print(retResult)
                         pass
                     else:
-                        if idx != 0 and idx % 5 == 0:
-                            drv.driverClose()
-                            drv.driverQuit()
-                            drv = cc.ChromeDriver()
-                            drv.set_path()
-                            drv.set_option()
-                            drv.options.add_argument(drv.ua[(int(idx/5) % len(drv.ua))])
-                            drv.set_driver()
-                            drv.set_waiting()
+                        data = {}
                         print('[{}][{}][{}] File is on process...'.format(j_type, i['code'], i['name']))
                         url = t_url.format(i['code'], generateEncCode())
+                        if ck is not None:
+                            for c in ck:
+                                drv.driver.add_cookie(c)
                         drv.set_url(url)
                         response = drv.driver.page_source
                         soup = BeautifulSoup(response, "lxml")
                         xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
                         saveFile(workDir, i['code'], i['name'], j_type, xml)
+                        ck = drv.driver.get_cookies()
                         # File 처리 끝
                         # DB 처리
                         tmp = select_by_attr(soup, 'ul', 'class', 'row2').find_all('li')
@@ -287,11 +286,11 @@ def getUSFinanceDataStandalone(j_type, t_url):
                         settlementMonth = tmp[4].text
                         issued_shares = int(
                             select_by_attr(soup, 'div', 'class', 'row02').find_all('tr')[5].find_all('td')[1].text
-                            .replace('\n', '')
-                            .replace('\t', '')
-                            .replace('천주', '')
-                            .replace(',', '')
-                            .replace(' ', '')
+                                .replace('\n', '')
+                                .replace('\t', '')
+                                .replace('천주', '')
+                                .replace(',', '')
+                                .replace(' ', '')
                         ) * 1000
                         # 0: [주가 / 전일대비 / 수익률]
                         # 1: [52주 최고 / 최저]
@@ -300,13 +299,12 @@ def getUSFinanceDataStandalone(j_type, t_url):
                         # 4: [52주 베타]
                         # 5: [상장주식수]
                         # 6: [수익률(1M / 3M / 6M / 1Y)]
-                        USStockMarketTextUpdate(i['code'], marketCd, marketTxt, marketTxtDetail, settlementMonth, issued_shares)
+                        USStockMarketTextUpdate(i['code'], marketCd, marketTxt, marketTxtDetail, settlementMonth,
+                                                issued_shares)
                         # tmp = select_by_attr(soup, 'ul', 'class', 'row1').find_all('li')
                         # for t in tmp:
                         #     print(t.text)
                         time.sleep(1)
-
-
 
                 drv.driverClose()
                 drv.driverQuit()
@@ -316,7 +314,8 @@ def getUSFinanceDataStandalone(j_type, t_url):
                 for i in iter(s):
                     url = t_url.format(i['code'], generateEncCode())
                     response = httpRequest(url, None, 'GET')
-                    with open(r'{}\financeData_{}_{}_{}.{}'.format(workDir, i['name'], i['code'], j_type, filetype),
+                    with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, i['name'], i['code'], j_type,
+                                                                   filetype),
                               'w') as fp:
                         json.dump(json.loads(response), fp)
 
@@ -334,7 +333,7 @@ def getUSFinanceDataStandalone(j_type, t_url):
 
 
     except Exception as e:
-        errmsg = '{}\n{}'.format('getUSFinanceDataStandalone', str(e))
+        errmsg = '{}\n{}'.format('getUSFinanceData', str(e))
         err_messeage_to_telegram(errmsg)
 
 
