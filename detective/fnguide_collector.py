@@ -219,11 +219,8 @@ def getUSFinanceDataStandalone(j_type, t_url):
     import sys
     import os
     import django
-    from multiprocessing import Pool
-    from concurrent.futures import ThreadPoolExecutor
-    from functools import partial
+    import time
     getConfig()
-    # from selenium import webdriver
 
     sys.path.append(django_path)
     sys.path.append(main_path)
@@ -234,6 +231,8 @@ def getUSFinanceDataStandalone(j_type, t_url):
     workDir = r'{}\{}\{}'.format(path, j_type, yyyymmdd)
     if not os.path.exists(workDir):
         os.makedirs(workDir)
+
+
     try:
 
         from django.db import connection
@@ -257,13 +256,21 @@ def getUSFinanceDataStandalone(j_type, t_url):
                 drv.set_driver()
                 drv.set_waiting()
 
-                for i in iter(s):
+                for idx, i in enumerate(iter(s)):
                     if fileCheck(workDir, i['code'], i['name'], j_type, filetype):
                         retResult = '[{}][{}][{}]|Skipped'.format(j_type, i['code'], i['name'])
                         print(retResult)
                         pass
                     else:
-                        data = {}
+                        if idx != 0 and idx % 5 == 0:
+                            drv.driverClose()
+                            drv.driverQuit()
+                            drv = cc.ChromeDriver()
+                            drv.set_path()
+                            drv.set_option()
+                            drv.options.add_argument(drv.ua[(int(idx/5) % len(drv.ua))])
+                            drv.set_driver()
+                            drv.set_waiting()
                         print('[{}][{}][{}] File is on process...'.format(j_type, i['code'], i['name']))
                         url = t_url.format(i['code'], generateEncCode())
                         drv.set_url(url)
@@ -273,17 +280,31 @@ def getUSFinanceDataStandalone(j_type, t_url):
                         saveFile(workDir, i['code'], i['name'], j_type, xml)
                         # File 처리 끝
                         # DB 처리
-                        data['결산월'] = select_by_attr(soup, 'ul', 'class', 'row2').find_all('li')[4].text
-                        # marketTxt = tmp[2].text
-                        # marketTxtDetail = tmp[3].text
-                        # settlementMonth = tmp[4].text
-                        tmp = select_by_attr(soup, 'ul', 'class', 'row1').find_all('li')
-                        for t in tmp:
-                            print(t.text)
-                        tmp = select_by_attr(soup, 'div', 'class', 'row02').find_all('tr')
-                        for t in tmp:
-                            tmp2 = t.find_all('td')
-                            print(tmp2[0].text, tmp2[1].text.replace('\n', '').replace('\t', '').replace(' ', ''))
+                        tmp = select_by_attr(soup, 'ul', 'class', 'row2').find_all('li')
+                        marketCd = tmp[1].text
+                        marketTxt = tmp[2].text
+                        marketTxtDetail = tmp[3].text
+                        settlementMonth = tmp[4].text
+                        issued_shares = int(
+                            select_by_attr(soup, 'div', 'class', 'row02').find_all('tr')[5].find_all('td')[1].text
+                            .replace('\n', '')
+                            .replace('\t', '')
+                            .replace('천주', '')
+                            .replace(',', '')
+                            .replace(' ', '')
+                        ) * 1000
+                        # 0: [주가 / 전일대비 / 수익률]
+                        # 1: [52주 최고 / 최저]
+                        # 2: [거래량 / 거래대금]
+                        # 3: [시가총액 / 순위]
+                        # 4: [52주 베타]
+                        # 5: [상장주식수]
+                        # 6: [수익률(1M / 3M / 6M / 1Y)]
+                        USStockMarketTextUpdate(i['code'], marketCd, marketTxt, marketTxtDetail, settlementMonth, issued_shares)
+                        # tmp = select_by_attr(soup, 'ul', 'class', 'row1').find_all('li')
+                        # for t in tmp:
+                        #     print(t.text)
+                        time.sleep(1)
 
 
 
@@ -295,8 +316,7 @@ def getUSFinanceDataStandalone(j_type, t_url):
                 for i in iter(s):
                     url = t_url.format(i['code'], generateEncCode())
                     response = httpRequest(url, None, 'GET')
-                    with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, i['name'], i['code'], j_type,
-                                                                   filetype),
+                    with open(r'{}\financeData_{}_{}_{}.{}'.format(workDir, i['name'], i['code'], j_type, filetype),
                               'w') as fp:
                         json.dump(json.loads(response), fp)
 
@@ -314,7 +334,7 @@ def getUSFinanceDataStandalone(j_type, t_url):
 
 
     except Exception as e:
-        errmsg = '{}\n{}'.format('getUSFinanceData', str(e))
+        errmsg = '{}\n{}'.format('getUSFinanceDataStandalone', str(e))
         err_messeage_to_telegram(errmsg)
 
 
@@ -741,6 +761,35 @@ def StockMarketTextUpdate(crp_cd, market_text, market_text_detail, sttl_month):
         detective_db.Stocks.objects.filter(code=crp_cd).update(market_text=market_text, market_text_detail=market_text_detail, settlement_month=sttl_month)
     except Exception as e:
         print('[Error on StockDataUpdate]\n', '*' * 50, e)
+
+
+def USStockMarketTextUpdate(crp_cd, market_code, market_text, market_text_detail, sttl_month, issued_shares):
+    import sys
+    import os
+    import django
+    from datetime import datetime
+    # sys.path.append(r'D:\Waver\MainBoard')
+    # sys.path.append(r'D:\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        print("Updating market info...{}-{}-{}-{}-{}".format(crp_cd, market_code, market_text, market_text_detail, sttl_month))
+        detective_db.USStocks.objects.filter(ticker=crp_cd).update(category_code=market_code,
+                                                                   category_name_kr=market_text,
+                                                                   category_detail_kr=market_text_detail,
+                                                                   settlement_month=sttl_month,
+                                                                   issued_shares=issued_shares)
+        detective_db.USNasdaqStocks.objects.filter(ticker=crp_cd).update(category_code=market_code,
+                                                                         category_name_kr=market_text,
+                                                                         category_detail_kr=market_text_detail,
+                                                                         settlement_month=sttl_month,
+                                                                         issued_shares=issued_shares)
+    except Exception as e:
+        print('[Error on USStockMarketTextUpdate]\n', '*' * 50, e)
 
 
 def DailySnapShotDataStore(report_name, crp_cd, crp_nm, caption, column_names, key, data_list):
