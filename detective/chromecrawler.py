@@ -63,26 +63,31 @@ if __name__ == '__main__':
     try:
         drv = ChromeDriver()
         drv.set_path()
-        drv.options.add_argument("User-Agent=Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.2; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; .NET CLR 2.0.50727; .NET CLR 3.0.30729; .NET CLR 3.5.30729; iftNxParam=1.0.1)")
+        # drv.options.add_argument("User-Agent=Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.2; WOW64; Trident/7.0; .NET4.0C; .NET4.0E; .NET CLR 2.0.50727; .NET CLR 3.0.30729; .NET CLR 3.5.30729; iftNxParam=1.0.1)")
         drv.set_option()
+        drv.set_user_agent()
         drv.set_driver()
         drv.set_waiting()
         # drv.implicitly_wait(15)
-        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=MSFT-US&en=08854076681227")
-        ck = drv.driver.get_cookies()
-        drv.driver.delete_all_cookies()
-        for k in ck:
-            print(k)
-            drv.driver.add_cookie(k)
-        # drv.driver.add_cookie(ck)
-
-        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=AMZN-US&en=08854076681227")
-        ck = drv.driver.get_cookies()
-
-        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=PTON-US&en=08854076681227")
-        ck = drv.driver.get_cookies()
-
-        drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=ADP-US&en=08854076681227")
+        # https://api.nasdaq.com/api/quote/AACQU/info?assetclass=stocks 주식정보
+        # {"data":{"symbol":"AACQU","companyName":"Artius Acquisition Inc. Unit ","stockType":"Unit consisting of one ordinary share and one third redeemable warrant","exchange":"NASDAQ-CM","isNasdaqListed":true,"isNasdaq100":false,"isHeld":false,"primaryData":{"lastSalePrice":"$10.40","netChange":"-0.03","percentageChange":"-0.29%","deltaIndicator":"down","lastTradeTimestamp":"DATA AS OF Jul 28, 2020","isRealTime":false},"secondaryData":null,"keyStats":{"Volume":{"label":"Volume","value":"537,219"},"PreviousClose":{"label":"Previous Close","value":"$10.43"},"OpenPrice":{"label":"Open","value":"$10.37"},"MarketCap":{"label":"Market Cap","value":"N/A"}},"marketStatus":"Market Closed","assetClass":"STOCKS"},"message":null,"status":{"rCode":200,"bCodeMessage":null,"developerMessage":null}}
+        drv.set_url("https://api.nasdaq.com/api/company/AACQU/company-profile")  # 전화번호 등등 회사
+        # {"data":{"ModuleTitle":{"label":"Module Title","value":"Company Description"},"CompanyName":{"label":"Company Name","value":"Artius Acquisition Inc."},"Symbol":{"label":"Symbol","value":"AACQU"},"Address":{"label":"Address","value":"3 COLUMBUS CIRCLE SUITE 2215, NEW YORK, New York, 10019, United States of America"},"Phone":{"label":"Phone","value":"212-309-7668"},"Industry":{"label":"Industry","value":"Business Services"},"Sector":{"label":"Sector","value":"Finance"},"Region":{"label":"Region","value":"North America"},"CompanyDescription":{"label":"Company Description","value":"We are a newly incorporated Cayman Island exempted company structured as a blank\r\ncheck company incorporated for the purpose of effecting a merger, share\r\nexchange, asset acquisition, share purchase, reorganization or similar business\r\ncombination with one or more businesses, which we refer to throughout this\r\nprospectus as our initial business combination. We have not selected any\r\nspecific business combination target and we have not, nor has anyone on our\r\nbehalf, initiated any substantive discussions, directly or indirectly, with any\r\nbusiness combination target. While we may pursue an initial business combination\r\nin any sector, we intend to focus our efforts on technology enabled businesses\r\nthat directly or indirectly offer specific technology solutions, broader\r\ntechnology software and services, or financial services to companies of all\r\nsizes.&nbsp;&nbsp;... <a href=\"http://secfilings.nasdaq.com/edgar_conv_html%2f2020%2f07%2f02%2f0001193125-20-186768.html#FIS_BUSINESS\" target=\"_blank\">More</a> ...&nbsp;&nbsp;\r\n"},"KeyExecutives":{"label":"Key Executives","value":[]}},"message":null,"status":{"rCode":200,"bCodeMessage":null,"developerMessage":null}}
+        print(drv.driver.page_source)
+        # ck = drv.driver.get_cookies()
+        # drv.driver.delete_all_cookies()
+        # for k in ck:
+        #     print(k)
+        #     drv.driver.add_cookie(k)
+        # # drv.driver.add_cookie(ck)
+        #
+        # drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=AMZN-US&en=08854076681227")
+        # ck = drv.driver.get_cookies()
+        #
+        # drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=PTON-US&en=08854076681227")
+        # ck = drv.driver.get_cookies()
+        #
+        # drv.set_url("http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=ADP-US&en=08854076681227")
 
         # time.sleep(1)
         # print(drv.driver.window_handles)
