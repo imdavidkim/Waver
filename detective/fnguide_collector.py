@@ -234,7 +234,7 @@ def getUSFinanceDataStandalone(j_type, t_url):
     workDir = r'{}\{}\{}'.format(path, j_type, yyyymmdd)
     if not os.path.exists(workDir):
         os.makedirs(workDir)
-    try:
+        try:
 
         from django.db import connection
         with connection.cursor() as cursor:
@@ -314,7 +314,7 @@ def getUSFinanceDataStandalone(j_type, t_url):
                 for i in iter(s):
                     url = t_url.format(i['code'], generateEncCode())
                     response = httpRequest(url, None, 'GET')
-                    with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, i['name'], i['code'], j_type,
+                    with open(r'{}\financeData_{}_{}_{}.{}'.format(workDir, i['name'], i['code'], j_type,
                                                                    filetype),
                               'w') as fp:
                         json.dump(json.loads(response), fp)
@@ -333,7 +333,7 @@ def getUSFinanceDataStandalone(j_type, t_url):
 
 
     except Exception as e:
-        errmsg = '{}\n{}'.format('getUSFinanceData', str(e))
+        errmsg = '{}\n{}'.format('getUSFinanceDataStandalone', str(e))
         err_messeage_to_telegram(errmsg)
 
 
