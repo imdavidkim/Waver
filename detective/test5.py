@@ -10,24 +10,52 @@ from selenium.webdriver.chrome.options import Options
 import numpy as np
 import string
 
-def request(driver):
-    s = requests.Session()
-    # cookies = driver.get_cookies()
-    # for cookie in cookies:
-    #     s.cookies.set(cookie['name'], cookie['value'])
-    return s
 
 # alphabet = string.ascii_uppercase
 # print(alphabet)
-
+# 참고사이트
+# https://m.blog.naver.com/21ahn/221329219163
 
 if __name__ == '__main__':
-    # path = r'D:\Waver\detective\reports\GlobalSnapshot\2020-06-17\financeData_MicrosoftCorporation_MSFT_GlobalSnapshot.json'
-    # with open(path, 'r') as fp:
-    #     data = json.load(fp)
-    # print(data["Data1"])
-    # for dic in data["Data2"]:
-    #     print(dic)
+    # import detective.fnguide_collector as fnguide
+    # import detective.crawler as crwlr
+    import requests
+    # url = 'https://api.nasdaq.com/api/company/AAPL/company-profile'
+    # header = {
+    #     "Accept": "application/json, text/plain, */*",
+    #     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
+    #     "Origin": "https://www.nasdaq.com",
+    #     "Sec-Fetch-Site": "same-site",
+    #     "Sec-Fetch-Mode": "cors",
+    #     "Sec-Fetch-Dest": "empty",
+    #     "Accept-Encoding": "gzip, deflate, br",
+    #     "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
+    # }
+    url = 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd=AAPL-US&en=57390072434531'
+    header = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
+    }
+    res = requests.get(url=url, headers=header)
+    # print(res.content)
+    soup = BeautifulSoup(res.content.decode('utf-8'), 'lxml')
+    print(soup.text)
+    print(res.cookies)
+    # a = httpRequest(url=url, header=header, method='GET')
+
+    """
+    "Accept": "application/json, text/plain, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
+    "Origin": "https://www.nasdaq.com",
+    "Sec-Fetch-Site": "same-site",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Dest": "empty",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
+
+    """
     # url = 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp'
     # data = {
     #         'pGB': 1,
@@ -39,35 +67,40 @@ if __name__ == '__main__':
     #         'stkGb': 701,
     #     }
     #
-    CHROMEDRIVER_PATH = r'D:\Waver\chromedriver_win32\chromedriver.exe'
-    options = Options()
-    options.headless = True
-    driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
-    # driver.implicitly_wait(3)
-    req = request(driver)
-    # # d = json.dumps(data)
-    # # # driver.get('http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A003490&cID=&MenuYn=Y&ReportGB=D&NewMenuID=101&stkGb=701')
-    # # # print(driver.page_source)
-    # # # res = req.post(url, data)
-    # for i in range(10):
-    # en = ''
-    # n = 5
-    # en += ''.join(["{}".format(np.random.randint(0, 9)) for num in range(0, n)])
-    # en += '06'
-    # en += ''.join(["{}".format(np.random.randint(0, 9)) for num in range(0, n)])
-    # en += '11'
-    url = 'http://eoddata.com/stocklist/NYSE/A.htm'
-    print(url)
-    res = req.get(url)
-    print(res.text)
-    # # # soup = BeautifulSoup(driver.page_source, 'lxml')
-    # # # print(soup)
-
-    # url = 'https://en.wikipedia.org/wiki/NASDAQ-100'
-    # res = req.get(url)
+    # CHROMEDRIVER_PATH = r'D:\Waver\chromedriver_win32\chromedriver.exe'
+    # options = Options()
+    # options.headless = True
+    # driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
+    # # driver.implicitly_wait(3)
+    # req = request(driver)
+    # d = json.dumps(data)
+    # # driver.get('http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?pGB=1&gicode=A003490&cID=&MenuYn=Y&ReportGB=D&NewMenuID=101&stkGb=701')
+    # # print(driver.page_source)
+    # res = req.post(url, data)
     # print(res.text)
+    # stocks = {}
+    # tt = requests.get('https://www.nasdaq.com/market-activity/stocks/aacqu')
+    #
+    # # tt = requests.get('https://www.nasdaq.com/nasdaq_symbol/168136')
+    # # print(tt.content)
+    # soup = BeautifulSoup(tt.content.decode('utf-8'), 'lxml')
+    # print(soup)
 
-
+    # usstocks = fnguide.select_by_attr(soup, 'div', 'id', 'ctl00_cph1_divSymbols')  # Snapshot FinancialHighlight
+    # dd = usstocks.find_all('tr')
+    # for idx, d in enumerate(dd):
+    #     if idx == 0:
+    #         # hh = d.find_all('th')
+    #         # print(idx, len(hh), hh)
+    #         # for h in hh:
+    #         #     print(h.text)
+    #         pass
+    #     else:
+    #         ss = d.find_all('td')
+    #         # [code, name, high, low, close, volume, change, direction, pct, down]
+    #         stocks[ss[0].text] = {'ticker': ss[0].text, 'security': ss[1].text}
+    #
+    # print(stocks)
     #
     # import telegram
     # # my_token = '577949495:AAFk3JWQjHlbJr2_AtZeonjqQS7buu8cYG4'
