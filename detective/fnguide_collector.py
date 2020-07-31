@@ -219,11 +219,11 @@ def getUSFinanceDataStandalone(j_type, t_url):
     import sys
     import os
     import django
-    from multiprocessing import Pool
-    from concurrent.futures import ThreadPoolExecutor
-    from functools import partial
+    import time
+    import json
+    import detective_app.models as detective_db
+
     getConfig()
-    # from selenium import webdriver
 
     sys.path.append(django_path)
     sys.path.append(main_path)
@@ -234,106 +234,162 @@ def getUSFinanceDataStandalone(j_type, t_url):
     workDir = r'{}\{}\{}'.format(path, j_type, yyyymmdd)
     if not os.path.exists(workDir):
         os.makedirs(workDir)
-        try:
 
-        from django.db import connection
-        with connection.cursor() as cursor:
-            cursor.execute("""
-            select ticker as 'code', max(replace(replace(replace(replace(replace(replace(security, ' ', ''), '&', 'AND'), ',', ''), '.', ''), '!', ''), '*', '')) as 'name'
-            from (
-                select security, ticker from detective_app_usstocks where listing = 'Y'
-                union
-                select security, ticker from detective_app_usnasdaqstocks where listing = 'Y'
-            )
-            group by ticker
-            order by ticker""")
-            s = dictfetchall(cursor)
+    try:
+        drv = None
+        # from django.db import connection
+        # with connection.cursor() as cursor:
+        #     cursor.execute("""
+        #     select ticker as 'code', max(replace(replace(replace(replace(replace(replace(security, ' ', ''), '&', 'AND'), ',', ''), '.', ''), '!', ''), '*', '')) as 'name'
+        #     from (
+        #         select security, ticker from detective_app_usstocks where listing = 'Y'
+        #         union
+        #         select security, ticker from detective_app_usnasdaqstocks where listing = 'Y'
+        #     )
+        #     group by ticker
+        #     order by ticker""")
+        stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y')
+        url_info = None
+        if j_type == 'GlobalSnapshot':
+            filetype = 'html'
+            drv = cc.ChromeDriver()
+            drv.set_path()
+            drv.set_option()
+            drv.set_user_agent()
+            drv.set_driver()
+            drv.set_waiting()
+            ck = None
+            for i in stockInfo:
+                sec_name = str(i.security).replace(' ', '').replace('&', 'AND').replace(',', '').replace('.',
+                                                                                                         '').replace(
+                    '!', '').replace('*', '').replace('/', '')
+                if fileCheck(workDir, i.ticker, sec_name, j_type, filetype):
+                    retResult = '[{}][{}][{}]|Skipped'.format(j_type, i.ticker, sec_name)
+                    print(retResult)
+                    pass
+                else:
+                    data = {}
+                    print('[{}][{}][{}] File is on process...'.format(j_type, i.ticker, sec_name))
+                    url = t_url.format(i.ticker, generateEncCode())
+                    url_info = url
+                    if ck is not None:
+                        for c in ck:
+                            drv.driver.add_cookie(c)
+                    drv.set_url(url)
+                    response = drv.driver.page_source
+                    soup = BeautifulSoup(response, "lxml")
+                    xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
+                    saveFile(workDir, i.ticker, sec_name, j_type, xml)
+                    ck = drv.driver.get_cookies()
+                    # File 처리 끝
+                    # DB 처리
+                    tmp = select_by_attr(soup, 'ul', 'class', 'row2').find_all('li')
+                    marketCd = tmp[1].text
+                    marketTxt = tmp[2].text
+                    marketTxtDetail = tmp[3].text
+                    settlementMonth = tmp[4].text
+                    issued_shares = int(
+                        select_by_attr(soup, 'div', 'class', 'row02').find_all('tr')[5].find_all('td')[1].text
+                            .replace('\n', '')
+                            .replace('\t', '')
+                            .replace('천주', '')
+                            .replace(',', '')
+                            .replace(' ', '')
+                    ) * 1000
+                    # 0: [주가 / 전일대비 / 수익률]
+                    # 1: [52주 최고 / 최저]
+                    # 2: [거래량 / 거래대금]
+                    # 3: [시가총액 / 순위]
+                    # 4: [52주 베타]
+                    # 5: [상장주식수]
+                    # 6: [수익률(1M / 3M / 6M / 1Y)]
+                    USStockMarketTextUpdate(i.ticker, marketCd, marketTxt, marketTxtDetail, settlementMonth,
+                                            issued_shares)
+                    # tmp = select_by_attr(soup, 'ul', 'class', 'row1').find_all('li')
+                    # for t in tmp:
+                    #     print(t.text)
+                    time.sleep(1)
 
-            if j_type == 'GlobalSnapshot':
-                filetype = 'html'
-                drv = cc.ChromeDriver()
-                drv.set_path()
-                drv.set_option()
-                drv.set_user_agent()
-                drv.set_driver()
-                drv.set_waiting()
-                ck = None
-                for i in iter(s):
-
-                    if fileCheck(workDir, i['code'], i['name'], j_type, filetype):
-                        retResult = '[{}][{}][{}]|Skipped'.format(j_type, i['code'], i['name'])
-                        print(retResult)
-                        pass
+            drv.driverClose()
+            drv.driverQuit()
+        elif j_type == 'GlobalFinancialSummary':
+            filetype = 'json'
+            for i in stockInfo:
+                sec_name = str(i.security).replace(' ', '').replace('&', 'AND').replace(',', '').replace('.',
+                                                                                                         '').replace(
+                    '!', '').replace('*', '').replace('/', '')
+                url = t_url.format(i.ticker, generateEncCode())
+                url_info = url
+                response = httpRequest(url, None, 'GET')
+                with open(r'{}\financeData_{}_{}_{}.{}'.format(workDir, sec_name, i.ticker, j_type,
+                                                               filetype),
+                          'w') as fp:
+                    json.dump(json.loads(response), fp)
+        elif j_type == 'GlobalCompanyProfile':
+            import math
+            filetype = 'json'
+            drv = cc.ChromeDriver()
+            drv.set_path()
+            drv.set_option()
+            drv.set_user_agent()
+            drv.set_driver()
+            drv.set_waiting()
+            for idx, i in enumerate(stockInfo):
+                sec_name = str(i.security).replace(' ', '').replace('&', 'AND').replace(',', '').replace('.',
+                                                                                                         '').replace(
+                    '!', '').replace('*', '').replace('/', '')
+                if fileCheck(workDir, i.ticker, sec_name, j_type, filetype):
+                    retResult = '[{}/{}][{}][{}][{}]|Skipped'.format(idx+1, len(stockInfo), j_type, i.ticker, sec_name)
+                    print(retResult)
+                    pass
+                else:
+                    urls = t_url.format(i.ticker, i.ticker)
+                    url_split = urls.split('|')
+                    url_info = url_split[0]
+                    drv.set_url(url_split[0])
+                    soup = BeautifulSoup(drv.driver.page_source, "lxml")
+                    response = soup.find("body").text
+                    json_msg = json.loads(response)
+                    if json_msg['data'] is not None:
+                        category_name = json_msg['data']['Sector']['value']
+                        category_detail = json_msg['data']['Industry']['value']
+                        tel = json_msg['data']['Phone']['value']
+                        address = json_msg['data']['Address']['value']
+                        location = json_msg['data']['Region']['value']
+                        description = json_msg['data']['CompanyDescription']['value']
+                        url_info = url_split[1]
+                        drv.set_url(url_split[1])
+                        soup = BeautifulSoup(drv.driver.page_source, "lxml")
+                        response = soup.find("body").text
+                        json_msg = json.loads(response)
+                        category_code = json_msg['data']['exchange']
+                        if json_msg['data']['keyStats']['MarketCap']['value'] != 'N/A':
+                            issued_shares = round(float(str(json_msg['data']['keyStats']['MarketCap']['value']).replace(',', '')) / float(
+                                str(json_msg['data']['primaryData']['lastSalePrice']).replace('$', '')), 1)
+                        else:
+                            issued_shares = 0.0
+                        print("[{}/{}]Updating market info...{}-{}-{}-{}-{}".format(idx + 1, len(stockInfo), i.ticker,
+                                                                                    category_code, category_name,
+                                                                                    category_detail, issued_shares))
+                        USStockMarketTextUpdateAdvcd(i.ticker, category_code, category_name, category_detail, tel, address,
+                                                     location, description,
+                                                     issued_shares)
+                        with open(r'{}\financeData_{}_{}_{}.{}'.format(workDir, sec_name, i.ticker, j_type,
+                                                                       filetype),
+                                  'w') as fp:
+                            json.dump(json_msg, fp)
                     else:
-                        data = {}
-                        print('[{}][{}][{}] File is on process...'.format(j_type, i['code'], i['name']))
-                        url = t_url.format(i['code'], generateEncCode())
-                        if ck is not None:
-                            for c in ck:
-                                drv.driver.add_cookie(c)
-                        drv.set_url(url)
-                        response = drv.driver.page_source
-                        soup = BeautifulSoup(response, "lxml")
-                        xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-                        saveFile(workDir, i['code'], i['name'], j_type, xml)
-                        ck = drv.driver.get_cookies()
-                        # File 처리 끝
-                        # DB 처리
-                        tmp = select_by_attr(soup, 'ul', 'class', 'row2').find_all('li')
-                        marketCd = tmp[1].text
-                        marketTxt = tmp[2].text
-                        marketTxtDetail = tmp[3].text
-                        settlementMonth = tmp[4].text
-                        issued_shares = int(
-                            select_by_attr(soup, 'div', 'class', 'row02').find_all('tr')[5].find_all('td')[1].text
-                                .replace('\n', '')
-                                .replace('\t', '')
-                                .replace('천주', '')
-                                .replace(',', '')
-                                .replace(' ', '')
-                        ) * 1000
-                        # 0: [주가 / 전일대비 / 수익률]
-                        # 1: [52주 최고 / 최저]
-                        # 2: [거래량 / 거래대금]
-                        # 3: [시가총액 / 순위]
-                        # 4: [52주 베타]
-                        # 5: [상장주식수]
-                        # 6: [수익률(1M / 3M / 6M / 1Y)]
-                        USStockMarketTextUpdate(i['code'], marketCd, marketTxt, marketTxtDetail, settlementMonth,
-                                                issued_shares)
-                        # tmp = select_by_attr(soup, 'ul', 'class', 'row1').find_all('li')
-                        # for t in tmp:
-                        #     print(t.text)
-                        time.sleep(1)
-
-                drv.driverClose()
-                drv.driverQuit()
-            elif j_type == 'GlobalGlobalSummary':
-                import json
-                filetype = 'json'
-                for i in iter(s):
-                    url = t_url.format(i['code'], generateEncCode())
-                    response = httpRequest(url, None, 'GET')
-                    with open(r'{}\financeData_{}_{}_{}.{}'.format(workDir, i['name'], i['code'], j_type,
-                                                                   filetype),
-                              'w') as fp:
-                        json.dump(json.loads(response), fp)
-
-                # j = jobs()
-                # j.workDir = workDir
-                # j.url = t_url
-                # j.jobtype = j_type
-                #
-                # if j.jobtype == 'GlobalSnapshot':
-                #     # agents = 2
-                #     j.filetype = 'html'
-                # elif j.jobtype == 'GlobalSummary':
-                #     # agents = 3
-                #     j.filetype = 'json'
-
-
+                        print("[{}/{}]Failed update market info...{}".format(idx + 1, len(stockInfo), i.ticker))
+                        with open(r'{}\financeData_{}_{}_{}.{}'.format(workDir, sec_name, i.ticker, j_type,
+                                                                       filetype),
+                                  'w') as fp:
+                            json.dump(json_msg, fp)
+                        continue
     except Exception as e:
-        errmsg = '{}\n{}'.format('getUSFinanceDataStandalone', str(e))
+        if drv is not None:
+            drv.driverClose()
+            drv.driverQuit()
+        errmsg = '{}\n{}\n{}'.format('getUSFinanceDataStandalone', str(e), url_info)
         err_messeage_to_telegram(errmsg)
 
 
@@ -368,8 +424,9 @@ def getFinanceData(cmd=None):
         104: 'financeRatio',
         108: 'consensus',
         200: 'ROE',
-        300: 'GlobalSnapshot',
-        301: 'GlobalSummary',
+        300: 'GlobalCompanyProfile',
+        301: 'GlobalFinancialSummary',
+
     }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
     urlInfo = {
         101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
@@ -377,9 +434,10 @@ def getFinanceData(cmd=None):
         104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp',
         108: 'http://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp',
         200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A{}_D.json',
-        300: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd={}-US&en={}',
+        300: 'https://api.nasdaq.com/api/company/{}/company-profile|https://api.nasdaq.com/api/quote/{}/info?assetclass=stocks',
         301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}'
     }
+    # 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd={}-US&en={}'
 
     data = {
         'pGB': 1,
@@ -786,6 +844,32 @@ def USStockMarketTextUpdate(crp_cd, market_code, market_text, market_text_detail
                                                                          category_name_kr=market_text,
                                                                          category_detail_kr=market_text_detail,
                                                                          settlement_month=sttl_month,
+                                                                         issued_shares=issued_shares)
+    except Exception as e:
+        print('[Error on USStockMarketTextUpdate]\n', '*' * 50, e)
+
+
+def USStockMarketTextUpdateAdvcd(crp_cd, category_code, category_name, category_detail, tel, address, location, description, issued_shares):
+    import sys
+    import os
+    import django
+    from datetime import datetime
+    # sys.path.append(r'D:\Waver\MainBoard')
+    # sys.path.append(r'D:\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        detective_db.USNasdaqStocks.objects.filter(ticker=crp_cd).update(category_code=category_code,
+                                                                         category_name=category_name,
+                                                                         category_detail=category_detail,
+                                                                         tel=tel,
+                                                                         address=address,
+                                                                         location=location,
+                                                                         description=description,
                                                                          issued_shares=issued_shares)
     except Exception as e:
         print('[Error on USStockMarketTextUpdate]\n', '*' * 50, e)
@@ -1332,4 +1416,6 @@ if __name__ == '__main__':
     # getFinanceData(108)
     # getFinanceData(104)
     # getUSFinanceData()
-    print(generateEncCode())
+    # print(generateEncCode())
+    url = 'https://api.nasdaq.com/api/company/AAPL/company-profile'
+    print(httpRequest(url, None))
