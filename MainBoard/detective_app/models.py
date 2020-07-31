@@ -79,6 +79,7 @@ class USNasdaqStocks(models.Model):
     date_first_added = models.TextField(null=True)
     listing = models.CharField(max_length=1, default='Y')
     founded = models.TextField(null=True)
+    description = models.TextField(null=True)
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
