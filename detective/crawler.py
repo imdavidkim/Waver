@@ -109,10 +109,15 @@ def getNasdaq100StockInfo():
 def getNasdaqStockInfo():
     import string
     alphabets = string.ascii_uppercase
+    targets = {}
     for code in alphabets:
         url = 'http://eoddata.com/stocklist/NASDAQ/{}.htm'.format(code)
+        print("Processing USStocks information starts with {} => {}".format(code, url))
         response = httpRequest(url)
-        stocklistCleansing(response)
+        targets = stocklistCleansing(targets, response)
+
+    USNasdaqDataInit()
+    USNasdaqDataStore(targets)
 
 
 def getYieldCurveInfo():
@@ -131,14 +136,29 @@ def getYieldCurveInfo():
     # print(ycinfo_nation)
 
 
-def stocklistCleansing(content):
+def stocklistCleansing(targets, content):
     import detective.fnguide_collector as fnguide
     retDict = {}
     soup = BeautifulSoup(content, 'lxml')
     # print(soup)
+    stocks = targets
     usstocks = fnguide.select_by_attr(soup, 'div', 'id', 'ctl00_cph1_divSymbols')  # Snapshot FinancialHighlight
-    datas = usstocks.find_all('tr td')
-    print(datas)
+    dd = usstocks.find_all('tr')
+    for idx, d in enumerate(dd):
+        if idx == 0:
+            # hh = d.find_all('th')
+            # print(idx, len(hh), hh)
+            # for h in hh:
+            #     print(h.text)
+            pass
+        else:
+            ss = d.find_all('td')
+            # [code, name, high, low, close, volume, change, direction, pct, down]
+            stocks[ss[0].text] = {'Ticker': ss[0].text
+                                  , 'Security': ss[1].text
+                                  , 'TickerLink': "http://www.nasdaq.com/symbol/{}".format(ss[0].text.lower())
+                                  , 'SecurityLink': None}
+    return stocks
     # if usstocks:
     #     header = fnguide.get_table_contents(usstocks, 'tr th')
     #     datas = fnguide.get_table_contents(usstocks, 'tr td')
