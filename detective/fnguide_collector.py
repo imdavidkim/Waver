@@ -328,12 +328,12 @@ def getUSFinanceDataStandalone(j_type, t_url):
         elif j_type == 'GlobalCompanyProfile':
             import math
             filetype = 'json'
-            drv = cc.ChromeDriver()
-            drv.set_path()
-            drv.set_option()
-            drv.set_user_agent()
-            drv.set_driver()
-            drv.set_waiting()
+            # drv = cc.ChromeDriver()
+            # drv.set_path()
+            # drv.set_option()
+            # drv.set_user_agent()
+            # drv.set_driver()
+            # drv.set_waiting()
             for idx, i in enumerate(stockInfo):
                 sec_name = str(i.security).replace(' ', '').replace('&', 'AND').replace(',', '').replace('.',
                                                                                                          '').replace(
@@ -1338,18 +1338,28 @@ def httpRequestWithDriver(driver, url, data, method='POST'):
         print(e)
 
 
-def httpRequest(url, data, method='POST'):
+def httpRequest(url, data, method='POST', header=None):
     try:
+        headers = {
+            "Accept": "application/json, text/plain, */*",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
+        }
+        if header is None:
+            pass
+        else:
+            headers = header
         if data is None:
-            r = requests.get(url)
+            r = requests.get(url, headers=headers)
             return r.content
         else:
             if method == 'POST':
-                r = requests.post(url, data)
+                r = requests.post(url, headers=headers, data=data)
                 # print(method, 'httpRequest error status', r.raise_for_status(), data['gicode'])
                 return r.content
             else:
-                r = requests.get(url, data)
+                r = requests.get(url, headers=headers, params=data)
                 # print(method, 'httpRequest error status', r.raise_for_status(), data['gicode'])
                 return r.content
     except Exception as e:
@@ -1411,11 +1421,17 @@ def getUSFinanceDataNotUse(cmd=None):
 if __name__ == '__main__':
     # print(getUSFinanceData())
     # getFinanceData(101)
-    getFinanceData(200)
+    # getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
     # getFinanceData(104)
     # getUSFinanceData()
     # print(generateEncCode())
     url = 'https://api.nasdaq.com/api/company/AAPL/company-profile'
-    print(httpRequest(url, None))
+    header = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
+    }
+    print(httpRequest(url, None, 'GET', header))
