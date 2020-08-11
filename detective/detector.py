@@ -26,7 +26,7 @@ def getConfig():
     proj_path = config['COMMON']['PROJECT_PATH']
     django_path = proj_path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
-    filename = r'\financeData_%s_%s_%s.%s'
+    filename = r'\financeData_{}_{}_{}.{}'
     yyyymmdd = str(datetime.now())[:10]
     # yyyymmdd = '2019-12-12'
     # print(path, filename)
@@ -34,12 +34,15 @@ def getConfig():
 
 def get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd, ext):
     getConfig()
-    full_path = path + r'\%s\%s' % (report_type, yyyymmdd) + filename % (crp_nm, crp_cd, report_type, ext)
-    with open(full_path, 'rb') as obj:
-        if ext == 'json':
-            soup = json.loads(obj.read())
-        else:
-            soup = BeautifulSoup(obj, 'lxml')
+    try:
+        full_path = path + r'\{}\{}'.format(report_type, yyyymmdd) + filename.format(crp_nm, crp_cd, report_type, ext)
+        with open(full_path, 'rb') as obj:
+            if ext == 'json':
+                soup = json.loads(obj.read())
+            else:
+                soup = BeautifulSoup(obj, 'lxml')
+    except Exception as e:
+        soup = None
     return soup
 
 
@@ -95,7 +98,7 @@ def get_max_date_on_dailysnapshot(crp_cd):
     sql = """select max(disc_date) as disc_date from detective_app_fnguidedailysnapshot
             where rpt_nm = '시세현황1'
             and rpt_tp = ''
-            and crp_cd = '%s'""" % crp_cd
+            and crp_cd = '{}'""".format(crp_cd)
     cursor.execute(sql)
     return dictfetchall(cursor)[0]
 
@@ -116,12 +119,12 @@ def get_high_ranked_stock():
                     select code, name, curr, last_price, price_gap, target_price, target_price2, return_on_equity, ratio, target_price2/last_price*100 as ratio2 from detective_app_targetstocks
                     where ratio > 100
                     --and return_on_equity > 14
-                    and valuation_date = '%s'
+                    and valuation_date = '{}'
                     order by ratio2 desc
                     limit 30) as t
                  --where last_price > 14000
                  --and ratio2 > 100
-                 order by t.ratio desc""" % yyyymmdd
+                 order by t.ratio desc""".format(yyyymmdd)
         cursor.execute(sql)
         retStr = ''
         for idx, d in enumerate(dictfetchall(cursor)):
@@ -154,12 +157,12 @@ def get_high_ranked_stock_with_closeprice():
                     where ts.ratio > 100
                     and s.code = ts.code
                     --and return_on_equity > 14
-                    and ts.valuation_date = '%s'
+                    and ts.valuation_date = '{}'
                     order by ratio2 desc
                     limit 30) as t
                  --where last_price > 14000
                  --and ratio2 > 100
-                 order by t.ratio desc""" % yyyymmdd
+                 order by t.ratio desc""".format(yyyymmdd)
         cursor.execute(sql)
         # retStr = ''
         fig = None
@@ -212,7 +215,7 @@ def get_high_ranked_stock_with_closeprice():
     #     print(dates)
     #     print(prcs)
 
-    #     retStr += '%d. %s\t%s => %s[%s%%]\n' % (
+    #     retStr += '%d. {}\t{} => {}[{}%%]\n'.format(
     #         idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
     # return retStr
 
@@ -468,16 +471,16 @@ def new_find_hidden_pearl():
     HIGH_ROS = []
     HIGH_RESERVE = []
     try:
-        JsonDir = '%s\ResultJson' % path
+        JsonDir = '{}\ResultJson'.format(path)
         if not os.path.exists(JsonDir):
             os.makedirs(JsonDir)
-        if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)) and USE_JSON:
-            with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), "r") as f:
+        if os.path.exists(r'{}\result.{}.json'.format(JsonDir, yyyymmdd)) and USE_JSON:
+            with open(r'{}\result.{}.json'.format(JsonDir, yyyymmdd), "r") as f:
                 data = f.read()
                 treasure = json.loads(data)
                 # print(treasure)
-        if os.path.exists(r'%s\trash.%s.json' % (JsonDir, yyyymmdd)) and USE_JSON:
-            with open(r'%s\trash.%s.json' % (JsonDir, yyyymmdd), "r") as f:
+        if os.path.exists(r'{}\trash.{}.json'.format(JsonDir, yyyymmdd)) and USE_JSON:
+            with open(r'{}\trash.{}.json'.format(JsonDir, yyyymmdd), "r") as f:
                 data = f.read()
                 trash = json.loads(data)
                 # print(treasure)
@@ -659,7 +662,7 @@ def new_find_hidden_pearl():
                         else:
                             data[col] = float(values[idx].replace(',', '')) if (values[idx] is not None and values[idx] != '') else 0.0
                         # break
-                    if col in ['발행주식수-보통주'] and data['발행주식수'] != float(values[idx].replace(',', '')):
+                    if col in ['발행주식수-보통주'] and values[idx] != '' and data['발행주식수'] != float(values[idx].replace(',', '')):
                         print("[{}][{}]발행주식수가 다릅니다. {} <> {}".format(stock.code, stock.name, stock.issued_shares, float(values[idx].replace(',', ''))))
                         data['발행주식수'] = float(values[idx].replace(',', ''))
                 # 20190419 요구수익률을 다른곳에서 가져오면서 주석처리
@@ -899,25 +902,25 @@ def new_find_hidden_pearl():
         # print(HIGH_ROS)
         # print(HIGH_RESERVE)
         logger.info(HIGH_RESERVE)
-        if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)):
-            os.remove(r'%s\result.%s.json' % (JsonDir, yyyymmdd))
-        with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
+        if os.path.exists(r'{}\result.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\result.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
             json.dump(treasure, fp)
-        if os.path.exists(r'%s\trash.%s.json' % (JsonDir, yyyymmdd)):
-            os.remove(r'%s\trash.%s.json' % (JsonDir, yyyymmdd))
-        with open(r'%s\trash.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
+        if os.path.exists(r'{}\trash.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\trash.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
             json.dump(trash, fp)
     except Exception as e:
         print('error', e, '\n', stock)
         errmsg = '{}\n{}\n[{}][{}]'.format('new_find_hidden_pearl', str(e), stock.code, stock.name)
         err_messeage_to_telegram(errmsg)
-        if os.path.exists(r'%s\result.%s.json' % (JsonDir, yyyymmdd)):
-            os.remove(r'%s\result.%s.json' % (JsonDir, yyyymmdd))
-        with open(r'%s\result.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
+        if os.path.exists(r'{}\result.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\result.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
             json.dump(treasure, fp)
-        if os.path.exists(r'%s\trash.%s.json' % (JsonDir, yyyymmdd)):
-            os.remove(r'%s\trash.%s.json' % (JsonDir, yyyymmdd))
-        with open(r'%s\trash.%s.json' % (JsonDir, yyyymmdd), 'w') as fp:
+        if os.path.exists(r'{}\trash.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\trash.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
             json.dump(trash, fp)
 
 
@@ -936,6 +939,23 @@ def dataInit():
     except Exception as e:
         print("TargetStocks data initialization Failed with", e)
 
+
+def USDataInit():
+    import sys
+    import os
+    import django
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        detective_db.USTargetStocks.objects.update(plus_npv='N')
+    except Exception as e:
+        print("TargetStocks data initialization Failed with", e)
+
+
 def TargetStockDataDelete(yyyymmdd):
     import sys
     import os
@@ -950,10 +970,30 @@ def TargetStockDataDelete(yyyymmdd):
     try:
         info = detective_db.TargetStocks.objects.filter(valuation_date=yyyymmdd).delete()
 
-        print("[TargetStocks][%s] information Deleted successfully" % yyyymmdd)
-        # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
+        print("[TargetStocks][{}] information Deleted successfully".format(yyyymmdd))
+        # print("[{}][{}][{}] information stored successfully".format(report_name, crp_cd, crp_nm))
     except Exception as e:
         print('[Error on TargetStockDataDelete]\n', '*' * 50, e)
+
+
+def USTargetStockDataDelete(yyyymmdd):
+    import sys
+    import os
+    import django
+    from datetime import datetime
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        info = detective_db.USTargetStocks.objects.filter(valuation_date=yyyymmdd).delete()
+
+        print("[USTargetStocks][{}] information Deleted successfully".format(yyyymmdd))
+        # print("[{}][{}][{}] information stored successfully".format(report_name, crp_cd, crp_nm))
+    except Exception as e:
+        print('[Error on USTargetStockDataDelete]\n', '*' * 50, e)
 
 
 def TargetStockDataStore(crp_cd, data):
@@ -994,10 +1034,54 @@ def TargetStockDataStore(crp_cd, data):
                                                                   }
                                                                   )
 
-        print("[TargetStocks][%s][%s] information stored successfully" % (crp_cd, data['회사명']))
-        # print("[%s][%s][%s] information stored successfully" % (report_name, crp_cd, crp_nm))
+        print("[TargetStocks][{}][{}] information stored successfully".format(crp_cd, data['회사명']))
+        # print("[{}][{}][{}] information stored successfully".format(report_name, crp_cd, crp_nm))
     except Exception as e:
         print('[Error on TargetStockDataStore]\n', '*' * 50, e)
+
+
+def USTargetStockDataStore(crp_cd, data):
+    import sys
+    import os
+    import django
+    from datetime import datetime
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        info = detective_db.USTargetStocks.objects.update_or_create(code=crp_cd,
+                                                                    valuation_date=yyyymmdd,
+                                                                    defaults={
+                                                                      'name': data['Name'],
+                                                                      'curr': 'USD',
+                                                                      'last_price': data['종가'],
+                                                                      'price_gap': data['전일대비'],
+                                                                      'target_price': data['NPV'],
+                                                                      'target_price2': None,
+                                                                      'required_yield': data['요구수익률'],
+                                                                      'return_on_equity': data['ROE'],
+                                                                      'ratio': data['NPV']/data['종가']*100,
+                                                                      'plus_npv': 'Y',
+                                                                      'holders_share': data['자산총계'],
+                                                                      'holders_value': data['주주가치'],
+                                                                      'holders_profit': data['당기순이익'],
+                                                                      'issued_shares': data['발행주식수'],
+                                                                      # 'valuation_date': yyyymmdd,
+                                                                      'return_on_sales': data['ROS'],
+                                                                      'liquidity_rate': None,
+                                                                      'foreign_holding': None,
+                                                                      'trade_amount': data['거래량'],
+                                                                      # 'impairment_profit': data['중단영업이익'],
+                                                                    }
+                                                                    )
+
+        print("[USTargetStocks][{}][{}] information stored successfully".format(crp_cd, data['회사명']))
+        # print("[{}][{}][{}] information stored successfully".format(report_name, crp_cd, crp_nm))
+    except Exception as e:
+        print('[Error on USTargetStockDataStore]\n', '*' * 50, e)
 
 
 def test():
@@ -1015,7 +1099,7 @@ def test():
     treasure = {}
 
     import detective_app.models as detective_db
-    stockInfo = detective_db.Stocks.objects.filter(code='304100', listing='Y')  # 삼성전자
+    stockInfo = detective_db.Stocks.objects.filter(code='348950', listing='Y')  # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
@@ -1156,7 +1240,8 @@ def test():
                         data[col] = float(values[idx].replace(',', '')) if (
                                     values[idx] is not None and values[idx] != '') else 0.0
                     # break
-                if col in ['발행주식수-보통주'] and data['발행주식수'] != float(values[idx].replace(',', '')):
+                # if col in ['발행주식수-보통주']: print(values[idx] == '')
+                if col in ['발행주식수-보통주'] and values[idx] != '' and data['발행주식수'] != float(values[idx].replace(',', '')):
                     print("[{}][{}]발행주식수가 다릅니다. {} <> {}".format(stock.code, stock.name, stock.issued_shares,
                                                                  float(values[idx].replace(',', ''))))
                     data['발행주식수'] = float(values[idx].replace(',', ''))
@@ -1298,10 +1383,11 @@ def test():
               )
 
 
-def ustest(j_type, t_url):
+def hidden_pearl_in_usmarket():
     import sys
     import os
     import django
+    import logging
     from detective.fnguide_collector import fileCheck, saveFile
     from detective.fnguide_collector import generateEncCode
     import detective.chromecrawler as cc
@@ -1310,46 +1396,211 @@ def ustest(j_type, t_url):
     sys.path.append(main_path)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
-    DEBUG = True
-    dateDict = new_get_dateDict()
+
+    logfile = 'US_detector'
+    if not os.path.exists('./logs'):
+        os.makedirs('./logs')
+    now = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('[%(asctime)s][%(filename)s:%(lineno)s] >> %(message)s')
+
+    streamHandler = logging.StreamHandler()
+    fileHandler = logging.FileHandler("./logs/{}_{}.log".format(logfile, now))
+
+    streamHandler.setFormatter(formatter)
+    fileHandler.setFormatter(formatter)
+
+    logger.addHandler(streamHandler)
+    logger.addHandler(fileHandler)
+    logger.setLevel(level=logging.INFO)
+
+    pass_reason = ''
     treasure = {}
+    trash = {}
+    data = {}
+    # 날짜 정보 셋팅
+    dateDict = new_get_dateDict()
+    # 종목 정보 셋팅
+    # DEBUG = True
+    DEBUG = False
+    # USE_JSON = False
+    USE_JSON = True
 
-    yyyymmdd = str(datetime.now())[:10]
-    workDir = r'{}\{}\{}'.format(path, j_type, '2020-07-20')
+    term_nm1 = 'YYMM5'
+    term_nm2 = 'VAL5'
+    # yyyymmdd = str(datetime.now())[:10]
+    # yyyymmdd = '2020-08-04'
+    # workDir = r'{}\{}\{}'.format(path, 'GlobalFinancialSummary', '2020-08-04')
 
-    from django.db import connection
-    with connection.cursor() as cursor:
-        cursor.execute("""
-                select ticker as 'code', max(replace(replace(replace(replace(replace(replace(security, ' ', ''), '&', 'AND'), ',', ''), '.', ''), '!', ''), '*', '')) as 'name'
-                from (
-                    select security, ticker from detective_app_usstocks where listing = 'Y'
-                    union
-                    select security, ticker from detective_app_usnasdaqstocks where listing = 'Y'
-                )
-                group by ticker
-                order by ticker""")
-        s = dictfetchall(cursor)
+    import detective_app.models as detective_db
+    # stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='RXT', listing='Y')  # Apple
+    stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y')  # Apple
 
-        for i in iter(s):
-            if fileCheck(workDir, i['code'], i['name'], j_type, 'html'):
-                retResult = '[{}][{}][{}] File exist'.format(j_type, i['code'], i['name'])
-                print(retResult)
-                pass
+    HIGH_ROS = []
+    HIGH_RESERVE = []
+
+    JsonDir = r'{}\USResultJson'.format(path)
+    if not os.path.exists(JsonDir):
+        os.makedirs(JsonDir)
+    if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)) and USE_JSON:
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), "r") as f:
+            data = f.read()
+            treasure = json.loads(data)
+            # print(treasure)
+    if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)) and USE_JSON:
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), "r") as f:
+            data = f.read()
+            trash = json.loads(data)
+            # print(treasure)
+    try:
+        for ii, stock in enumerate(stockInfo):
+            # if ii > 10: break
+            if stock.ticker in treasure.keys():
+                print("stock.ticker in treasure.keys()")
+                continue
             else:
-                print('[{}][{}][{}] File is on process...'.format(j_type, i['code'], i['name']))
-                url = t_url.format(i['code'], generateEncCode())
-                drv = cc.ChromeDriver()
-                drv.set_path()
-                drv.set_option()
-                drv.set_driver()
-                drv.set_waiting()
-                drv.set_url(url)
-                response = drv.driver.page_source
-                soup = BeautifulSoup(response, "lxml")
-                xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-                saveFile(workDir, i['code'], i['name'], j_type, xml)
-                retResult = '[{}][{}][{}] File down completed'.format(j_type, i['code'], i['name'])
-                print(retResult)
+                if stock.ticker in trash.keys():
+                    print("stock.ticker in trash.keys()")
+                    continue
+                else:
+                    pass
+        for idx, i in enumerate(stockInfo):
+            # print(i.__dict__)
+            data = {}
+            data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name, 'Industry': i.category_detail, '발행주식수': i.issued_shares}
+            sec_name = i.security.replace(' ', '')\
+                .replace('&', 'AND')\
+                .replace(',', '')\
+                .replace('.', '')\
+                .replace('!', '')\
+                .replace('*', '')\
+                .replace('/', '')
+            dic = get_soup_from_file('GlobalCompanyProfile', yyyymmdd, sec_name, i.ticker, 'json')
+            if dic is None or dic == '':
+                logger.info("[{}][{}] Not exist profile File".format(i.ticker, i.security))
+                continue
+            if dic['data'] is not None:
+                if dic['data']['primaryData'] is not None:
+                    if dic['data']['primaryData']['lastSalePrice'] is not None:
+                        data['종가'] = float(dic['data']['primaryData']['lastSalePrice'].replace('$', ''))
+                    else: data['종가'] = 0.0
+                else: data['종가'] = 0.0
+            else:
+                data['종가'] = 0.0
+                continue
+            data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
+            data['거래량'] = int(dic['data']['keyStats']['Volume']['value'].replace(',', ''))
+            dic = get_soup_from_file('GlobalFinancialSummary', yyyymmdd, sec_name, i.ticker, 'json')
+            if dic is None or dic == '':
+                logger.info("[{}][{}] Not exist FinancialSummary File".format(i.ticker, i.security))
+                continue
+            data['Period'] = dic['Data1'][term_nm1]
+            data['요구수익률'] = 10
+            for d in dic['Data2']:
+                if DEBUG: print(d)
+                if d['ITEM_NM'] in ['자산총계', '자본총계', '매출액', '매출총이익', '판매비와관리비', '영업이익', '당기순이익', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', 'CAPEX', 'Free Cash Flow']:
+                    data[d['ITEM_NM']] = d[term_nm2] * 1000000 if d[term_nm2] is not None else 0
+
+            if data['자산총계'] == 0:
+                data['ROE'] = 0.0
+            else:
+                data['ROE'] = (data['당기순이익'] / data['자산총계'] * 100) if data['자산총계'] != 0 else 0
+
+            data['주주가치'] = data['자산총계'] + (
+                    data['자산총계'] * (data['ROE'] - data['요구수익률']) / (data['요구수익률']))
+            data['NPV'] = data['주주가치'] / data['발행주식수'] if data['발행주식수'] != 0 else 0
+            data['ROS'] = data['당기순이익'] / data['매출액'] * 100 if data['매출액'] != 0 else 0
+            if data['ROS'] > 15: HIGH_ROS.append(data['Name'])
+            if DEBUG: print(data)
+            treasure[i.ticker] = data
+        print('=' * 50, '마이너스', '=' * 50)
+        print(align_string('L', 'No.', 5),
+              align_string('R', 'Ticker', 10),
+              align_string('R', 'Security', 20),
+              align_string('R', 'ROE', 20),
+              align_string('R', '자산총계', 14),
+              align_string('R', '주주가치', 16),
+              align_string('R', 'NPV', 20),
+              align_string('R', '종가', 10),
+              align_string('R', '확인사항', 16),
+              )
+        if not DEBUG: USDataInit()
+        cnt = 0
+        print(treasure)
+        USTargetStockDataDelete(yyyymmdd)
+        for d in treasure.keys():
+            if treasure[d]['ROE'] < 10 or \
+                    treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
+                    treasure[d]['NPV'] < 0 or \
+                    treasure[d]['자산총계'] == 0 or \
+                    treasure[d]['당기순이익'] == 0 or \
+                    treasure[d]['발행주식수'] == 0 or \
+                    treasure[d]['NPV'] / treasure[d]['종가'] * 100 < 105:
+                cnt += 1
+                print(align_string('L', cnt, 5),
+                      align_string('R', d, 10),
+                      align_string('R', treasure[d]['Name'], 40 - len(treasure[d]['Name'])),
+                      align_string(',', round(treasure[d]['ROE'], 2), 20),
+                      align_string(',', round(treasure[d]['자산총계'], 0), 20),
+                      align_string(',', round(treasure[d]['주주가치'], 0), 20),
+                      align_string(',', round(treasure[d]['NPV'], 0), 20),
+                      align_string(',', treasure[d]['종가'], 10),
+                      align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
+                      )
+                if treasure[d]['ROE'] < 15 or treasure[d]['ROE'] < treasure[d]['요구수익률']:
+                    pass_reason = "[{}][{}]['ROE'] < 15 또는 ['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d,
+                                                                                                                treasure[d][
+                                                                                                                    'Name'],
+                                                                                                                treasure[d][
+                                                                                                                    'ROE'],
+                                                                                                                treasure[d][
+                                                                                                                    '요구수익률'])
+                else:
+                    pass_reason = "[{}][{}]자산총계 : {}\nROE : {:.2f} < 15\n업종구분 : {}\nNPV : {:.2f}\n종가 : {}".format(
+                        d, treasure[d]['Name'], treasure[d]['자산총계'], treasure[d]['ROE'], treasure[d]['Industry'],
+                        treasure[d]['NPV'], treasure[d]['종가'])
+
+                if treasure[d]['ROE'] >= 30 or treasure[d]['NPV'] / treasure[d]['종가'] * 100 > 200:
+                    logger.info("[NEED TO CHECK]" + pass_reason)
+                else:
+                    logger.error(pass_reason)
+                pass_reason = ""
+                continue
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', treasure[d]['Name'], 40 - len(treasure[d]['Name'])),
+                  align_string(',', round(treasure[d]['ROE'], 2), 20),
+                  align_string(',', round(treasure[d]['자산총계'], 0), 20),
+                  align_string(',', round(treasure[d]['주주가치'], 0), 20),
+                  align_string(',', round(treasure[d]['NPV'], 0), 20),
+                  align_string(',', treasure[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
+                  )
+            USTargetStockDataStore(d, treasure[d])
+        # print(HIGH_ROS)
+        # print(HIGH_RESERVE)
+        logger.info(HIGH_ROS)
+        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(treasure, fp)
+        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(trash, fp)
+    except Exception as e:
+        print('error', e, '\n', i)
+        errmsg = '{}\n{}\n[{}][{}]'.format('hidden_pearl_in_usmarket', str(e), i.ticker, i.security)
+        err_messeage_to_telegram(errmsg)
+        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(treasure, fp)
+        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(trash, fp)
 
 
 
@@ -1370,4 +1621,5 @@ if __name__ == '__main__':
     # crp_cd = '005930'
     # aa = get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd)
     # print(len(aa.find_all('div')))
-    test()
+    hidden_pearl_in_usmarket()
+    # test()
