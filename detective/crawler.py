@@ -154,6 +154,24 @@ def stocklistCleansing(targets, content):
         else:
             ss = d.find_all('td')
             # [code, name, high, low, close, volume, change, direction, pct, down]
+            if ss[0].text in ['ERI']: continue
+            if 'ETF' in ss[1].text \
+                or 'Ishares' in ss[1].text \
+                or 'Proshares' in ss[1].text \
+                or 'Global X' in ss[1].text \
+                or 'G-X' in ss[1].text \
+                or 'Nasdaq' in ss[1].text \
+                or 'Victoryshares' in ss[1].text \
+                or 'Vanguard' in ss[1].text \
+                or 'Warrents' in ss[1].text \
+                or 'Bulletshares' in ss[1].text \
+                or 'Advisorshares' in ss[1].text \
+                or 'Dividend' in ss[1].text \
+                or ' WT' in ss[1].text \
+                or ' Index' in ss[1].text \
+                or ' Fund' in ss[1].text \
+                or 'Yield' in ss[1].text \
+                or ' Bond' in ss[1].text: continue
             stocks[ss[0].text] = {'Ticker': ss[0].text
                                   , 'Security': ss[1].text
                                   , 'TickerLink': "http://www.nasdaq.com/symbol/{}".format(ss[0].text.lower())
