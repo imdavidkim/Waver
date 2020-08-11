@@ -41,10 +41,10 @@ def getConfig():
 
 def fileCheck(workDir, code, name, type, ext):
     filename = r"%s\financeData_%s_%s_%s.%s" % (workDir,
-                                                   name,
-                                                   code,
-                                                   type,
-                                                   ext)
+                                                name,
+                                                code,
+                                                type,
+                                                ext)
     # print(filename)
     # print(os.path.isfile(filename))
     # if os.path.isfile(filename):
@@ -52,7 +52,7 @@ def fileCheck(workDir, code, name, type, ext):
     return os.path.isfile(filename) and os.stat(filename).st_size > 0
 
 
-def saveFile(workDir, code, name, type, xml, mode='wb', encoding='utf8'):
+def saveFile(workDir, name, code, type, xml, mode='wb', encoding='utf8'):
     if mode[-1] == 'b':
         file = open(r"%s\financeData_%s_%s_%s.html" % (workDir,
                                                        name,
@@ -92,68 +92,129 @@ def dictfetchall(cursor):
 
 def getTargetFile(j, c):
     import json
+    retResult = ''
+    ticker = ""
+    sec_name = ""
+    url_info = None
     try:
-        retResult = ''
-        # print(c)
-        if fileCheck(j.workDir, c['code'], c['name'], j.jobtype, j.filetype):
-            retResult = '[{}][{}][{}]|Skipped'.format(j.jobtype, c['code'], c['name'])
+        if j.jobtype.startswith('Global'):
+            ticker = c['ticker']
+            sec_name = str(c['security']).replace(' ', '').replace('&', 'AND').replace(',', '').replace('.',
+                                                                                                     '').replace(
+                '!', '').replace('*', '').replace('/', '')
+        else:
+            ticker = c['code']
+            sec_name = c['name']
+
+        if fileCheck(j.workDir, ticker, sec_name, j.jobtype, j.filetype):
+            retResult = '[{}][{}][{}]|Skipped'.format(j.jobtype, ticker, sec_name)
+            print(retResult)
             pass
         else:
-            print('[{}][{}][{}] File is on process...'.format(j.jobtype, c['code'], c['name']))
+            print('[{}][{}][{}] File is on process...'.format(j.jobtype, ticker, sec_name))
             if j.jobtype.startswith('Global'):
-                url = j.url.format(c['code'], generateEncCode())
-                if j.filetype == 'html':
-                    drv = cc.ChromeDriver()
-                    drv.set_path()
-                    drv.set_option()
-                    drv.set_driver()
-                    drv.set_waiting()
-                    # drv.implicitly_wait(15)
-                    drv.set_url(url)
-                    # time.sleep(1)
-                    response = drv.driver.page_source
-                    # print(response)
-                    # soup = BeautifulSoup(response.decode('utf-8'), "lxml")
-                    soup = BeautifulSoup(response, "lxml")
-                    # File 처리
-                    xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-                    saveFile(j.workDir, c['code'], c['name'], j.jobtype, xml)
-                    drv.driverClose()
-                    drv.driverQuit()
-                elif j.filetype == 'json':
-                    response = httpRequest(url, None, 'GET')
-                    with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, c['name'], c['code'], j.jobtype,
-                                                                   j.filetype),
-                              'w') as fp:
-                        json.dump(json.loads(response), fp)
-                retResult = "[{}][{}][{}]|Done".format(j.jobtype, c['code'], c['name'])
+                if j.jobtype == 'GlobalCompanyProfile':
+                    urls = j.url.format(ticker, ticker).split('|')
+
+                    url_info = urls[1]
+                    res = httpRequest(urls[1], None, 'GET', None)
+                    json_msg = json.loads(res.decode('utf-8'))
+
+                    if json_msg['data'] is not None:
+                        category_code = json_msg['data']['exchange']
+                        if json_msg['data']['keyStats']['MarketCap']['value'] != 'N/A':
+                            issued_shares = round(
+                                float(str(json_msg['data']['keyStats']['MarketCap']['value']).replace(',', '')) / float(
+                                    str(json_msg['data']['primaryData']['lastSalePrice']).replace('$', '')), 1)
+                        else:
+                            issued_shares = 0.0
+                        url_info = urls[0]
+                        res = httpRequest(urls[0], None, 'GET', None)
+                        json_msg2 = json.loads(res.decode('utf-8'))
+                        if json_msg2['data'] is not None:
+                            category_name = json_msg2['data']['Sector']['value']
+                            category_detail = json_msg2['data']['Industry']['value']
+                            tel = json_msg2['data']['Phone']['value']
+                            address = json_msg2['data']['Address']['value']
+                            location = json_msg2['data']['Region']['value']
+                            description = json_msg2['data']['CompanyDescription']['value']
+                        else:
+                            category_name = ''
+                            category_detail = ''
+                            tel = ''
+                            address = ''
+                            location = ''
+                            description = ''
+                            for key in json_msg2['data'].keys():
+                                json_msg['data'][key] = json_msg2['data'][key]
+                        retResult = "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}".format(j.jobtype,
+                                                                           ticker,
+                                                                           category_code,
+                                                                           category_name,
+                                                                           category_detail,
+                                                                           tel,
+                                                                           address,
+                                                                           location,
+                                                                           description,
+                                                                           issued_shares)
+                        with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                       j.filetype),
+                                  'w') as fp:
+                            json.dump(json_msg, fp)
+                    else:
+                        retResult = '[{}][{}][{}]|Update Failed'.format(j.jobtype, ticker, sec_name)
+                        print(retResult)
+                        with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                       j.filetype),
+                                  'w') as fp:
+                            json.dump(json_msg, fp)
+                elif j.jobtype == 'GlobalFinancialSummary':
+                    qry_url = 'http://compglobal.wisereport.co.kr/Common/CompanySearchGlobal?q={}-US&q1={}-US&etf_yn=1&iso_str=US%2CCN%2CHK%2CJP%2CVN%2CID%2CS6&limit=10'.format(ticker, ticker)
+                    if httpRequest(qry_url, None, 'GET').decode('utf-8') == '[]':
+                        with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                       j.filetype),
+                                  'w') as fp:
+                            json.dump("", fp)
+                        retResult = '[{}][{}][{}]|NotExist'.format(j.jobtype, ticker, sec_name)
+                    else:
+                        url = j.url.format(ticker, generateEncCode())
+                        url_info = url
+                        response = httpRequest(url, None, 'GET')
+                        with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                       j.filetype),
+                                  'w') as fp:
+                            json.dump(json.loads(response), fp)
+                        retResult = "[{}][{}][{}]|Done".format(j.jobtype, ticker, sec_name)
             elif j.url:
                 if j.reqdata is None:
-                    url = j.url.format(c['code'])
+                    url = j.url.format(ticker)
+                    url_info = url
                     response = httpRequest(url, None, 'GET')
-                    with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, c['name'], c['code'], j.jobtype, j.filetype),
+                    # 20200803 파일명 변경  c['name'], c['code'] => ticker, sec_name
+                    with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype, j.filetype),
                               'w') as fp:
                         json.dump(json.loads(response), fp)
-                    retResult = "[{}][{}][{}]|Done".format(j.jobtype, c['code'], c['name'])
+                    retResult = "[{}][{}][{}]|Done".format(j.jobtype, ticker, sec_name)
                 else:
                     url = j.url
-                    j.reqdata['gicode'] = 'A{}'.format(c['code'])
+                    url_info = url
+                    j.reqdata['gicode'] = 'A{}'.format(ticker)
                     response = httpRequestWithDriver(None, url, j.reqdata)
                     # print(response)
                     soup = BeautifulSoup(response.decode('utf-8'), "lxml")
                     # File 처리
                     xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-                    saveFile(j.workDir, c['code'], c['name'], j.jobtype, xml)
+                    saveFile(j.workDir, sec_name, ticker, j.jobtype, xml)
 
                     # File 처리 끝
                     # DB 처리
                     marketTxt = select_by_attr(soup, 'span', 'class', 'stxt stxt1').text
                     marketTxtDetail = select_by_attr(soup, 'span', 'class', 'stxt stxt2').text
                     settlementMonth = select_by_attr(soup, 'span', 'class', 'stxt stxt3').text
-                    retResult = "{}|{}|{}|{}|{}|{}".format(j.jobtype, c['code'], c['name'], marketTxt, marketTxtDetail,
+                    retResult = "{}|{}|{}|{}|{}|{}".format(j.jobtype, ticker, sec_name, marketTxt, marketTxtDetail,
                                                                settlementMonth)
     except Exception as e:
-        errmsg = '{}\n{}'.format('getTargetFile', str(e))
+        errmsg = '{}\n{}\n{}'.format('getTargetFile', str(e), url_info)
         err_messeage_to_telegram(errmsg)
     return retResult
 
@@ -279,7 +340,7 @@ def getUSFinanceDataStandalone(j_type, t_url):
                     response = drv.driver.page_source
                     soup = BeautifulSoup(response, "lxml")
                     xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
-                    saveFile(workDir, i.ticker, sec_name, j_type, xml)
+                    saveFile(workDir, sec_name, i.ticker, j_type, xml)
                     ck = drv.driver.get_cookies()
                     # File 처리 끝
                     # DB 처리
@@ -414,6 +475,7 @@ def getFinanceData(cmd=None):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
+    from django.db.models import Q
     global marketTxt
 
     yyyymmdd = str(datetime.now())[:10]
@@ -437,6 +499,16 @@ def getFinanceData(cmd=None):
         300: 'https://api.nasdaq.com/api/company/{}/company-profile|https://api.nasdaq.com/api/quote/{}/info?assetclass=stocks',
         301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}'
     }
+
+    fileInfo = {
+        101: 'html',
+        103: 'html',
+        104: 'html',
+        108: 'html',
+        200: 'json',
+        300: 'json',
+        301: 'json',
+    }
     # 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd={}-US&en={}'
 
     data = {
@@ -458,38 +530,83 @@ def getFinanceData(cmd=None):
             if cmd and key != cmd:
                 continue
             if cmd >= 300:
-                jobtype = reportType[key]
-                url = urlInfo[key]
-                # getUSFinanceData(jobtype, url)
-                getUSFinanceDataStandalone(jobtype, url)
-                continue
-            stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+                stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y')
+            else:
+                stockInfo = detective_db.Stocks.objects.filter(listing='Y')
+            #     jobtype = reportType[key]
+            #     url = urlInfo[key]
+            #     # getUSFinanceData(jobtype, url)
+            #     getUSFinanceDataStandalone(jobtype, url)
+            #     continue
+
             # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
             workDir = r'%s\%s\%s' % (path, reportType[key], yyyymmdd)
             if not os.path.exists(workDir):
                 os.makedirs(workDir)
 
             data['NewMenuID'] = key
-            ext = 'json' if cmd == 200 else 'html'
+            # ext = 'json' if cmd == 200 else 'html'
             # 신규코드(multiprocessing) 시작
             if cmd == 200:
                 agents = 2
                 j = jobs()
-                j.filetype = ext
+                j.filetype = fileInfo[key]
                 j.workDir = workDir
                 j.jobtype = reportType[key]
                 j.url = urlInfo[key]
                 s = stockInfo.values()
-                # j.driver = cc.ChromeDriver()
                 func = partial(getTargetFile, j)
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
-                # j.driver.driverClose()
-                # j.driver.driverQuit()
+            elif cmd == 300:
+                agents = 3
+                j = jobs()
+                j.filetype = fileInfo[key]
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                s = stockInfo.values()
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+
+                for r in result:
+                    retArr = r.split('|')
+                    if len(retArr) < 3: continue
+
+                    if retArr[2] != '' and retArr[0] == 'GlobalCompanyProfile':
+                        USStockMarketTextUpdateAdvcd(retArr[1], retArr[2], retArr[3], retArr[4], retArr[5],
+                                                     retArr[6], retArr[7], retArr[8], retArr[9])
+                        # 0 j.jobtype,
+                        # 1 ticker,
+                        # 2 category_code,
+                        # 3 category_name,
+                        # 4 category_detail,
+                        # 5 tel,
+                        # 6 address,
+                        # 7 location,
+                        # 8 description,
+                        # 9 issued_shares
+                if len(stockInfo) != len(result):
+                    print(
+                        "Total target stocks : {}\n requested stocks : {}\nPlease check out the process.\nTerminating this program.".format(
+                            len(stockInfo), len(result)))
+                    exit(0)
+            elif cmd == 301:
+                agents = 3
+                j = jobs()
+                j.filetype = fileInfo[key]
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                s = stockInfo.values()
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
             else:
                 agents = 3
                 j = jobs()
-                j.filetype = ext
+                j.filetype = fileInfo[key]
                 j.workDir = workDir
                 j.jobtype = reportType[key]
                 j.url = urlInfo[key]
@@ -503,7 +620,7 @@ def getFinanceData(cmd=None):
 
                 for r in result:
                     retArr = r.split('|')
-                    if len(retArr) < 2: continue
+                    if len(retArr) < 3: continue
                     if retArr[3] != '' and retArr[0] == 'snapshot':
                         StockMarketTextUpdate(retArr[1], retArr[3].replace('\xa0', ' '), retArr[4].replace('\xa0', ' '),
                                               retArr[5].replace('\xa0', ' '))
@@ -863,6 +980,8 @@ def USStockMarketTextUpdateAdvcd(crp_cd, category_code, category_name, category_
     django.setup()
     import detective_app.models as detective_db
     try:
+        print("Updating market info...{}-{}-{}-{}-{}".format(crp_cd, category_code, category_name, category_detail,
+                                                             issued_shares))
         detective_db.USNasdaqStocks.objects.filter(ticker=crp_cd).update(category_code=category_code,
                                                                          category_name=category_name,
                                                                          category_detail=category_detail,
@@ -1415,8 +1534,189 @@ def getUSFinanceDataNotUse(cmd=None):
             docs = edgar.getXMLDocuments(tree, noOfDocuments=1)
             # print(docs)
             for xml in docs:
-                saveFile(workDir, s.cik, s.security.replace(' ', '_'), reportType[key], xml, 'w')
+                saveFile(workDir, s.security.replace(' ', '_'), s.cik, reportType[key], xml, 'w')
 
+
+def getFinanceDataTest(cmd=None):
+    import sys
+    import os
+    import django
+    from multiprocessing import Pool
+    from functools import partial
+    getConfig()
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+
+    # CHROMEDRIVER_PATH = chrome_path
+    options = Options()
+    options.headless = True
+    # driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
+    # driver.implicitly_wait(3)
+
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    from django.db.models import Q
+    global marketTxt
+
+    yyyymmdd = str(datetime.now())[:10]
+    yyyymmdd = '2020-08-04'
+    url = "http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp"
+    reportType = {
+        101: 'snapshot',
+        103: 'financeReport',
+        104: 'financeRatio',
+        108: 'consensus',
+        200: 'ROE',
+        300: 'GlobalCompanyProfile',
+        301: 'GlobalFinancialSummary',
+
+    }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
+    urlInfo = {
+        101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
+        103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp',
+        104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp',
+        108: 'http://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp',
+        200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A{}_D.json',
+        300: 'https://api.nasdaq.com/api/company/{}/company-profile|https://api.nasdaq.com/api/quote/{}/info?assetclass=stocks',
+        301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}'
+    }
+
+    fileInfo = {
+        101: 'html',
+        103: 'html',
+        104: 'html',
+        108: 'html',
+        200: 'json',
+        300: 'json',
+        301: 'json',
+    }
+    # 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd={}-US&en={}'
+
+    data = {
+        'pGB': 1,
+        'gicode': '',
+        'cID': '',
+        'MenuYn': 'Y',
+        'ReportGB': 'D',  # D: 연결, B: 별도
+        'NewMenuID': 0,
+        'stkGb': 701,
+    }
+
+    xmlString = ''
+    result = None
+
+    try:
+        for key in reportType.keys():
+            # print(cmd, cmd and key != cmd)
+            if cmd and key != cmd:
+                continue
+            if cmd >= 300:
+                stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='AAPL', listing='Y')
+            else:
+                stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
+            #     jobtype = reportType[key]
+            #     url = urlInfo[key]
+            #     # getUSFinanceData(jobtype, url)
+            #     getUSFinanceDataStandalone(jobtype, url)
+            #     continue
+
+            # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
+            workDir = r'%s\%s\%s' % (path, reportType[key], yyyymmdd)
+            if not os.path.exists(workDir):
+                os.makedirs(workDir)
+
+            data['NewMenuID'] = key
+            # ext = 'json' if cmd == 200 else 'html'
+            # 신규코드(multiprocessing) 시작
+            if cmd == 200:
+                agents = 2
+                j = jobs()
+                j.filetype = fileInfo[key]
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                s = stockInfo.values()
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+            elif cmd == 300:
+                agents = 3
+                j = jobs()
+                j.filetype = fileInfo[key]
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                s = stockInfo.values()
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+
+                for r in result:
+                    retArr = r.split('|')
+                    if len(retArr) < 3: continue
+
+                    if retArr[2] != '' and retArr[0] == 'GlobalCompanyProfile':
+                        USStockMarketTextUpdateAdvcd(retArr[1], retArr[2], retArr[3], retArr[4], retArr[5],
+                                                     retArr[6], retArr[7], retArr[8], retArr[9])
+                        # 0 j.jobtype,
+                        # 1 ticker,
+                        # 2 category_code,
+                        # 3 category_name,
+                        # 4 category_detail,
+                        # 5 tel,
+                        # 6 address,
+                        # 7 location,
+                        # 8 description,
+                        # 9 issued_shares
+                if len(stockInfo) != len(result):
+                    print(
+                        "Total target stocks : {}\n requested stocks : {}\nPlease check out the process.\nTerminating this program.".format(
+                            len(stockInfo), len(result)))
+                    exit(0)
+            elif cmd == 301:
+                agents = 3
+                j = jobs()
+                j.filetype = fileInfo[key]
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                s = stockInfo.values()
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+            else:
+                agents = 3
+                j = jobs()
+                j.filetype = fileInfo[key]
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                j.reqdata = data
+                # j.driver = driver
+                s = stockInfo.values()
+                # j.driver = cc.ChromeDriver()
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+
+                for r in result:
+                    retArr = r.split('|')
+                    if len(retArr) < 3: continue
+                    if retArr[3] != '' and retArr[0] == 'snapshot':
+                        StockMarketTextUpdate(retArr[1], retArr[3].replace('\xa0', ' '), retArr[4].replace('\xa0', ' '),
+                                              retArr[5].replace('\xa0', ' '))
+                if len(stockInfo) != len(result):
+                    print(
+                        "Total target stocks : {}\n requested stocks : {}\nPlease check out the process.\nTerminating this program.".format(
+                            len(stockInfo), len(result)))
+                    exit(0)
+        print("FnGuideDataCollection job finished")
+    except Exception as e:
+        errmsg = '{}\n{}'.format('getFinanceData', str(e))
+        err_messeage_to_telegram(errmsg)
 
 if __name__ == '__main__':
     # print(getUSFinanceData())
@@ -1424,14 +1724,22 @@ if __name__ == '__main__':
     # getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
-    # getFinanceData(104)
+    getFinanceDataTest(300)
     # getUSFinanceData()
     # print(generateEncCode())
-    url = 'https://api.nasdaq.com/api/company/AAPL/company-profile'
-    header = {
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
-        "Accept-Encoding": "gzip, deflate",
-        "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
-    }
-    print(httpRequest(url, None, 'GET', header))
+    # url = 'https://api.nasdaq.com/api/company/ainv/company-profile'
+    # header = {
+    #     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    #     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
+    #     "Accept-Encoding": "gzip, deflate",
+    #     "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
+    # }
+    # print(httpRequest(url, None, 'GET', header))
+    # url = 'https://api.nasdaq.com/api/quote/AINV/info?assetclass=stocks'
+    # header = {
+    #     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+    #     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
+    #     "Accept-Encoding": "gzip, deflate",
+    #     "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
+    # }
+    # print(httpRequest(url, None, 'GET', header))
