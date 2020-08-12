@@ -128,11 +128,38 @@ def get_high_ranked_stock():
         cursor.execute(sql)
         retStr = ''
         for idx, d in enumerate(dictfetchall(cursor)):
-            retStr += '{}. {}({})\t{} => {}[{}%]\n'.format(
-                idx + 1, d['name'], d['price_gap'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
+            retStr += '{}. [{}]{}({})\n\t{} => {}[{}%]\n'.format(
+                idx + 1, d['code'], d['name'], d['price_gap'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
         return retStr
     except Exception as e:
         errmsg = '{}\n{}'.format('get_high_ranked_stock', str(e))
+        err_messeage_to_telegram(errmsg)
+
+
+def get_nasdaq_high_ranked_stock():
+    import sys
+    import os
+    import django
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    try:
+        from django.db import connection
+        cursor = connection.cursor()
+        sql = """select code, name, last_price, round(target_price, 2) 'target_price', price_gap, ratio, return_on_equity, return_on_sales from detective_app_ustargetstocks
+                where valuation_date = '{}'
+                and ratio > 100
+                order by ratio desc""".format(yyyymmdd)
+        cursor.execute(sql)
+        retStr = ''
+        for idx, d in enumerate(dictfetchall(cursor)):
+            retStr += '{}. [{}]{}({})\n\t{} => {}[{}%]\n'.format(
+                idx + 1, d['code'], d['name'], d['price_gap'], format(d['last_price'], ','), format(d['target_price'], ','), str(round((d['target_price'])/(d['last_price'])*100-100, 1)))
+        return retStr
+    except Exception as e:
+        errmsg = '{}\n{}'.format('get_nasdaq_high_ranked_stock', str(e))
         err_messeage_to_telegram(errmsg)
 
 
@@ -178,8 +205,8 @@ def get_high_ranked_stock_with_closeprice():
             fig = plt.figure(clear=True)
             price = getNaverPrice(d['code'], 36)
             SP = fig.add_subplot(1, 1, 1)
-            SP.plot(price, label="{}".format(d['name']))
-            SP.legend(loc='upper left')
+            SP.plot(price, label="{}({})".format(d['name'], d['code']))
+            SP.legend(loc='upper center')
             img_path = r'{}\{}\{}'.format(path, 'StockPriceTrace', yyyymmdd)
             print(img_path)
             if not os.path.exists(img_path):
@@ -218,6 +245,99 @@ def get_high_ranked_stock_with_closeprice():
     #     retStr += '%d. {}\t{} => {}[{}%%]\n'.format(
     #         idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
     # return retStr
+
+
+def get_nasdaq_high_ranked_stock_with_closeprice():
+    from yahoofinancials import YahooFinancials
+    from detective.naver_api import getNaverPrice
+    import sys
+    import os
+    import django
+    import matplotlib.pyplot as plt
+    from matplotlib import rc, font_manager
+    import pandas as pd
+
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    # yyyymmdd = '2020-08-11'
+    try:
+        from django.db import connection
+        cursor = connection.cursor()
+        sql = """select code, name, last_price, round(target_price, 2) 'target_price', price_gap, ratio, return_on_equity, return_on_sales from detective_app_ustargetstocks
+                where valuation_date = '{}'
+                and ratio > 100
+                order by ratio desc""".format(yyyymmdd)
+        cursor.execute(sql)
+        # retStr = ''
+        fig = None
+        # 폰트 경로
+        font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
+        # 폰트 이름 얻어오기
+        font_name = font_manager.FontProperties(fname=font_path).get_name()
+        # font 설정
+        plt.rc('font', family=font_name)
+        plt.close('all')
+        # plt.clf()
+        todaydate = datetime.strptime(yyyymmdd, "%Y-%m-%d")
+        before180days = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=180)
+        # print(str(todaydate)[:10], str(before180days)[:10])
+        for idx, d in enumerate(dictfetchall(cursor)):
+            fig = plt.figure(clear=True)
+            dates = []
+            prcs = []
+            ins_ticker = d['code']
+            # print(idx, ins_ticker)
+            instrument = YahooFinancials(ins_ticker)
+            prices = instrument.get_historical_price_data(str(before180days)[:10], str(todaydate)[:10], "daily")
+            # if "prices" not in prices[ins_ticker].keys(): print(prices)
+            for info in prices[ins_ticker]['prices']:
+                dates.append(datetime.strptime(info['formatted_date'], "%Y-%m-%d"))
+                prcs.append(info['close'])
+            price = pd.core.series.Series(prcs, dates)
+            SP = fig.add_subplot(1, 1, 1)
+            SP.plot(price, label="{}({})".format(d['name'], d['code']))
+            SP.legend(loc='upper center')
+            img_path = r'{}\{}\{}'.format(path, 'USStockPriceTrace', yyyymmdd)
+            print(img_path)
+            if not os.path.exists(img_path):
+                os.makedirs(img_path)
+            plt.savefig(img_path + '\\{}_{}.png'.format(d['name'], d['code']))
+            plt.xticks(rotation=45)
+            # plt.show()
+            msgr.img_messeage_to_telegram(img_path + '\\{}_{}.png'.format(d['name'], d['code']))
+            fig = None
+            plt.close('all')
+        plt = None
+    except Exception as e:
+        errmsg = '{}\n{}'.format('get_nasdaq_high_ranked_stock_with_closeprice', str(e))
+        err_messeage_to_telegram(errmsg)
+        fig = None
+        plt.close('all')
+        plt = None
+    # todaydate = datetime.strptime(yyyymmdd, "%Y-%m-%d")
+    # before30date = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=30)
+    # print(str(todaydate)[:10], str(before30date)[:10])
+    # for idx, d in enumerate(dictfetchall(cursor)):
+    #     dates = []
+    #     prcs = []
+    #     ins_ticker = '{}.KS'.format(d['code']) if d['market_text'].split("\xa0")[0].strip() == 'KSE' else '{}.KQ'.format(d['code'])
+    #     print(idx, ins_ticker)
+    #     instrument = YahooFinancials(ins_ticker)
+    #     prices = instrument.get_historical_price_data(str(before30date)[:10], str(todaydate)[:10], "daily")
+    #     if "prices" not in prices[ins_ticker].keys(): print(prices)
+    #     for info in prices[ins_ticker]['prices']:
+    #         dates.append(info['formatted_date'])
+    #         prcs.append(info['close'])
+    #     print(dates)
+    #     print(prcs)
+
+    #     retStr += '%d. {}\t{} => {}[{}%%]\n'.format(
+    #         idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
+    # return retStr
+
 
 def align_string(switch, text, digit):
     if switch == 'L':
@@ -1530,8 +1650,7 @@ def hidden_pearl_in_usmarket():
         print(treasure)
         USTargetStockDataDelete(yyyymmdd)
         for d in treasure.keys():
-            if treasure[d]['ROE'] < 10 or \
-                    treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
+            if treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
                     treasure[d]['NPV'] < 0 or \
                     treasure[d]['자산총계'] == 0 or \
                     treasure[d]['당기순이익'] == 0 or \
@@ -1548,14 +1667,14 @@ def hidden_pearl_in_usmarket():
                       align_string(',', treasure[d]['종가'], 10),
                       align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                       )
-                if treasure[d]['ROE'] < 15 or treasure[d]['ROE'] < treasure[d]['요구수익률']:
-                    pass_reason = "[{}][{}]['ROE'] < 15 또는 ['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d,
-                                                                                                                treasure[d][
-                                                                                                                    'Name'],
-                                                                                                                treasure[d][
-                                                                                                                    'ROE'],
-                                                                                                                treasure[d][
-                                                                                                                    '요구수익률'])
+                if treasure[d]['ROE'] < treasure[d]['요구수익률']:
+                    pass_reason = "[{}][{}]['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d,
+                                                                                                treasure[d][
+                                                                                                    'Name'],
+                                                                                                treasure[d][
+                                                                                                    'ROE'],
+                                                                                                treasure[d][
+                                                                                                    '요구수익률'])
                 else:
                     pass_reason = "[{}][{}]자산총계 : {}\nROE : {:.2f} < 15\n업종구분 : {}\nNPV : {:.2f}\n종가 : {}".format(
                         d, treasure[d]['Name'], treasure[d]['자산총계'], treasure[d]['ROE'], treasure[d]['Industry'],
@@ -1621,5 +1740,7 @@ if __name__ == '__main__':
     # crp_cd = '005930'
     # aa = get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd)
     # print(len(aa.find_all('div')))
-    hidden_pearl_in_usmarket()
+    # hidden_pearl_in_usmarket()
+    print(get_nasdaq_high_ranked_stock())
+    # get_nasdaq_high_ranked_stock_with_closeprice()
     # test()
