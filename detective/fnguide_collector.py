@@ -138,6 +138,8 @@ def getTargetFile(j, c):
                             address = json_msg2['data']['Address']['value']
                             location = json_msg2['data']['Region']['value']
                             description = json_msg2['data']['CompanyDescription']['value']
+                            for key in json_msg2['data'].keys():
+                                json_msg['data'][key] = json_msg2['data'][key]
                         else:
                             category_name = ''
                             category_detail = ''
@@ -145,8 +147,7 @@ def getTargetFile(j, c):
                             address = ''
                             location = ''
                             description = ''
-                            for key in json_msg2['data'].keys():
-                                json_msg['data'][key] = json_msg2['data'][key]
+
                         retResult = "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}".format(j.jobtype,
                                                                            ticker,
                                                                            category_code,
@@ -559,7 +560,7 @@ def getFinanceData(cmd=None):
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
             elif cmd == 300:
-                agents = 3
+                agents = 5
                 j = jobs()
                 j.filetype = fileInfo[key]
                 j.workDir = workDir
@@ -1562,7 +1563,7 @@ def getFinanceDataTest(cmd=None):
     global marketTxt
 
     yyyymmdd = str(datetime.now())[:10]
-    yyyymmdd = '2020-08-04'
+    # yyyymmdd = '2020-08-04'
     url = "http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp"
     reportType = {
         101: 'snapshot',
@@ -1614,7 +1615,7 @@ def getFinanceDataTest(cmd=None):
             if cmd and key != cmd:
                 continue
             if cmd >= 300:
-                stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='AAPL', listing='Y')
+                stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='ZM', listing='Y')
             else:
                 stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
             #     jobtype = reportType[key]
@@ -1643,7 +1644,7 @@ def getFinanceDataTest(cmd=None):
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
             elif cmd == 300:
-                agents = 3
+                agents = 1
                 j = jobs()
                 j.filetype = fileInfo[key]
                 j.workDir = workDir
