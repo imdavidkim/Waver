@@ -154,7 +154,7 @@ def stocklistCleansing(targets, content):
         else:
             ss = d.find_all('td')
             # [code, name, high, low, close, volume, change, direction, pct, down]
-            if ss[0].text in ['ERI']: continue
+            if ss[0].text in ['ERI', 'ENT']: continue
             if 'ETF' in ss[1].text \
                 or 'Ishares' in ss[1].text \
                 or 'Proshares' in ss[1].text \
