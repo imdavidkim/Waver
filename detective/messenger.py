@@ -56,6 +56,7 @@ def messeage_to_telegram(txt):
     import time
     getConfig()
     DEBUG = False
+    print(txt)
     if txt is not None and txt != '':
         if not DEBUG:
             msg = yyyymmdd + '\n' + txt
@@ -70,6 +71,7 @@ def img_messeage_to_telegram(img_path):
     import time
     getConfig()
     DEBUG = False
+    # DEBUG = True
     if img_path is not None and img_path != '':
         if not DEBUG:
             sendMessage(chart, chat_id_kh, yyyymmdd)
