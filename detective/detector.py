@@ -1198,7 +1198,7 @@ def USTargetStockDataStore(crp_cd, data):
                                                                     }
                                                                     )
 
-        print("[USTargetStocks][{}][{}] information stored successfully".format(crp_cd, data['회사명']))
+        print("[USTargetStocks][{}][{}] information stored successfully".format(crp_cd, data['Name']))
         # print("[{}][{}][{}] information stored successfully".format(report_name, crp_cd, crp_nm))
     except Exception as e:
         print('[Error on USTargetStockDataStore]\n', '*' * 50, e)
@@ -1619,9 +1619,16 @@ def hidden_pearl_in_usmarket():
             data['요구수익률'] = 10
             for d in dic['Data2']:
                 if DEBUG: print(d)
-                if d['ITEM_NM'] in ['자산총계', '자본총계', '매출액', '매출총이익', '판매비와관리비', '영업이익', '당기순이익', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', 'CAPEX', 'Free Cash Flow']:
+                if d['ITEM_NM'] in ['자산총계', '자본총계', '매출총이익', '판매비와관리비', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', 'CAPEX', 'Free Cash Flow']:
                     data[d['ITEM_NM']] = d[term_nm2] * 1000000 if d[term_nm2] is not None else 0
-
+            dic = get_soup_from_file('GlobalConsensus', yyyymmdd, sec_name, i.ticker, 'json')
+            if dic is None or dic == '':
+                logger.info("[{}][{}] Not exist Consensus File".format(i.ticker, i.security))
+                continue
+            for d in dic['Data']:
+                if DEBUG: print(d)
+                if d['ITEM'] in ['매출액', '영업이익', '당기순이익']:
+                    data[d['ITEM']] = d['DATA3'] * 1000000 if d['DATA3'] is not None else 0
             if data['자산총계'] == 0:
                 data['ROE'] = 0.0
             else:
@@ -1650,7 +1657,10 @@ def hidden_pearl_in_usmarket():
         print(treasure)
         USTargetStockDataDelete(yyyymmdd)
         for d in treasure.keys():
+            pass_reason = ""
             if treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
+                    treasure[d]['Sector'] in ['Finance', 'Transportation'] or \
+                    treasure[d]['Industry'] in ['Construction/Ag Equipment/Trucks', 'Engineering & Construction'] or \
                     treasure[d]['NPV'] < 0 or \
                     treasure[d]['자산총계'] == 0 or \
                     treasure[d]['당기순이익'] == 0 or \
@@ -1684,7 +1694,8 @@ def hidden_pearl_in_usmarket():
                     logger.info("[NEED TO CHECK]" + pass_reason)
                 else:
                     logger.error(pass_reason)
-                pass_reason = ""
+                trash[d] = treasure[d]
+                # treasure.pop(d)
                 continue
             print(align_string('L', cnt, 5),
                   align_string('R', d, 10),
@@ -1735,12 +1746,17 @@ if __name__ == '__main__':
     # msgr.messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
-    # report_type = 'financeRatio'
-    # crp_nm = '삼성전자'
-    # crp_cd = '005930'
-    # aa = get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd)
+    yyyymmdd = '2020-08-13'
+    report_type = 'GlobalConsensus'
+    crp_nm = 'AppleInc'
+    crp_cd = 'AAPL'
+    ext = 'json'
+    aa = get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd, ext)
+    for a in aa['Data']:
+        print(a)
+
     # print(len(aa.find_all('div')))
     # hidden_pearl_in_usmarket()
-    print(get_nasdaq_high_ranked_stock())
+    # print(get_nasdaq_high_ranked_stock())
     # get_nasdaq_high_ranked_stock_with_closeprice()
     # test()
