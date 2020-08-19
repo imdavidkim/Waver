@@ -169,23 +169,36 @@ def getTargetFile(j, c):
                                                                        j.filetype),
                                   'w') as fp:
                             json.dump(json_msg, fp)
-                elif j.jobtype == 'GlobalFinancialSummary':
+                elif j.jobtype in ['GlobalFinancialSummary', 'GlobalConsensus']:
                     qry_url = 'http://compglobal.wisereport.co.kr/Common/CompanySearchGlobal?q={}-US&q1={}-US&etf_yn=1&iso_str=US%2CCN%2CHK%2CJP%2CVN%2CID%2CS6&limit=10'.format(ticker, ticker)
-                    if httpRequest(qry_url, None, 'GET').decode('utf-8') == '[]':
+                    res = httpRequest(qry_url, None, 'GET')
+                    if res.decode('utf-8') == '[]':
                         with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
                                                                        j.filetype),
                                   'w') as fp:
                             json.dump("", fp)
                         retResult = '[{}][{}][{}]|NotExist'.format(j.jobtype, ticker, sec_name)
                     else:
-                        url = j.url.format(ticker, generateEncCode())
-                        url_info = url
-                        response = httpRequest(url, None, 'GET')
-                        with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
-                                                                       j.filetype),
-                                  'w') as fp:
-                            json.dump(json.loads(response), fp)
-                        retResult = "[{}][{}][{}]|Done".format(j.jobtype, ticker, sec_name)
+                        obj = json.loads(res)
+                        matched = False
+                        for d in obj:
+                            if d['item_cd'] == '{}-US'.format(ticker): matched = True
+                            break
+                        if not matched:
+                            with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                           j.filetype),
+                                      'w') as fp:
+                                json.dump("", fp)
+                            retResult = '[{}][{}][{}]|NotExist'.format(j.jobtype, ticker, sec_name)
+                        else:
+                            url = j.url.format(ticker, generateEncCode())
+                            url_info = url
+                            response = httpRequest(url, None, 'GET')
+                            with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                           j.filetype),
+                                      'w') as fp:
+                                json.dump(json.loads(response), fp)
+                            retResult = "[{}][{}][{}]|Done".format(j.jobtype, ticker, sec_name)
             elif j.url:
                 if j.reqdata is None:
                     url = j.url.format(ticker)
@@ -489,6 +502,7 @@ def getFinanceData(cmd=None):
         200: 'ROE',
         300: 'GlobalCompanyProfile',
         301: 'GlobalFinancialSummary',
+        302: 'GlobalConsensus',
 
     }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
     urlInfo = {
@@ -498,7 +512,8 @@ def getFinanceData(cmd=None):
         108: 'http://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp',
         200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A{}_D.json',
         300: 'https://api.nasdaq.com/api/company/{}/company-profile|https://api.nasdaq.com/api/quote/{}/info?assetclass=stocks',
-        301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}'
+        301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}',
+        302: 'http://compglobal.wisereport.co.kr/Company/GetConsensusData1?cmp_cd={}-US&curr=USD&en={}'
     }
 
     fileInfo = {
@@ -509,6 +524,7 @@ def getFinanceData(cmd=None):
         200: 'json',
         300: 'json',
         301: 'json',
+        302: 'json',
     }
     # 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd={}-US&en={}'
 
@@ -560,7 +576,7 @@ def getFinanceData(cmd=None):
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
             elif cmd == 300:
-                agents = 5
+                agents = 4
                 j = jobs()
                 j.filetype = fileInfo[key]
                 j.workDir = workDir
@@ -593,8 +609,8 @@ def getFinanceData(cmd=None):
                         "Total target stocks : {}\n requested stocks : {}\nPlease check out the process.\nTerminating this program.".format(
                             len(stockInfo), len(result)))
                     exit(0)
-            elif cmd == 301:
-                agents = 3
+            elif cmd == 301 or cmd == 302:
+                agents = 2
                 j = jobs()
                 j.filetype = fileInfo[key]
                 j.workDir = workDir
