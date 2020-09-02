@@ -11,7 +11,8 @@ from detective.messenger import messeage_to_telegram
 from detective.kofiabond import get_list_day
 from detective.fred import make_graph as fred_make_graph
 from detective.kofia import make_graph as kofia_make_graph
-from detective.yahoo_price_info import make_USDKRW_graph as usdkrw_make_grapf
+from detective.yahoo_price_info import make_USDKRW_graph as usdkrw_make_graph
+from detective.oecd_api import make_CLI_graph as cli_make_graph
 import multiprocessing.pool
 
 
@@ -32,7 +33,8 @@ class NonDaemonicPool(multiprocessing.pool.Pool):
 if __name__ == '__main__':
     getStockInfo()
     get_list_day(None)
-    usdkrw_make_grapf()
+    cli_make_graph()
+    usdkrw_make_graph()
     kofia_make_graph()
     fred_make_graph()
 
