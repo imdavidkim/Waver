@@ -92,6 +92,7 @@ def dictfetchall(cursor):
 
 def getTargetFile(j, c):
     import json
+    from watson.db_factory import UpdateFnguideExist
     retResult = ''
     ticker = ""
     sec_name = ""
@@ -170,35 +171,41 @@ def getTargetFile(j, c):
                                   'w') as fp:
                             json.dump(json_msg, fp)
                 elif j.jobtype in ['GlobalFinancialSummary', 'GlobalConsensus']:
-                    qry_url = 'http://compglobal.wisereport.co.kr/Common/CompanySearchGlobal?q={}-US&q1={}-US&etf_yn=1&iso_str=US%2CCN%2CHK%2CJP%2CVN%2CID%2CS6&limit=10'.format(ticker, ticker)
-                    res = httpRequest(qry_url, None, 'GET')
-                    if res.decode('utf-8') == '[]':
+                    try:
+                        url = j.url.format(ticker, generateEncCode())
+                        url_info = url
+                        response = httpRequest(url, None, 'GET')
                         with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
                                                                        j.filetype),
                                   'w') as fp:
-                            json.dump("", fp)
-                        retResult = '[{}][{}][{}]|NotExist'.format(j.jobtype, ticker, sec_name)
-                    else:
-                        obj = json.loads(res)
-                        matched = False
-                        for d in obj:
-                            if d['item_cd'] == '{}-US'.format(ticker): matched = True
-                            break
-                        if not matched:
+                            json.dump(json.loads(response), fp)
+                        retResult = "[{}][{}][{}]|Done".format(j.jobtype, ticker, sec_name)
+                    except Exception as e:
+                        # qry_url = 'http://compglobal.wisereport.co.kr/Common/CompanySearchGlobal?q={}-US&q1={}-US&etf_yn=1&iso_str=US%2CCN%2CHK%2CJP%2CVN%2CID%2CS6&limit=10'.format(ticker, ticker)
+                        qry_url = "http://compglobal.wisereport.co.kr/Lookup/GetGlobalCompany?iso_typ=13&category_typ=W&ntt_cd=WI000&order_mkt=1&order_iso=0&kr_use_yn=1&search_str={}&curpage=1&iso_cd=&perpage=100".format(
+                            ticker)
+                        url_info = qry_url
+                        res = httpRequest(qry_url, None, 'GET')
+                        if res.decode('utf-8') == '[]':
                             with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
                                                                            j.filetype),
                                       'w') as fp:
                                 json.dump("", fp)
+                            UpdateFnguideExist(ticker)
                             retResult = '[{}][{}][{}]|NotExist'.format(j.jobtype, ticker, sec_name)
                         else:
-                            url = j.url.format(ticker, generateEncCode())
-                            url_info = url
-                            response = httpRequest(url, None, 'GET')
-                            with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
-                                                                           j.filetype),
-                                      'w') as fp:
-                                json.dump(json.loads(response), fp)
-                            retResult = "[{}][{}][{}]|Done".format(j.jobtype, ticker, sec_name)
+                            obj = json.loads(res)
+                            matched = False
+                            for d in obj:
+                                if d['TICKER'] == '{}-US'.format(ticker): matched = True
+                                break
+                            if not matched:
+                                with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                               j.filetype),
+                                          'w') as fp:
+                                    json.dump("", fp)
+                                UpdateFnguideExist(ticker)
+                                retResult = '[{}][{}][{}]|NotExist'.format(j.jobtype, ticker, sec_name)
             elif j.url:
                 if j.reqdata is None:
                     url = j.url.format(ticker)
@@ -212,6 +219,163 @@ def getTargetFile(j, c):
                 else:
                     url = j.url
                     url_info = url
+                    j.reqdata['gicode'] = 'A{}'.format(ticker)
+                    response = httpRequestWithDriver(None, url, j.reqdata)
+                    # print(response)
+                    soup = BeautifulSoup(response.decode('utf-8'), "lxml")
+                    # File 처리
+                    xml = soup.prettify(encoding='utf-8').replace(b'&', b'&amp;')
+                    saveFile(j.workDir, sec_name, ticker, j.jobtype, xml)
+
+                    # File 처리 끝
+                    # DB 처리
+                    marketTxt = select_by_attr(soup, 'span', 'class', 'stxt stxt1').text
+                    marketTxtDetail = select_by_attr(soup, 'span', 'class', 'stxt stxt2').text
+                    settlementMonth = select_by_attr(soup, 'span', 'class', 'stxt stxt3').text
+                    retResult = "{}|{}|{}|{}|{}|{}".format(j.jobtype, ticker, sec_name, marketTxt, marketTxtDetail,
+                                                               settlementMonth)
+    except Exception as e:
+        errmsg = '{}\n{}\n{}'.format('getTargetFile', str(e), url_info)
+        err_messeage_to_telegram(errmsg)
+    return retResult
+
+
+def getTargetFileTest(j, c):
+    import json
+    from watson.db_factory import UpdateFnguideExist
+    retResult = ''
+    ticker = ""
+    sec_name = ""
+    url_info = None
+    try:
+        if j.jobtype.startswith('Global'):
+            ticker = c['ticker']
+            sec_name = str(c['security']).replace(' ', '').replace('&', 'AND').replace(',', '').replace('.',
+                                                                                                     '').replace(
+                '!', '').replace('*', '').replace('/', '')
+        else:
+            ticker = c['code']
+            sec_name = c['name']
+
+        if fileCheck(j.workDir, ticker, sec_name, j.jobtype, j.filetype):
+            retResult = '[{}][{}][{}]|Skipped'.format(j.jobtype, ticker, sec_name)
+            print(retResult)
+            pass
+        else:
+            print('[{}][{}][{}] File is on process...'.format(j.jobtype, ticker, sec_name))
+            if j.jobtype.startswith('Global'):
+                if j.jobtype == 'GlobalCompanyProfile':
+                    urls = j.url.format(ticker, ticker).split('|')
+
+                    url_info = urls[1]
+                    print(url_info)
+                    res = httpRequest(urls[1], None, 'GET', None)
+                    json_msg = json.loads(res.decode('utf-8'))
+
+                    if json_msg['data'] is not None:
+                        category_code = json_msg['data']['exchange']
+                        if json_msg['data']['keyStats']['MarketCap']['value'] != 'N/A':
+                            issued_shares = round(
+                                float(str(json_msg['data']['keyStats']['MarketCap']['value']).replace(',', '')) / float(
+                                    str(json_msg['data']['primaryData']['lastSalePrice']).replace('$', '')), 1)
+                        else:
+                            issued_shares = 0.0
+                        url_info = urls[0]
+                        print(url_info)
+                        res = httpRequest(urls[0], None, 'GET', None)
+                        print(res)
+                        json_msg2 = json.loads(res.decode('utf-8'))
+                        if json_msg2['data'] is not None:
+                            category_name = json_msg2['data']['Sector']['value']
+                            category_detail = json_msg2['data']['Industry']['value']
+                            tel = json_msg2['data']['Phone']['value']
+                            address = json_msg2['data']['Address']['value']
+                            location = json_msg2['data']['Region']['value']
+                            description = json_msg2['data']['CompanyDescription']['value']
+                            for key in json_msg2['data'].keys():
+                                json_msg['data'][key] = json_msg2['data'][key]
+                        else:
+                            category_name = ''
+                            category_detail = ''
+                            tel = ''
+                            address = ''
+                            location = ''
+                            description = ''
+
+                        retResult = "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}".format(j.jobtype,
+                                                                           ticker,
+                                                                           category_code,
+                                                                           category_name,
+                                                                           category_detail,
+                                                                           tel,
+                                                                           address,
+                                                                           location,
+                                                                           description,
+                                                                           issued_shares)
+                        with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                       j.filetype),
+                                  'w') as fp:
+                            json.dump(json_msg, fp)
+                    else:
+                        retResult = '[{}][{}][{}]|Update Failed'.format(j.jobtype, ticker, sec_name)
+                        print(retResult)
+                        with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                       j.filetype),
+                                  'w') as fp:
+                            json.dump(json_msg, fp)
+                elif j.jobtype in ['GlobalFinancialSummary', 'GlobalConsensus']:
+                    try:
+                        url = j.url.format(ticker, generateEncCode())
+                        url_info = url
+                        print(url_info)
+                        response = httpRequest(url, None, 'GET')
+                        with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                       j.filetype),
+                                  'w') as fp:
+                            json.dump(json.loads(response), fp)
+                        retResult = "[{}][{}][{}]|Done".format(j.jobtype, ticker, sec_name)
+                    except Exception as e:
+                        # qry_url = 'http://compglobal.wisereport.co.kr/Common/CompanySearchGlobal?q={}-US&q1={}-US&etf_yn=1&iso_str=US%2CCN%2CHK%2CJP%2CVN%2CID%2CS6&limit=10'.format(ticker, ticker)
+                        qry_url = "http://compglobal.wisereport.co.kr/Lookup/GetGlobalCompany?iso_typ=13&category_typ=W&ntt_cd=WI000&order_mkt=1&order_iso=0&kr_use_yn=1&search_str={}&curpage=1&iso_cd=&perpage=100".format(
+                            ticker)
+                        url_info = qry_url
+                        print(url_info)
+                        res = httpRequest(qry_url, None, 'GET')
+                        if res.decode('utf-8') == '[]':
+                            with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                           j.filetype),
+                                      'w') as fp:
+                                json.dump("", fp)
+                            UpdateFnguideExist(ticker)
+                            retResult = '[{}][{}][{}]|NotExist'.format(j.jobtype, ticker, sec_name)
+                        else:
+                            obj = json.loads(res)
+                            matched = False
+                            for d in obj:
+                                if d['TICKER'] == '{}-US'.format(ticker): matched = True
+                                break
+                            if not matched:
+                                with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
+                                                                               j.filetype),
+                                          'w') as fp:
+                                    json.dump("", fp)
+                                UpdateFnguideExist(ticker)
+                                retResult = '[{}][{}][{}]|NotExist'.format(j.jobtype, ticker, sec_name)
+            elif j.url:
+                if j.reqdata is None:
+                    url = j.url.format(ticker)
+                    url_info = url
+                    print(url_info)
+                    response = httpRequest(url, None, 'GET')
+                    # 20200803 파일명 변경  c['name'], c['code'] => ticker, sec_name
+                    with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype, j.filetype),
+                              'w') as fp:
+                        json.dump(json.loads(response), fp)
+                    retResult = "[{}][{}][{}]|Done".format(j.jobtype, ticker, sec_name)
+                else:
+                    url = j.url
+                    url_info = url
+                    print(url_info)
                     j.reqdata['gicode'] = 'A{}'.format(ticker)
                     response = httpRequestWithDriver(None, url, j.reqdata)
                     # print(response)
@@ -547,7 +711,7 @@ def getFinanceData(cmd=None):
             if cmd and key != cmd:
                 continue
             if cmd >= 300:
-                stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y')
+                stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y', fnguide_exist='Y')
             else:
                 stockInfo = detective_db.Stocks.objects.filter(listing='Y')
             #     jobtype = reportType[key]
@@ -576,7 +740,7 @@ def getFinanceData(cmd=None):
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
             elif cmd == 300:
-                agents = 4
+                agents = 5
                 j = jobs()
                 j.filetype = fileInfo[key]
                 j.workDir = workDir
@@ -608,7 +772,7 @@ def getFinanceData(cmd=None):
                     print(
                         "Total target stocks : {}\n requested stocks : {}\nPlease check out the process.\nTerminating this program.".format(
                             len(stockInfo), len(result)))
-                    exit(0)
+                    # exit(0)
             elif cmd == 301 or cmd == 302:
                 agents = 2
                 j = jobs()
@@ -621,7 +785,7 @@ def getFinanceData(cmd=None):
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
             else:
-                agents = 3
+                agents = 5
                 j = jobs()
                 j.filetype = fileInfo[key]
                 j.workDir = workDir
@@ -645,7 +809,7 @@ def getFinanceData(cmd=None):
                     print(
                         "Total target stocks : {}\n requested stocks : {}\nPlease check out the process.\nTerminating this program.".format(
                             len(stockInfo), len(result)))
-                    exit(0)
+                    # exit(0)
 
                 # j.driver.driverQuit()
             # 신규코드(multiprocessing) 끝
@@ -1631,9 +1795,9 @@ def getFinanceDataTest(cmd=None):
             if cmd and key != cmd:
                 continue
             if cmd >= 300:
-                stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='ZM', listing='Y')
+                stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='TLF', listing='Y', fnguide_exist='Y')
             else:
-                stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
+                stockInfo = detective_db.Stocks.objects.filter(code='009160', listing='Y')
             #     jobtype = reportType[key]
             #     url = urlInfo[key]
             #     # getUSFinanceData(jobtype, url)
@@ -1656,7 +1820,7 @@ def getFinanceDataTest(cmd=None):
                 j.jobtype = reportType[key]
                 j.url = urlInfo[key]
                 s = stockInfo.values()
-                func = partial(getTargetFile, j)
+                func = partial(getTargetFileTest, j)
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
             elif cmd == 300:
@@ -1667,7 +1831,7 @@ def getFinanceDataTest(cmd=None):
                 j.jobtype = reportType[key]
                 j.url = urlInfo[key]
                 s = stockInfo.values()
-                func = partial(getTargetFile, j)
+                func = partial(getTargetFileTest, j)
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
 
@@ -1701,7 +1865,7 @@ def getFinanceDataTest(cmd=None):
                 j.jobtype = reportType[key]
                 j.url = urlInfo[key]
                 s = stockInfo.values()
-                func = partial(getTargetFile, j)
+                func = partial(getTargetFileTest, j)
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
             else:
@@ -1715,7 +1879,7 @@ def getFinanceDataTest(cmd=None):
                 # j.driver = driver
                 s = stockInfo.values()
                 # j.driver = cc.ChromeDriver()
-                func = partial(getTargetFile, j)
+                func = partial(getTargetFileTest, j)
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
 
@@ -1735,15 +1899,54 @@ def getFinanceDataTest(cmd=None):
         errmsg = '{}\n{}'.format('getFinanceData', str(e))
         err_messeage_to_telegram(errmsg)
 
+
+def getStocksByMarketCapitalRank():
+    import sys
+    import os
+    import django
+    import json
+    getConfig()
+
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+
+    url = 'http://compglobal.wisereport.co.kr/Screener/GetRankIdx?iso_typ=13&mkt=US&sec=WI000&condType=M&baseyear=CPD&ordItem=5&ordDirect=D&cap_chk=0&curpage=1&perpage=100&curr=USD&en={}'
+    header = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
+    }
+    jj = json.loads(httpRequest(url.format(generateEncCode()), None, 'GET', header).decode('utf-8'))
+    tickers = []
+    category = []
+    industry = []
+    # print(jj['header'])
+    for d in jj['content']:
+        tickers.append(d['TICKER'].replace("-US", ""))
+    print(tickers)
+    for ticker in tickers:
+        stock = detective_db.USNasdaqStocks.objects.filter(ticker=ticker)
+        for s in stock:
+            print(s.ticker, '\t', s.security, '\t', s.category_name, '\t', s.category_detail)
+            industry.append(s.category_name)
+            category.append(s.category_detail)
+    print(list(set(industry)))
+    print(list(set(category)))
+
 if __name__ == '__main__':
     # print(getUSFinanceData())
     # getFinanceData(101)
     # getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
-    getFinanceDataTest(300)
+    getFinanceDataTest(101)
     # getUSFinanceData()
     # print(generateEncCode())
+    # getStocksByMarketCapitalRank()
     # url = 'https://api.nasdaq.com/api/company/ainv/company-profile'
     # header = {
     #     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -1752,7 +1955,7 @@ if __name__ == '__main__':
     #     "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
     # }
     # print(httpRequest(url, None, 'GET', header))
-    # url = 'https://api.nasdaq.com/api/quote/AINV/info?assetclass=stocks'
+    # url = 'http://compglobal.wisereport.co.kr/Screener/GetRankIdx?iso_typ=13&mkt=US&sec=WI000&condType=M&baseyear=CPD&ordItem=5&ordDirect=D&cap_chk=0&curpage=1&perpage=100&curr=USD&en=57304082434525'
     # header = {
     #     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     #     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
