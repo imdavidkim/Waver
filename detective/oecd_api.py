@@ -3,10 +3,24 @@ import xmltodict
 import pandas as pd
 import logging
 import datetime
-from tqdm import tqdm
+# from tqdm import tqdm
 
 # http://stats.oecd.org/restsdmx/sdmx.ashx/GetDataStructure/ALL
 # Extract OECD KeyFamily id (dataset id) and English description
+
+
+def getConfig():
+    import configparser
+    global path, proj_path, django_path, main_path, yyyymmdd
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    path = config['COMMON']['REPORT_PATH']
+    proj_path = config['COMMON']['PROJECT_PATH']
+    django_path = proj_path + r'\MainBoard'
+    main_path = django_path + r'\MainBoard'
+    yyyymmdd = str(datetime.datetime.now())[:10]
+
+
 
 
 def get_oecd_keyfamilies():
@@ -139,5 +153,86 @@ def get_oecd_json_dataset(dataset_id):
     print(success_count, " datasets retrieved")
     logging.debug("Log ended at %s", str(datetime.datetime.now()))
 
+
+def get_oecd_json_CLI_dataset():
+    from detective.fnguide_collector import httpRequest
+    import json
+
+    countries = None
+    time_period = None
+    retDict = {}
+    url = "https://stats.oecd.org:443/sdmx-json/data/DP_LIVE/G-7+KOR+OECD+USA.CLI.AMPLITUD.LTRENDIDX.M/OECD?json-lang=en&dimensionAtObservation=allDimensions&startPeriod=2005-01"
+    jo = json.loads(httpRequest(url, None, 'GET', None).decode('utf-8'))
+
+    # header
+    # dataSets
+    # structure
+    # for key in jo['header'].keys():
+    #     print(key, jo['header'][key])
+    # for key in jo['structure'].keys():
+    #     print(key, jo['structure'][key])
+    # 국가명 : dimensions - observation - keyPosition:0 - values
+    # dimensions - observation - id:TIME_PERIOD - values - id
+    for d in jo['structure']['dimensions']['observation']:
+        # print(d)
+        if 'keyPosition' in d.keys():
+            if d['keyPosition'] == 0:
+                countries = [data['id'] for data in d['values']]
+        else:
+            if d['id'] == "TIME_PERIOD":
+                time_period = [data['id'] for data in d['values']]
+
+    # print(countries, time_period)
+    for d in jo['dataSets']:
+        if 'observations' in d.keys():
+            for key in d['observations'].keys():
+                if countries[int(key.split(":")[0])] in retDict.keys():
+                    retDict[countries[int(key.split(":")[0])]][time_period[int(key.split(":")[-1])]] = \
+                    d['observations'][key][0]
+                else:
+                    retDict[countries[int(key.split(":")[0])]] = {}
+                    retDict[countries[int(key.split(":")[0])]][time_period[int(key.split(":")[-1])]] = \
+                    d['observations'][key][0]
+    return retDict
+
+def make_CLI_graph():
+    import matplotlib.pyplot as plt
+    import os
+    import datetime
+    from matplotlib import font_manager, rc
+    import detective.messenger as msgr
+    getConfig()
+
+    font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
+    # 폰트 이름 얻어오기
+    font_name = font_manager.FontProperties(fname=font_path).get_name()
+    # font 설정
+    rc('font', family=font_name)
+    src = get_oecd_json_CLI_dataset()
+    try:
+        # print(list(src['OECD'].keys()), list(src['OECD'].values()))
+        for country in src.keys():
+            retArrayDate = [datetime.datetime.strptime(date, '%Y-%m') for date in list(src[country].keys())]
+            retArrayData = list(src[country].values())
+            retVal = pd.core.series.Series(retArrayData, retArrayDate)
+            plt.plot(retVal, label=country)
+        plt.legend(loc='upper left')
+        plt.xticks(rotation=45)
+        plt.title("OECD 경기선행지수")
+        # plt.show()
+        img_path = r'{}\{}\{}'.format(path, 'OECD_CLI', yyyymmdd)
+        print(img_path)
+        if not os.path.exists(img_path):
+            os.makedirs(img_path)
+        plt.savefig(img_path + '\\result.png')
+        msgr.img_messeage_to_telegram(img_path + '\\result.png')
+        plt.close('all')
+    except Exception as e:
+        plt.close('all')
+
+
+
 if __name__ == '__main__':
-    get_oecd_json_dataset('PRICES_CPI')
+    # get_oecd_json_dataset('PRICES_CPI')
+    # get_oecd_json_CLI_dataset()
+    make_CLI_graph()
