@@ -143,12 +143,16 @@ def make_graph():
     retVal = getSeriesDataFromFRED('BAMLEMCBPIOAS')
     retVal2 = getSeriesDataFromFRED('T10Y2Y')
     retVal3 = getSeriesDataFromFRED('T10YIE')
+    retVal4 = getSeriesDataFromFRED('BAMLH0A0HYM2')
     fig = plt.figure()
-    BAMLEMCBPIOAS = fig.add_subplot(3, 1, 1)
-    T10Y2Y = fig.add_subplot(3, 1, 2)
-    T10YIE = fig.add_subplot(3, 1, 3)
+    BAMLEMCBPIOAS = fig.add_subplot(4, 1, 1)
+    BAMLH0A0HYM2 = fig.add_subplot(4, 1, 2)
+    T10Y2Y = fig.add_subplot(4, 1, 3)
+    T10YIE = fig.add_subplot(4, 1, 4)
     BAMLEMCBPIOAS.plot(retVal.tail(180), label="EM OAS")
     BAMLEMCBPIOAS.legend(loc='upper left')
+    BAMLH0A0HYM2.plot(retVal4.tail(180), label="US HighYield")
+    BAMLH0A0HYM2.legend(loc='upper left')
     T10Y2Y.plot(retVal2.tail(180), label="10Y-2Y")
     T10Y2Y.legend(loc='upper left')
     T10YIE.plot(retVal3.tail(180), label="10Y BEI")
@@ -162,6 +166,15 @@ def make_graph():
     print(img_path)
     if not os.path.exists(img_path):
         os.makedirs(img_path)
+    plt.xticks(rotation=45)
     plt.savefig(img_path+'\\result.png')
     msgr.img_messeage_to_telegram(img_path+'\\result.png')
     plt = None
+
+
+if __name__ == '__main__':
+    make_graph()
+    # import numpy as np
+    # print(np.random.randn(3))
+    # print(pandas.core.series.Series())
+    # print(type(getSeriesDataFromFRED('BAMLEMCBPIOAS')), getSeriesDataFromFRED('BAMLEMCBPIOAS'))
