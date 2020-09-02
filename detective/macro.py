@@ -538,10 +538,26 @@ def namedtuplefetchall(cursor):
     nt_result = namedtuple('Result', [col[0] for col in desc])
     return [nt_result(*row) for row in cursor.fetchall()]
 
+
+def getISMIndexInfo():
+    from detective.fnguide_collector import httpRequest
+    import matplotlib.pyplot as plt
+    getConfig()
+    import json
+    url = 'https://sbcharts.investing.com/events_charts/us/173.json'  # ISM Index
+    jo = json.loads(httpRequest(url, None, 'GET', None).decode('utf-8'))
+    for key in jo.keys():
+        if key == 'data':
+            for d in jo[key]:
+                print(datetime.fromtimestamp(d[0] / 1000).strftime('%Y-%m-%d'), d[1])
+
+
 if __name__ == '__main__':
     # getKeyStatisticListData()
     # getStatisticTableListData()
     # getStatisticItemListData()
-    getStatisticSearchData()
+    # getStatisticSearchData()
     # dictionary = {'a':'b'}
     # print(type(dictionary) == dict)
+    getISMIndexInfo()
+
