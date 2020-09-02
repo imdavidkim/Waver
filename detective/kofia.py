@@ -113,6 +113,7 @@ def make_graph():
     # "4000"	"CD(91일)"	            "16"
     # "5000"	"CP(91일)"	            "17"
     plt.legend(loc='upper left')
+    plt.xticks(rotation=45)
     # plt.show()
     img_path = r'{}\{}\{}'.format(path, 'KOFIABOND', yyyymmdd)
     print(img_path)
