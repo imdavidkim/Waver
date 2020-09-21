@@ -114,7 +114,7 @@ def getNaverPrice(url_type, code, r_page=1):
             tmplists = source.find_all("td", class_='number_1')
             pricelists = [t for t in tmplists if t.span is None and not t.has_attr('style')]
             # print(pricelists)
-            for i in range(1, len(pricelists) - 1):
+            for i in range(0, len(pricelists)):
                 retArray.append([datetime.datetime.strptime(
                     datelists[i].text.replace('.', '-'), "%Y-%m-%d"),
                                  float(pricelists[i].text.replace(',', ''))])
@@ -130,7 +130,8 @@ if __name__ == '__main__':
     stockItem = '013890'
     page = 1
     stockItem = '005930'
-    print(getNaverPrice('stock', stockItem, page))
+    # print(getNaverPrice('stock', stockItem, page))
+    getNaverPrice('INDEX', 'KPI200', 21)
     # for index, value in getNaverPrice(stockItem, page).items():
     #     print(index, value)
 
