@@ -54,47 +54,6 @@ def getMarketData(instrument_id, market_id, count, is_desc, want_sorting):
 
 
 def make_graph():
-    import matplotlib.pyplot as plt
-    getConfig()
-    # 폰트 경로
-    font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
-    # 폰트 이름 얻어오기
-    font_name = font_manager.FontProperties(fname=font_path).get_name()
-    # font 설정
-    day = 180
-    rc('font', family=font_name)
-    date1, data1 = getMarketData(16, 2, day, False, True)
-    date2, data2 = getMarketData(1, 2, day, False, True)
-    date3, data3 = getMarketData(2, 2, day, False, True)
-    date4, data4 = getMarketData(4, 2, day, False, True)
-    date5, data5 = getMarketData(14, 2, day, False, True)
-    date6, data6 = getMarketData(15, 2, day, False, True)
-    a = np.asarray(data1, dtype=np.float32)
-    b = np.asarray(data2, dtype=np.float32)
-    c = np.asarray(data3, dtype=np.float32)
-    d = np.asarray(data4, dtype=np.float32)
-    e = np.asarray(data5, dtype=np.float32)
-    f = np.asarray(data6, dtype=np.float32)
-
-    g = d - c  # 10년 - 3년(장단기금리차1)
-    h = c - a  # 3년 - CD(장단기금리차2)
-    i = e - c  # AA - 3년(AA신용스프레드)
-    k = f - c  # BBB - 3년(BBB신용스프레드)
-    # l = c - b  # 3년 - 1년(장단기금리차3)
-
-    t = np.arange(0, len(a), 1)
-
-    plt.plot(date1, a, label="CD(91일)")
-    # plt.plot(t, b, label="국고채권(1년)")
-    plt.plot(date1, c, label="국고채권(3년)")
-    plt.plot(date1, d, label="국고채권(10년)")
-    # plt.plot(t, e, label="회사채(무보증3년)AA-")
-    # plt.plot(date1, f, label="회사채(무보증3년)BBB-")
-    plt.plot(date1, g, label="10년 - 3년(장단기금리차1)")
-    plt.plot(date1, h, label="3년 - CD(장단기금리차2)")
-    # plt.plot(date1, l, label="3년 - 1년(장단기금리차3)")
-    # plt.plot(t, i, label="AA - 3년(AA신용스프레드)")
-    # plt.plot(date1, k, label="BBB - 3년(BBB신용스프레드)")
     # "3006"	"국고채권(1년)"	        "1"
     # "3000"	"국고채권(3년)"	        "2"
     # "3007"	"국고채권(5년)"	        "3"
@@ -112,14 +71,75 @@ def make_graph():
     # "3010"	"회사채(무보증3년)BBB-"	"15"
     # "4000"	"CD(91일)"	            "16"
     # "5000"	"CP(91일)"	            "17"
-    plt.legend(loc='upper left')
-    plt.xticks(rotation=45)
-    # plt.show()
-    img_path = r'{}\{}\{}'.format(path, 'KOFIABOND', yyyymmdd)
-    print(img_path)
-    if not os.path.exists(img_path):
-        os.makedirs(img_path)
-    plt.savefig(img_path + '\\result.png')
-    msgr.img_messeage_to_telegram(img_path + '\\result.png')
-    plt = None
+    import matplotlib.pyplot as plt
+    getConfig()
+    # 폰트 경로
+    font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
+    # 폰트 이름 얻어오기
+    font_name = font_manager.FontProperties(fname=font_path).get_name()
+    # font 설정
+    day = 180
+    try:
+        rc('font', family=font_name)
+        date1, data1 = getMarketData(16, 2, day, False, True)
+        date2, data2 = getMarketData(1, 2, day, False, True)
+        date3, data3 = getMarketData(2, 2, day, False, True)
+        date4, data4 = getMarketData(4, 2, day, False, True)
+        date5, data5 = getMarketData(14, 2, day, False, True)
+        date6, data6 = getMarketData(15, 2, day, False, True)
+        a = np.asarray(data1, dtype=np.float32)
+        b = np.asarray(data2, dtype=np.float32)
+        c = np.asarray(data3, dtype=np.float32)
+        d = np.asarray(data4, dtype=np.float32)
+        e = np.asarray(data5, dtype=np.float32)
+        f = np.asarray(data6, dtype=np.float32)
 
+        g = d - c  # 10년 - 3년(장단기금리차1)
+        h = c - a  # 3년 - CD(장단기금리차2)
+        i = e - c  # AA - 3년(AA신용스프레드)
+        k = f - c  # BBB - 3년(BBB신용스프레드)
+        # m = c - b  # 3년 - 1년(장단기금리차3)
+
+        t = np.arange(0, len(a), 1)
+
+        img_path = r'{}\{}\{}'.format(path, 'KOFIABOND', yyyymmdd)
+        print(img_path)
+        if not os.path.exists(img_path):
+            os.makedirs(img_path)
+        # 1
+        plt.plot(date1, a, label="CD(91일)")
+        # plt.plot(t, b, label="국고채권(1년)")
+        plt.plot(date1, c, label="국고채권(3년)")
+        plt.plot(date1, d, label="국고채권(10년)")
+        plt.plot(date1, g, label="10년 - 3년(장단기금리차1)")
+        plt.plot(date1, h, label="3년 - CD(장단기금리차2)")
+        # plt.plot(date1, m, label="3년 - 1년(장단기금리차3)")
+        plt.legend(loc='best')
+        plt.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
+        plt.savefig(img_path + '\\result1.png')
+        msgr.img_messeage_to_telegram(img_path + '\\result1.png', True)
+        plt.close('all')
+        # 2
+        plt.plot(date1, e, label="회사채(무보증3년)AA-")
+        plt.plot(date1, i, label="AA - 3년(AA신용스프레드)")
+        plt.legend(loc='best')
+        plt.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
+        plt.savefig(img_path + '\\result2.png')
+        msgr.img_messeage_to_telegram(img_path + '\\result2.png', True)
+        plt.close('all')
+        # 3
+        plt.plot(date1, f, label="회사채(무보증3년)BBB-")
+        plt.plot(date1, k, label="BBB - 3년(BBB신용스프레드)")
+        plt.legend(loc='best')
+        plt.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
+        plt.savefig(img_path + '\\result3.png')
+        msgr.img_messeage_to_telegram(img_path + '\\result3.png', True)
+        plt.close('all')
+        plt = None
+    except Exception as e:
+        print(e.with_traceback())
+        plt.close('all')
+        plt = None
+
+if __name__ == '__main__':
+    make_graph()
