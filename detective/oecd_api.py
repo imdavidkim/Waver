@@ -218,6 +218,7 @@ def make_CLI_graph():
             plt.plot(retVal, label=country)
         plt.legend(loc='upper left')
         plt.xticks(rotation=45)
+        plt.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
         plt.title("OECD 경기선행지수")
         # plt.show()
         img_path = r'{}\{}\{}'.format(path, 'OECD_CLI', yyyymmdd)
