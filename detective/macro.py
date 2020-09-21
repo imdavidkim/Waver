@@ -149,7 +149,7 @@ class ecosData:
 
 def getConfig():
     import configparser
-    global path, django_path, main_path
+    global path, django_path, main_path, yyyymmdd
     global auth_key, auth_key_valid_until, api_url, api_service1, api_service2, api_service3, api_service4, api_service5, api_service6
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -157,6 +157,7 @@ def getConfig():
     proj_path = config['COMMON']['PROJECT_PATH']
     django_path = proj_path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
+    yyyymmdd = str(datetime.now())[:10]
     auth_key = config['ECOS']['AUTH-KEY']
     auth_key_valid_until = config['ECOS']['AUTH-KEY-VALID-UNTIL']
     api_url = config['ECOS']['API_URL']
@@ -539,25 +540,11 @@ def namedtuplefetchall(cursor):
     return [nt_result(*row) for row in cursor.fetchall()]
 
 
-def getISMIndexInfo():
-    from detective.fnguide_collector import httpRequest
-    import matplotlib.pyplot as plt
-    getConfig()
-    import json
-    url = 'https://sbcharts.investing.com/events_charts/us/173.json'  # ISM Index
-    jo = json.loads(httpRequest(url, None, 'GET', None).decode('utf-8'))
-    for key in jo.keys():
-        if key == 'data':
-            for d in jo[key]:
-                print(datetime.fromtimestamp(d[0] / 1000).strftime('%Y-%m-%d'), d[1])
-
-
 if __name__ == '__main__':
-    # getKeyStatisticListData()
+    getKeyStatisticListData()
     # getStatisticTableListData()
     # getStatisticItemListData()
     # getStatisticSearchData()
     # dictionary = {'a':'b'}
     # print(type(dictionary) == dict)
-    getISMIndexInfo()
 
