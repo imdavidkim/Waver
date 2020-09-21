@@ -203,16 +203,17 @@ def get_high_ranked_stock_with_closeprice():
         # plt.clf()
         for idx, d in enumerate(dictfetchall(cursor)):
             fig = plt.figure(clear=True)
-            price = getNaverPrice(d['code'], 36)
+            url_type = 'STOCK'
+            price = getNaverPrice(url_type, d['code'], 36)
             SP = fig.add_subplot(1, 1, 1)
             SP.plot(price, label="{}({})".format(d['name'], d['code']))
             SP.legend(loc='upper center')
+            plt.xticks(rotation=45)
             img_path = r'{}\{}\{}'.format(path, 'StockPriceTrace', yyyymmdd)
-            print(img_path)
+            # print(img_path)
             if not os.path.exists(img_path):
                 os.makedirs(img_path)
             plt.savefig(img_path + '\\{}_{}.png'.format(d['name'], d['code']))
-            plt.xticks(rotation=45)
             # plt.show()
             msgr.img_messeage_to_telegram(img_path + '\\{}_{}.png'.format(d['name'], d['code']))
             fig = None
@@ -965,7 +966,7 @@ def new_find_hidden_pearl():
             #      treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
             if treasure[d]['ROE'] < 15 or \
                treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
-               treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
+               treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설', '코스피금융업'] or \
                treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
                treasure[d]['NPV'] < 0 or \
                treasure[d]['NPV']/treasure[d]['종가']*100 < 105:
@@ -987,8 +988,8 @@ def new_find_hidden_pearl():
                       )
                 if treasure[d]['ROE'] < 15 or treasure[d]['ROE'] < treasure[d]['요구수익률']:
                     pass_reason = "[{}][{}]['ROE'] < 15 또는 ['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d, treasure[d]['회사명'], treasure[d]['ROE'], treasure[d]['요구수익률'])
-                elif treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설']:
-                    pass_reason = "[{}][{}][업종구분이 제조 또는 건설] => 업종구분 : {}".format(d, treasure[d]['회사명'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''))
+                elif treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설', '코스피금융업']:
+                    pass_reason = "[{}][{}][업종구분이 제조, 건설 또는 금융] => 업종구분 : {}".format(d, treasure[d]['회사명'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''))
                 elif treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51:
                     pass_reason = "[{}][{}][지배주주 자산지분 비율이 51% 미만] => 지배주주지분 / 자산총계 : {:.2f}".format(d, treasure[d]['회사명'], treasure[d]['지배주주지분'] / treasure[d]['자산총계'])
                 else:
@@ -1217,9 +1218,9 @@ def test():
     DEBUG = True
     dateDict = new_get_dateDict()
     treasure = {}
-
+    yyyymmdd = '2020-09-07'
     import detective_app.models as detective_db
-    stockInfo = detective_db.Stocks.objects.filter(code='348950', listing='Y')  # 삼성전자
+    stockInfo = detective_db.Stocks.objects.filter(code='123890', listing='Y')  # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
@@ -1444,7 +1445,7 @@ def test():
     for d in treasure.keys():
         if treasure[d]['ROE'] < 15 or \
                 treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
-                treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
+                treasure[d]['업종구분'].replace('\n', '').replace('KSE', '').replace('KOSDAQ', '').replace(' ', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
                 treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
                 treasure[d]['NPV'] < 0 or \
                 treasure[d]['NPV'] / treasure[d]['종가'] * 100 < 105:
@@ -1602,7 +1603,214 @@ def hidden_pearl_in_usmarket():
                 continue
             if dic['data'] is not None:
                 if dic['data']['primaryData'] is not None:
-                    if dic['data']['primaryData']['lastSalePrice'] is not None:
+                    if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData']['lastSalePrice'] != 'N/A':
+                        data['종가'] = float(dic['data']['primaryData']['lastSalePrice'].replace('$', ''))
+                    else: data['종가'] = 0.0
+                else: data['종가'] = 0.0
+            else:
+                data['종가'] = 0.0
+                continue
+            data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
+            data['거래량'] = int(dic['data']['keyStats']['Volume']['value'].replace(',', ''))
+            dic = get_soup_from_file('GlobalFinancialSummary', yyyymmdd, sec_name, i.ticker, 'json')
+            if dic is None or dic == '':
+                logger.info("[{}][{}] Not exist FinancialSummary File".format(i.ticker, i.security))
+                continue
+            data['Period'] = dic['Data1'][term_nm1]
+            data['요구수익률'] = 10
+            for d in dic['Data2']:
+                if DEBUG: print(d)
+                if d['ITEM_NM'] in ['자산총계', '자본총계', '매출총이익', '판매비와관리비', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', 'CAPEX', 'Free Cash Flow']:
+                    data[d['ITEM_NM']] = d[term_nm2] * 1000000 if d[term_nm2] is not None else 0
+            dic = get_soup_from_file('GlobalConsensus', yyyymmdd, sec_name, i.ticker, 'json')
+            if dic is None or dic == '':
+                logger.info("[{}][{}] Not exist Consensus File".format(i.ticker, i.security))
+                continue
+            for d in dic['Data']:
+                if DEBUG: print(d)
+                if d['ITEM'] in ['매출액', '영업이익', '당기순이익']:
+                    data[d['ITEM']] = d['DATA3'] * 1000000 if d['DATA3'] is not None else 0
+            if data['자산총계'] == 0:
+                data['ROE'] = 0.0
+            else:
+                data['ROE'] = (data['당기순이익'] / data['자산총계'] * 100) if data['자산총계'] is not None and data['자산총계'] != 0 else 0
+
+            data['주주가치'] = data['자산총계'] + (
+                    data['자산총계'] * (data['ROE'] - data['요구수익률']) / (data['요구수익률']))
+            data['NPV'] = data['주주가치'] / data['발행주식수'] if data['발행주식수'] is not None and data['발행주식수'] != 0.0 else 0
+            data['ROS'] = data['당기순이익'] / data['매출액'] * 100 if data['매출액'] is not None and data['매출액'] != 0 else 0
+            if data['ROS'] > 15: HIGH_ROS.append(data['Name'])
+            if DEBUG: print(data)
+            treasure[i.ticker] = data
+        print('=' * 50, '마이너스', '=' * 50)
+        print(align_string('L', 'No.', 5),
+              align_string('R', 'Ticker', 10),
+              align_string('R', 'Security', 20),
+              align_string('R', 'ROE', 20),
+              align_string('R', '자산총계', 14),
+              align_string('R', '주주가치', 16),
+              align_string('R', 'NPV', 20),
+              align_string('R', '종가', 10),
+              align_string('R', '확인사항', 16),
+              )
+        if not DEBUG: USDataInit()
+        cnt = 0
+        print(treasure)
+        USTargetStockDataDelete(yyyymmdd)
+        for d in treasure.keys():
+            pass_reason = ""
+            if treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
+                    treasure[d]['Sector'] in ['Finance', 'Transportation'] or \
+                    treasure[d]['Industry'] in ['Construction/Ag Equipment/Trucks', 'Engineering & Construction'] or \
+                    treasure[d]['NPV'] < 0 or \
+                    treasure[d]['자산총계'] == 0 or \
+                    treasure[d]['당기순이익'] == 0 or \
+                    treasure[d]['발행주식수'] == 0 or \
+                    treasure[d]['종가'] == 0.0 or \
+                    treasure[d]['NPV'] / treasure[d]['종가'] * 100 < 105:
+                cnt += 1
+                print(align_string('L', cnt, 5),
+                      align_string('R', d, 10),
+                      align_string('R', treasure[d]['Name'], 40 - len(treasure[d]['Name'])),
+                      align_string(',', round(treasure[d]['ROE'], 2), 20),
+                      align_string(',', round(treasure[d]['자산총계'], 0), 20),
+                      align_string(',', round(treasure[d]['주주가치'], 0), 20),
+                      align_string(',', round(treasure[d]['NPV'], 0), 20),
+                      align_string(',', treasure[d]['종가'], 10),
+                      align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
+                      )
+                if treasure[d]['ROE'] < treasure[d]['요구수익률']:
+                    pass_reason = "[{}][{}]['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d,
+                                                                                                treasure[d][
+                                                                                                    'Name'],
+                                                                                                treasure[d][
+                                                                                                    'ROE'],
+                                                                                                treasure[d][
+                                                                                                    '요구수익률'])
+                else:
+                    pass_reason = "[{}][{}]자산총계 : {}\nROE : {:.2f} < 15\n업종구분 : {}\nNPV : {:.2f}\n종가 : {}".format(
+                        d, treasure[d]['Name'], treasure[d]['자산총계'], treasure[d]['ROE'], treasure[d]['Industry'],
+                        treasure[d]['NPV'], treasure[d]['종가'])
+
+                if treasure[d]['ROE'] >= 30 or (treasure[d]['종가'] != 0.0 and treasure[d]['NPV'] / treasure[d]['종가'] * 100 > 200):
+                    logger.info("[NEED TO CHECK]" + pass_reason)
+                else:
+                    logger.error(pass_reason)
+                trash[d] = treasure[d]
+                # treasure.pop(d)
+                continue
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', treasure[d]['Name'], 40 - len(treasure[d]['Name'])),
+                  align_string(',', round(treasure[d]['ROE'], 2), 20),
+                  align_string(',', round(treasure[d]['자산총계'], 0), 20),
+                  align_string(',', round(treasure[d]['주주가치'], 0), 20),
+                  align_string(',', round(treasure[d]['NPV'], 0), 20),
+                  align_string(',', treasure[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
+                  )
+            USTargetStockDataStore(d, treasure[d])
+        # print(HIGH_ROS)
+        # print(HIGH_RESERVE)
+        logger.info(HIGH_ROS)
+        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(treasure, fp)
+        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(trash, fp)
+    except Exception as e:
+        print('error', e, '\n', i)
+        errmsg = '{}\n{}\n[{}][{}]'.format('hidden_pearl_in_usmarket', str(e), i.ticker, i.security)
+        err_messeage_to_telegram(errmsg)
+        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(treasure, fp)
+        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(trash, fp)
+
+
+def hidden_pearl_in_usmarket_test():
+    import sys
+    import os
+    import django
+    import logging
+    from detective.fnguide_collector import fileCheck, saveFile
+    from detective.fnguide_collector import generateEncCode
+    import detective.chromecrawler as cc
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+
+    logfile = 'US_detector_test'
+    if not os.path.exists('./logs'):
+        os.makedirs('./logs')
+    now = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('[%(asctime)s][%(filename)s:%(lineno)s] >> %(message)s')
+
+    streamHandler = logging.StreamHandler()
+    fileHandler = logging.FileHandler("./logs/{}_{}.log".format(logfile, now))
+
+    streamHandler.setFormatter(formatter)
+    fileHandler.setFormatter(formatter)
+
+    logger.addHandler(streamHandler)
+    logger.addHandler(fileHandler)
+    logger.setLevel(level=logging.INFO)
+
+    pass_reason = ''
+    treasure = {}
+    trash = {}
+    data = {}
+    # 날짜 정보 셋팅
+    dateDict = new_get_dateDict()
+    # 종목 정보 셋팅
+    # DEBUG = True
+    DEBUG = False
+    # USE_JSON = False
+    USE_JSON = True
+
+    term_nm1 = 'YYMM5'
+    term_nm2 = 'VAL5'
+    # yyyymmdd = str(datetime.now())[:10]
+    # yyyymmdd = '2020-08-04'
+    # workDir = r'{}\{}\{}'.format(path, 'GlobalFinancialSummary', '2020-08-04')
+
+    import detective_app.models as detective_db
+    stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='ZYXI', listing='Y')  # Apple
+    # stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y')  # Apple
+
+    HIGH_ROS = []
+    HIGH_RESERVE = []
+
+    try:
+        for idx, i in enumerate(stockInfo):
+            # print(i.__dict__)
+            data = {}
+            data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name, 'Industry': i.category_detail, '발행주식수': i.issued_shares}
+            sec_name = i.security.replace(' ', '')\
+                .replace('&', 'AND')\
+                .replace(',', '')\
+                .replace('.', '')\
+                .replace('!', '')\
+                .replace('*', '')\
+                .replace('/', '')
+            dic = get_soup_from_file('GlobalCompanyProfile', yyyymmdd, sec_name, i.ticker, 'json')
+            if dic is None or dic == '':
+                logger.info("[{}][{}] Not exist profile File".format(i.ticker, i.security))
+                continue
+            if dic['data'] is not None:
+                if dic['data']['primaryData'] is not None:
+                    if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData']['lastSalePrice'] != 'N/A':
                         data['종가'] = float(dic['data']['primaryData']['lastSalePrice'].replace('$', ''))
                     else: data['종가'] = 0.0
                 else: data['종가'] = 0.0
@@ -1636,8 +1844,8 @@ def hidden_pearl_in_usmarket():
 
             data['주주가치'] = data['자산총계'] + (
                     data['자산총계'] * (data['ROE'] - data['요구수익률']) / (data['요구수익률']))
-            data['NPV'] = data['주주가치'] / data['발행주식수'] if data['발행주식수'] != 0 else 0
-            data['ROS'] = data['당기순이익'] / data['매출액'] * 100 if data['매출액'] != 0 else 0
+            data['NPV'] = data['주주가치'] / data['발행주식수'] if data['발행주식수'] is not None and data['발행주식수'] != 0  else 0
+            data['ROS'] = data['당기순이익'] / data['매출액'] * 100 if data['매출액'] is not None and data['매출액'] != 0 else 0
             if data['ROS'] > 15: HIGH_ROS.append(data['Name'])
             if DEBUG: print(data)
             treasure[i.ticker] = data
@@ -1652,10 +1860,8 @@ def hidden_pearl_in_usmarket():
               align_string('R', '종가', 10),
               align_string('R', '확인사항', 16),
               )
-        if not DEBUG: USDataInit()
         cnt = 0
         print(treasure)
-        USTargetStockDataDelete(yyyymmdd)
         for d in treasure.keys():
             pass_reason = ""
             if treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
@@ -1707,34 +1913,13 @@ def hidden_pearl_in_usmarket():
                   align_string(',', treasure[d]['종가'], 10),
                   align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                   )
-            USTargetStockDataStore(d, treasure[d])
         # print(HIGH_ROS)
         # print(HIGH_RESERVE)
         logger.info(HIGH_ROS)
-        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
-            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
-        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
-            json.dump(treasure, fp)
-        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
-            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
-        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
-            json.dump(trash, fp)
     except Exception as e:
         print('error', e, '\n', i)
-        errmsg = '{}\n{}\n[{}][{}]'.format('hidden_pearl_in_usmarket', str(e), i.ticker, i.security)
-        err_messeage_to_telegram(errmsg)
-        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
-            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
-        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
-            json.dump(treasure, fp)
-        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
-            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
-        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
-            json.dump(trash, fp)
-
-
-
-
+        errmsg = '{}\n{}\n[{}][{}]'.format('hidden_pearl_in_usmarket_test', str(e), i.ticker, i.security)
+        print(errmsg)
 
 if __name__ == '__main__':
     # get_high_ranked_stock_with_closeprice()
@@ -1746,17 +1931,17 @@ if __name__ == '__main__':
     # msgr.messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
-    yyyymmdd = '2020-08-13'
-    report_type = 'GlobalConsensus'
-    crp_nm = 'AppleInc'
-    crp_cd = 'AAPL'
-    ext = 'json'
-    aa = get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd, ext)
-    for a in aa['Data']:
-        print(a)
+    # yyyymmdd = '2020-08-13'
+    # report_type = 'GlobalConsensus'
+    # crp_nm = 'AppleInc'
+    # crp_cd = 'AAPL'
+    # ext = 'json'
+    # aa = get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd, ext)
+    # for a in aa['Data']:
+    #     print(a)
 
     # print(len(aa.find_all('div')))
-    # hidden_pearl_in_usmarket()
+    # hidden_pearl_in_usmarket_test()
     # print(get_nasdaq_high_ranked_stock())
     # get_nasdaq_high_ranked_stock_with_closeprice()
-    # test()
+    test()
