@@ -667,6 +667,7 @@ def getFinanceData(cmd=None):
         300: 'GlobalCompanyProfile',
         301: 'GlobalFinancialSummary',
         302: 'GlobalConsensus',
+        303: 'GlobalFinancialStatement'
 
     }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
     urlInfo = {
@@ -677,7 +678,8 @@ def getFinanceData(cmd=None):
         200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A{}_D.json',
         300: 'https://api.nasdaq.com/api/company/{}/company-profile|https://api.nasdaq.com/api/quote/{}/info?assetclass=stocks',
         301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}',
-        302: 'http://compglobal.wisereport.co.kr/Company/GetConsensusData1?cmp_cd={}-US&curr=USD&en={}'
+        302: 'http://compglobal.wisereport.co.kr/Company/GetConsensusData1?cmp_cd={}-US&curr=USD&en={}',
+        303: 'http://compglobal.wisereport.co.kr/company/getFinStatement?cmp_cd={}-US&term=A&typ=IS&curr=LOC&en={}',
     }
 
     fileInfo = {
@@ -689,6 +691,7 @@ def getFinanceData(cmd=None):
         300: 'json',
         301: 'json',
         302: 'json',
+        303: 'json',
     }
     # 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd={}-US&en={}'
 
@@ -1753,6 +1756,8 @@ def getFinanceDataTest(cmd=None):
         200: 'ROE',
         300: 'GlobalCompanyProfile',
         301: 'GlobalFinancialSummary',
+        302: 'GlobalConsensus',
+        303: 'GlobalFinancialStatement'
 
     }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
     urlInfo = {
@@ -1762,7 +1767,9 @@ def getFinanceDataTest(cmd=None):
         108: 'http://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp',
         200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A{}_D.json',
         300: 'https://api.nasdaq.com/api/company/{}/company-profile|https://api.nasdaq.com/api/quote/{}/info?assetclass=stocks',
-        301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}'
+        301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}',
+        302: 'http://compglobal.wisereport.co.kr/Company/GetConsensusData1?cmp_cd={}-US&curr=USD&en={}',
+        303: 'http://compglobal.wisereport.co.kr/company/getFinStatement?cmp_cd={}-US&term=A&typ=IS&curr=LOC&en={}',
     }
 
     fileInfo = {
@@ -1773,6 +1780,8 @@ def getFinanceDataTest(cmd=None):
         200: 'json',
         300: 'json',
         301: 'json',
+        302: 'json',
+        303: 'json',
     }
     # 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd={}-US&en={}'
 
@@ -1797,7 +1806,7 @@ def getFinanceDataTest(cmd=None):
             if cmd >= 300:
                 stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='TLF', listing='Y', fnguide_exist='Y')
             else:
-                stockInfo = detective_db.Stocks.objects.filter(code='009160', listing='Y')
+                stockInfo = detective_db.Stocks.objects.filter(code='234340', listing='Y')
             #     jobtype = reportType[key]
             #     url = urlInfo[key]
             #     # getUSFinanceData(jobtype, url)
@@ -1813,7 +1822,7 @@ def getFinanceDataTest(cmd=None):
             # ext = 'json' if cmd == 200 else 'html'
             # 신규코드(multiprocessing) 시작
             if cmd == 200:
-                agents = 2
+                agents = 1
                 j = jobs()
                 j.filetype = fileInfo[key]
                 j.workDir = workDir
@@ -1858,7 +1867,7 @@ def getFinanceDataTest(cmd=None):
                             len(stockInfo), len(result)))
                     exit(0)
             elif cmd == 301:
-                agents = 3
+                agents = 1
                 j = jobs()
                 j.filetype = fileInfo[key]
                 j.workDir = workDir
@@ -1869,7 +1878,7 @@ def getFinanceDataTest(cmd=None):
                 with Pool(processes=agents) as pool:
                     result = pool.map(func, s)
             else:
-                agents = 3
+                agents = 1
                 j = jobs()
                 j.filetype = fileInfo[key]
                 j.workDir = workDir
@@ -1943,10 +1952,10 @@ if __name__ == '__main__':
     # getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
-    getFinanceDataTest(101)
+    # getFinanceDataTest(101)
     # getUSFinanceData()
     # print(generateEncCode())
-    # getStocksByMarketCapitalRank()
+    getStocksByMarketCapitalRank()
     # url = 'https://api.nasdaq.com/api/company/ainv/company-profile'
     # header = {
     #     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
