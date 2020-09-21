@@ -139,36 +139,55 @@ def getFredStatisticCategory(id=None):
 
 def make_graph():
     import matplotlib.pyplot as plt
+    from matplotlib import gridspec
     getConfig()
     retVal = getSeriesDataFromFRED('BAMLEMCBPIOAS')
     retVal2 = getSeriesDataFromFRED('T10Y2Y')
     retVal3 = getSeriesDataFromFRED('T10YIE')
     retVal4 = getSeriesDataFromFRED('BAMLH0A0HYM2')
+    plt.close('all')
     fig = plt.figure()
-    BAMLEMCBPIOAS = fig.add_subplot(4, 1, 1)
-    BAMLH0A0HYM2 = fig.add_subplot(4, 1, 2)
-    T10Y2Y = fig.add_subplot(4, 1, 3)
-    T10YIE = fig.add_subplot(4, 1, 4)
+    gs = gridspec.GridSpec(nrows=2,  # row 몇 개
+                           ncols=1,  # col 몇 개
+                           height_ratios=[1, 1])
+
+    # plt.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
+    # BAMLEMCBPIOAS = fig.add_subplot(2, 1, 1)
+    BAMLEMCBPIOAS = plt.subplot(gs[0])
+    BAMLEMCBPIOAS.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
     BAMLEMCBPIOAS.plot(retVal.tail(180), label="EM OAS")
-    BAMLEMCBPIOAS.legend(loc='upper left')
+    BAMLEMCBPIOAS.legend(loc='best')
+    # BAMLH0A0HYM2 = fig.add_subplot(2, 1, 2)
+    BAMLH0A0HYM2 = plt.subplot(gs[1])
+    BAMLH0A0HYM2.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
     BAMLH0A0HYM2.plot(retVal4.tail(180), label="US HighYield")
-    BAMLH0A0HYM2.legend(loc='upper left')
-    T10Y2Y.plot(retVal2.tail(180), label="10Y-2Y")
-    T10Y2Y.legend(loc='upper left')
-    T10YIE.plot(retVal3.tail(180), label="10Y BEI")
-    T10YIE.legend(loc='upper left')
+    BAMLH0A0HYM2.legend(loc='best')
+    fig.tight_layout()
     # plt.show()
-    # for id in getFredStatisticCategory():
-    #     db_fred_category.append(id[0])
-    # getRootDataFromFRED()
-    # import Image
     img_path = r'{}\{}\{}'.format(path, 'FRED', yyyymmdd)
     print(img_path)
     if not os.path.exists(img_path):
         os.makedirs(img_path)
-    plt.xticks(rotation=45)
-    plt.savefig(img_path+'\\result.png')
-    msgr.img_messeage_to_telegram(img_path+'\\result.png')
+    plt.savefig(img_path + '\\result_1.png')
+    msgr.img_messeage_to_telegram(img_path + '\\result_1.png')
+    plt.close('all')
+    T10Y2Y = plt.subplot(gs[0])
+    T10Y2Y.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
+    T10Y2Y.plot(retVal2.tail(180), label="10Y-2Y")
+    T10Y2Y.legend(loc='best')
+    T10YIE = plt.subplot(gs[1])
+    T10YIE.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
+    T10YIE.plot(retVal3.tail(180), label="10Y BEI")
+    T10YIE.legend(loc='best')
+    fig.tight_layout()
+    # plt.show()
+    img_path = r'{}\{}\{}'.format(path, 'FRED', yyyymmdd)
+    print(img_path)
+    if not os.path.exists(img_path):
+        os.makedirs(img_path)
+    plt.savefig(img_path+'\\result_2.png')
+    msgr.img_messeage_to_telegram(img_path+'\\result_2.png')
+    plt.close('all')
     plt = None
 
 
