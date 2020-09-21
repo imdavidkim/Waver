@@ -26,6 +26,8 @@ class YFPrice():
     def setting(self, ticker):
         self.ticker = ticker
         self.yf_obj = YahooFinancials(self.ticker)
+        self.prices = None
+        self.data = {}
 
     def get_data(self, fromdt, todt, period, srch_term):
         self.prices = self.yf_obj.get_historical_price_data(fromdt, todt, period)
@@ -45,59 +47,127 @@ class YFPrice():
         self.prices = None
         self.data = {}
 
-def make_USDKRWKOSPI_graph():
-    import matplotlib.pyplot as plt
-    from detective.naver_api import getNaverPrice
-    getConfig()
-    daydiff = 180
-    fromdt = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=daydiff)
-    obj = YFPrice()
-    obj.setting('KRW=X')
-    retVal = obj.get_data(fromdt.strftime("%Y-%m-%d"), yyyymmdd, 'daily', 'close')
-    obj.close()
-    retVal2 = getNaverPrice('INDEX', 'KPI200', 21)
-    # print(retVal2)
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-    ax1.plot(retVal, 'r-')
-    ax2.plot(retVal2, 'b-')
-    ax1.set_xlabel('Date')
-    ax1.set_ylabel('USD/KRW', color='r')
-    ax2.set_ylabel('KOSPI200', color='b')
-    plt.show()
+# def make_USDKRWKOSPI_graph():
+#     import matplotlib.pyplot as plt
+#     from detective.naver_api import getNaverPrice
+#     getConfig()
+#     daydiff = 180
+#     fromdt = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=daydiff)
+#     obj = YFPrice()
+#     obj.setting('KRW=X')
+#     retVal = obj.get_data(fromdt.strftime("%Y-%m-%d"), yyyymmdd, 'daily', 'close')
+#     obj.close()
+#     retVal2 = getNaverPrice('INDEX', 'KPI200', 21)
+#     # print(retVal2)
+#     fig, ax1 = plt.subplots()
+#     ax2 = ax1.twinx()
+#     ax1.plot(retVal, 'r-')
+#     ax2.plot(retVal2, 'b-')
+#     ax1.set_xlabel('Date')
+#     ax1.set_ylabel('USD/KRW', color='r')
+#     ax2.set_ylabel('KOSPI200', color='b')
+#     plt.show()
 
 
 def make_USDKRW_graph():
+    # from importlib import reload
     import matplotlib.pyplot as plt
+    # reload(plt)
     from detective.naver_api import getNaverPrice
     getConfig()
     daydiff = 180
-    fromdt = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=daydiff)
-    obj = YFPrice()
-    obj.setting('KRW=X')
-    retVal = obj.get_data(fromdt.strftime("%Y-%m-%d"), yyyymmdd, 'daily', 'close')
-    obj.close()
-    retVal2 = getNaverPrice('INDEX', 'KPI200', 21)
-    # print(retVal2)
-    fig, ax1 = plt.subplots()
-    ax2 = ax1.twinx()
-    ax1.plot(retVal, 'r-')
-    ax2.plot(retVal2, 'b-')
-    ax1.set_xlabel('Date')
-    ax1.set_ylabel('USD/KRW', color='r')
-    ax2.set_ylabel('KOSPI200', color='b')
-    plt.xticks(rotation=45)
-    # plt.show()
-    img_path = r'{}\{}\{}'.format(path, 'EX_RATE', yyyymmdd)
-    print(img_path)
-    if not os.path.exists(img_path):
-        os.makedirs(img_path)
-    plt.savefig(img_path + '\\result.png')
-    msgr.img_messeage_to_telegram(img_path + '\\result.png')
-    fig = None
-    ax1 = None
-    ax2 = None
-    plt.close('all')
+    try:
+        fromdt = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=daydiff)
+        obj = YFPrice()
+        obj.setting('KRW=X')
+        retVal = obj.get_data(fromdt.strftime("%Y-%m-%d"), yyyymmdd, 'daily', 'close')
+        obj.close()
+        retVal2 = getNaverPrice('INDEX', 'KPI200', 21)
+        # print(retVal)
+        # print(retVal2)
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        ax1.plot(retVal, 'r-')
+        ax2.plot(retVal2, 'b-')
+        ax1.set_xlabel('Date')
+        ax1.set_ylabel('USD/KRW', color='r')
+        ax2.set_ylabel('KOSPI200', color='b')
+        plt.xticks(rotation=45)
+        plt.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
+        img_path = r'{}\{}\{}'.format(path, 'EX_RATE', yyyymmdd)
+        print(img_path)
+        if not os.path.exists(img_path):
+            os.makedirs(img_path)
+        plt.savefig(img_path + '\\result.png')
+        msgr.img_messeage_to_telegram(img_path + '\\result.png')
+        plt.close('all')
+    except Exception as e:
+        print(e)
+        plt.close('all')
+
+
+def getISMIndexDataSet():
+    from detective.fnguide_collector import httpRequest
+    import json
+    getConfig()
+    retArrayDate = []
+    retArrayData = []
+    url = 'https://sbcharts.investing.com/events_charts/us/173.json'  # ISM Index
+    jo = json.loads(httpRequest(url, None, 'GET', None).decode('utf-8'))
+    for key in jo.keys():
+        if key == 'data':
+            for d in jo[key]:
+                retArrayDate.append(datetime.strptime(datetime.fromtimestamp(d[0] / 1000).strftime('%Y-%m-%d'), '%Y-%m-%d'))
+                retArrayData.append(d[1])
+    return retArrayDate, retArrayData
+    # return pd.Series(retArrayData, retArrayDate).tail(120)
+
+
+def make_ISMIndex_graph():
+    # from importlib import reload
+    import matplotlib.pyplot as plt
+    # reload(plt)
+    import os
+    from matplotlib import font_manager, rc
+    import detective.messenger as msgr
+    getConfig()
+
+    font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
+    # 폰트 이름 얻어오기
+    font_name = font_manager.FontProperties(fname=font_path).get_name()
+    # font 설정
+    rc('font', family=font_name)
+
+    try:
+        retArrayDate, retArrayData = getISMIndexDataSet()
+        retVal = pd.core.series.Series(retArrayData, retArrayDate)[-60:]
+        # retVal = getISMIndexDataSet()[-60:]
+        obj = YFPrice()
+        obj.setting('^IXIC')
+        retVal2 = obj.get_data(retArrayDate[-60].strftime("%Y-%m-%d"), yyyymmdd, 'monthly', 'close')
+        obj.close()
+        fig, ax1 = plt.subplots()
+        ax2 = ax1.twinx()
+        ax1.plot(retVal, 'm-')
+        ax2.plot(retVal2, 'g-')
+        ax1.set_ylabel('ISM PMI', color='m')
+        ax2.set_ylabel('Nasdaq Comp.', color='g')
+        # plt.legend(loc='upper center')
+        # plt.xticks(rotation=45)
+        plt.grid(True, axis='y', color='gray', alpha=0.5, linestyle='--')
+        plt.title("미국ISM 제조업구매자지수 & Nasdaq")
+        # plt.show()
+        img_path = r'{}\{}\{}'.format(path, 'ISM_PMI', yyyymmdd)
+        print(img_path)
+        if not os.path.exists(img_path):
+            os.makedirs(img_path)
+        plt.savefig(img_path + '\\result.png')
+        msgr.img_messeage_to_telegram(img_path + '\\result.png')
+        plt.close('all')
+    except Exception as e:
+        print(e)
+        plt.close('all')
+
 
 if __name__ == '__main__':
     # print(yahoo_financials)
