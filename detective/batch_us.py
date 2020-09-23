@@ -25,7 +25,7 @@ class NonDaemonicPool(multiprocessing.pool.Pool):
 
 
 if __name__ == '__main__':
-    getSnP500StockInfo()
+    # getSnP500StockInfo()
     getNasdaqStockInfo()
 
     run_info = [300, 301, 302]
