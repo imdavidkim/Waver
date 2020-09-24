@@ -117,3 +117,21 @@ def KofiaBondMarketStore(mkt_name):
         print("[KofiaBondMarketStore][%s] information stored successfully" % mkt_name)
     except Exception as e:
         print('[Error on KofiaBondMarketStore]\n', '*' * 50, e)
+
+
+def UpdateFnguideExist(ticker):
+    import sys
+    import os
+    import django
+    from datetime import datetime
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        info = detective_db.USNasdaqStocks.objects.filter(ticker=ticker).update(fnguide_exist='N')
+        print("[UpdateFnguideExist][%s] information updated not to use successfully" % ticker)
+    except Exception as e:
+        print('[Error on UpdateFnguideExist]\n', '*' * 50, e)
