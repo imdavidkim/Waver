@@ -19,11 +19,12 @@ DEBUG = True
 
 def getConfig():
     import configparser
-    global path, filename, yyyymmdd, django_path, main_path
+    global path, filename, yyyymmdd, django_path, main_path, font_path
     config = configparser.ConfigParser()
     config.read('config.ini')
     path = config['COMMON']['REPORT_PATH']
     proj_path = config['COMMON']['PROJECT_PATH']
+    font_path = config['COMMON']['FONT_PATH']
     django_path = proj_path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
     filename = r'\financeData_{}_{}_{}.{}'
@@ -194,7 +195,7 @@ def get_high_ranked_stock_with_closeprice():
         # retStr = ''
         fig = None
         # 폰트 경로
-        font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
+        # font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
         # 폰트 이름 얻어오기
         font_name = font_manager.FontProperties(fname=font_path).get_name()
         # font 설정
@@ -275,7 +276,7 @@ def get_nasdaq_high_ranked_stock_with_closeprice():
         # retStr = ''
         fig = None
         # 폰트 경로
-        font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
+        # font_path = r"C:/Windows/Fonts/KoPubDotum_Pro_Light.otf"
         # 폰트 이름 얻어오기
         font_name = font_manager.FontProperties(fname=font_path).get_name()
         # font 설정
@@ -756,6 +757,79 @@ def new_find_hidden_pearl():
                                 continue
 
                 if not set(['지배주주순이익', '지배주주지분', '자산총계']).issubset(data.keys()):
+                    yearly_highlight = fnguide.select_by_attr(soup, 'div', 'id',
+                                                              'highlight_B_Y')  # Snapshot FinancialHighlight
+                    # print(yearly_highlight)
+                    if yearly_highlight:
+                        columns, items, values = fnguide.setting(
+                            fnguide.get_table_contents(yearly_highlight, 'table thead tr th')[1:],
+                            fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
+                            fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
+                        # if DEBUG: print(columns, items, values)
+                        for idx, i in enumerate(items):
+                            if i in ['당기순이익', '자본총계', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)']:
+                                for idx2, yyyymm in enumerate(columns):
+                                    # print(idx2, yyyymm)
+                                    # print(yyyymm[:4], dateDict['yyyy'], i, values[idx][idx2])
+                                    if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
+                                        data['Period'] = yyyymm
+                                        if i[-3:] == '(%)':
+                                            if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                                data[i] = float(values[idx][idx2].replace(',', ''))
+                                            else:
+                                                data[i] = 0
+                                            if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                                    values[idx][idx2 - 1].replace(',', '')):
+                                                data['X' + i] = float(values[idx][idx2 - 1].replace(',', ''))
+                                            else:
+                                                data['X' + i] = 0
+                                            break
+                                        else:
+                                            if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                                data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
+                                            else:
+                                                data[i] = 0
+                                            if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                                    values[idx][idx2 - 1].replace(',', '')):
+                                                data['X' + i] = float(values[idx][idx2 - 1].replace(',', '')) * 100000000
+                                            else:
+                                                data['X' + i] = 0
+                                            break
+
+                                    else:
+                                        if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                                values[idx][idx2 - 1].replace(',', '')):
+                                            if i[-3:] == '(%)':
+                                                data['X' + i] = float(values[idx][idx2 - 1].replace(',', ''))
+                                            else:
+                                                data['X' + i] = float(values[idx][idx2 - 1].replace(',', '')) * 100000000
+                                        else:
+                                            continue
+                            elif i in ['ROE(%)']:
+                                for idx2, yyyymm in enumerate(columns):
+                                    # print(idx2, yyyymm)
+                                    # print(yyyymm[:4], dateDict['yyyy'], values[idx][idx2])
+                                    if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
+                                        data['Period'] = yyyymm
+                                        if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                            pass
+                                        else:
+                                            data['확인사항'] = values[idx][idx2].replace(',', '')
+                                        break
+                                    elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
+                                        data['Period'] = columns[idx2 - 1]
+                                        if fnguide.is_float(values[idx][idx2 - 1].replace(',', '')):
+                                            pass
+                                        else:
+                                            data['확인사항'] = values[idx][idx2 - 1].replace(',', '')
+                                        break
+                                    else:
+                                        continue
+                    if '당기순이익' in data.keys():
+                        data['지배주주순이익'] = data['당기순이익']
+                    if '자본총계' in data.keys():
+                        data['지배주주지분'] = data['자본총계']
+                if not set(['지배주주순이익', '지배주주지분', '자산총계']).issubset(data.keys()):
                     pass_reason = '[{}][{}] Not enough Information for valuation 2차'.format(stock.code, stock.name)
                     logger.info(pass_reason)
                     trash[stock.code] = data
@@ -1218,9 +1292,9 @@ def test():
     DEBUG = True
     dateDict = new_get_dateDict()
     treasure = {}
-    yyyymmdd = '2020-09-07'
+    yyyymmdd = '2020-09-23'
     import detective_app.models as detective_db
-    stockInfo = detective_db.Stocks.objects.filter(code='123890', listing='Y')  # 삼성전자
+    stockInfo = detective_db.Stocks.objects.filter(code='213420', listing='Y')  # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
@@ -1337,6 +1411,79 @@ def test():
                         else:
                             continue
 
+            if not set(['지배주주순이익', '지배주주지분', '자산총계']).issubset(data.keys()):
+                yearly_highlight = fnguide.select_by_attr(soup, 'div', 'id',
+                                                          'highlight_B_Y')  # Snapshot FinancialHighlight
+                # print(yearly_highlight)
+                if yearly_highlight:
+                    columns, items, values = fnguide.setting(
+                        fnguide.get_table_contents(yearly_highlight, 'table thead tr th')[1:],
+                        fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
+                        fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
+                    # if DEBUG: print(columns, items, values)
+                    for idx, i in enumerate(items):
+                        if i in ['당기순이익', '자본총계', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)']:
+                            for idx2, yyyymm in enumerate(columns):
+                                # print(idx2, yyyymm)
+                                # print(yyyymm[:4], dateDict['yyyy'], i, values[idx][idx2])
+                                if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
+                                    data['Period'] = yyyymm
+                                    if i[-3:] == '(%)':
+                                        if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                            data[i] = float(values[idx][idx2].replace(',', ''))
+                                        else:
+                                            data[i] = 0
+                                        if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                                values[idx][idx2 - 1].replace(',', '')):
+                                            data['X' + i] = float(values[idx][idx2 - 1].replace(',', ''))
+                                        else:
+                                            data['X' + i] = 0
+                                        break
+                                    else:
+                                        if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                            data[i] = float(values[idx][idx2].replace(',', '')) * 100000000
+                                        else:
+                                            data[i] = 0
+                                        if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                                values[idx][idx2 - 1].replace(',', '')):
+                                            data['X' + i] = float(values[idx][idx2 - 1].replace(',', '')) * 100000000
+                                        else:
+                                            data['X' + i] = 0
+                                        break
+
+                                else:
+                                    if values[idx][idx2 - 1] != '' and fnguide.is_float(
+                                            values[idx][idx2 - 1].replace(',', '')):
+                                        if i[-3:] == '(%)':
+                                            data['X' + i] = float(values[idx][idx2 - 1].replace(',', ''))
+                                        else:
+                                            data['X' + i] = float(values[idx][idx2 - 1].replace(',', '')) * 100000000
+                                    else:
+                                        continue
+                        elif i in ['ROE(%)']:
+                            for idx2, yyyymm in enumerate(columns):
+                                # print(idx2, yyyymm)
+                                # print(yyyymm[:4], dateDict['yyyy'], values[idx][idx2])
+                                if yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] != '':
+                                    data['Period'] = yyyymm
+                                    if fnguide.is_float(values[idx][idx2].replace(',', '')):
+                                        pass
+                                    else:
+                                        data['확인사항'] = values[idx][idx2].replace(',', '')
+                                    break
+                                elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
+                                    data['Period'] = columns[idx2 - 1]
+                                    if fnguide.is_float(values[idx][idx2 - 1].replace(',', '')):
+                                        pass
+                                    else:
+                                        data['확인사항'] = values[idx][idx2 - 1].replace(',', '')
+                                    break
+                                else:
+                                    continue
+                if '당기순이익' in data.keys():
+                    data['지배주주순이익'] = data['당기순이익']
+                if '자본총계' in data.keys():
+                    data['지배주주지분'] = data['자본총계']
             if not set(['지배주주순이익', '지배주주지분', '자산총계']).issubset(data.keys()):
                 pass_reason = '[{}][{}] Not enough Information for valuation 2차'.format(stock.code, stock.name)
                 continue
@@ -1927,7 +2074,7 @@ if __name__ == '__main__':
     # messeage_to_telegram()
     # find_hidden_pearl()
     # test_find_hidden_pearl()
-    # new_find_hidden_pearl()
+    new_find_hidden_pearl()
     # msgr.messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
