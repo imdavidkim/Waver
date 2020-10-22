@@ -13,12 +13,13 @@ sys.path.append(r'C:\ProgramData\Anaconda3\envs\Waver\DLLs')
 
 def getConfig():
     import configparser
-    global path, django_path, main_path
+    global path, django_path, main_path, dart_auth_key
     config = configparser.ConfigParser()
     config.read('config.ini')
     path = config['COMMON']['PROJECT_PATH']
     django_path = path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
+    dart_auth_key = config['DART']['SEARCH-API-KEY']
 
 
 def getStockInfo():
@@ -237,7 +238,7 @@ def wikiDataCleansing(content):
 
 
 def dataCleansing(content):
-    import re
+    getConfig()
     retDict = {}
     tmpList = []
     temp = content.decode('utf-8')
@@ -277,6 +278,7 @@ def dataCleansing(content):
                 tmpList[-1][-1] += ' '.join(dataArray)
             # print(tmpList[-1])
             # print("* " * 10 + strLine)
+    dart_info = get_corpcode(dart_auth_key)
     for da in tmpList:
         retDict[da[1]] = {
             '종목명': da[2],
@@ -287,7 +289,8 @@ def dataCleansing(content):
             '액면가': da[7],
             '통화': da[8][da[8].find('(')+1:da[8].find(')')],
             '전화번호': da[9],
-            '주소': da[10]
+            '주소': da[10],
+            'DART코드': dart_info[da[1]]
         }
 
     return retDict
@@ -368,6 +371,7 @@ def dataStore(retDict):
                                                                     'name': retDict[key]['종목명'],
                                                                     'category_code': retDict[key]['업종코드'],
                                                                     'category_name': retDict[key]['업종명'],
+                                                                    'dart_corp_code': retDict[key]['DART코드'],
                                                                     'issued_shares': float(
                                                                         retDict[key]['상장주식수'].replace(',', '')),
                                                                     'capital': float(
@@ -461,6 +465,26 @@ def USNasdaqDataStore(retDict):
         print("Total %d" % count)
     except Exception as e:
         print(e, key, retDict[key])
+
+
+def get_corpcode(crtfc_key):
+    import io
+    import zipfile
+    import xml.etree.ElementTree as et
+    print("Gathering DART CorporationCode...")
+    params = {'crtfc_key': crtfc_key}
+    url = "https://opendart.fss.or.kr/api/corpCode.xml"
+    res = requests.get(url, params=params)
+    zfile = zipfile.ZipFile(io.BytesIO(res.content))
+    fin = zfile.open(zfile.namelist()[0])
+    # print(fin.read().decode('utf-8'))
+    root = et.fromstring(fin.read().decode('utf-8'))
+    data = {}
+    for child in root:
+        if len(child.find('stock_code').text.strip()) > 1: # 종목코드가 있는 경우
+            data[child.find('stock_code').text.strip()] = child.find('corp_code').text.strip()
+    print("{} CorpCode returned".format(len(data)))
+    return data
 
 
 def httpRequest(url, data=None, header=None, method='POST'):
