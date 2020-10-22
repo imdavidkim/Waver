@@ -10,6 +10,7 @@ class Stocks(models.Model):
     name = models.TextField()
     category_code = models.CharField(max_length=20)
     category_name = models.TextField()
+    dart_corp_code = models.CharField(max_length=8, null=True)
     issued_shares = models.FloatField()
     capital = models.FloatField()
     par_value = models.IntegerField()
