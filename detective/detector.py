@@ -35,6 +35,17 @@ def getConfig():
 
 def get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd, ext):
     getConfig()
+    reportType = {
+        'snapshot': 101,
+        'financeReport': 103,
+        'financeRatio': 104,
+        'consensus': 108,
+        'ROE': 200,
+        'GlobalCompanyProfile': 300,
+        'GlobalFinancialSummary': 301,
+        'GlobalConsensus': 302,
+        'GlobalFinancialStatement': 303
+    }
     try:
         full_path = path + r'\{}\{}'.format(report_type, yyyymmdd) + filename.format(crp_nm, crp_cd, report_type, ext)
         with open(full_path, 'rb') as obj:
@@ -43,7 +54,17 @@ def get_soup_from_file(report_type, yyyymmdd, crp_nm, crp_cd, ext):
             else:
                 soup = BeautifulSoup(obj, 'lxml')
     except Exception as e:
-        soup = None
+        try:
+            fnguide.getFinanceDataRetry(reportType[report_type], crp_cd)
+            full_path = path + r'\{}\{}'.format(report_type, yyyymmdd) + filename.format(crp_nm, crp_cd, report_type,
+                                                                                         ext)
+            with open(full_path, 'rb') as obj:
+                if ext == 'json':
+                    soup = json.loads(obj.read())
+                else:
+                    soup = BeautifulSoup(obj, 'lxml')
+        except Exception as ee:
+            soup = None
     return soup
 
 
@@ -767,7 +788,8 @@ def new_find_hidden_pearl():
                             fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
                         # if DEBUG: print(columns, items, values)
                         for idx, i in enumerate(items):
-                            if i in ['당기순이익', '자본총계', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)']:
+                            if i in ['당기순이익', '자본총계', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)',
+                                     '부채비율(%)', '영업이익(발표기준)']:
                                 for idx2, yyyymm in enumerate(columns):
                                     # print(idx2, yyyymm)
                                     # print(yyyymm[:4], dateDict['yyyy'], i, values[idx][idx2])
@@ -1292,9 +1314,9 @@ def test():
     DEBUG = True
     dateDict = new_get_dateDict()
     treasure = {}
-    yyyymmdd = '2020-09-23'
+    yyyymmdd = '2020-11-10'
     import detective_app.models as detective_db
-    stockInfo = detective_db.Stocks.objects.filter(code='213420', listing='Y')  # 삼성전자
+    stockInfo = detective_db.Stocks.objects.filter(code='010960', listing='Y')  # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
@@ -1421,8 +1443,13 @@ def test():
                         fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
                         fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
                     # if DEBUG: print(columns, items, values)
+                    # print(fnguide.get_table_contents_test(yearly_highlight, 'table thead tr th')[1:])
+                    # print(fnguide.get_table_contents_test(yearly_highlight, 'table tbody tr th'))
+                    # print(fnguide.get_table_contents_test(yearly_highlight, 'table tbody tr td'))
+                    # print(items)
+                    # print(values)
                     for idx, i in enumerate(items):
-                        if i in ['당기순이익', '자본총계', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)']:
+                        if i in ['당기순이익', '자본총계', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)', '영업이익(발표기준)']:
                             for idx2, yyyymm in enumerate(columns):
                                 # print(idx2, yyyymm)
                                 # print(yyyymm[:4], dateDict['yyyy'], i, values[idx][idx2])
@@ -1452,6 +1479,8 @@ def test():
                                         break
 
                                 else:
+                                    # print(idx, idx2)
+                                    # print(values)
                                     if values[idx][idx2 - 1] != '' and fnguide.is_float(
                                             values[idx][idx2 - 1].replace(',', '')):
                                         if i[-3:] == '(%)':
@@ -2074,7 +2103,7 @@ if __name__ == '__main__':
     # messeage_to_telegram()
     # find_hidden_pearl()
     # test_find_hidden_pearl()
-    new_find_hidden_pearl()
+    # new_find_hidden_pearl()
     # msgr.messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
