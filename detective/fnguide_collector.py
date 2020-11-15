@@ -700,7 +700,7 @@ def getFinanceData(cmd=None):
         'gicode': '',
         'cID': '',
         'MenuYn': 'Y',
-        'ReportGB': 'D',  # D: 연결, B: 별도
+        'ReportGB': '',  # D: 연결, B: 별도, 없으면 Default?
         'NewMenuID': 0,
         'stkGb': 701,
     }
@@ -1421,6 +1421,48 @@ def get_table_contents(soup, structure):
     return retList
 
 
+def get_table_contents_test(soup, structure):
+    retList = []
+    if soup:
+        for tag in soup.select(structure):
+            if tag.div and tag.div.dl and tag.div.dl.dt:
+                print("여기1")
+                if '(E) : Estimate' == tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ',
+                                                                                                         '').replace(
+                        '   ', '').strip():
+                    retList.append(
+                        tag.div.span.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ',
+                                                                                                           '').strip())
+                    print("여기1-1")
+                elif '(P) : Provisional' == tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ',
+                                                                                                              '').replace(
+                        '   ', '').strip():
+                    retList.append(
+                        tag.div.span.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ',
+                                                                                                           '').strip())
+                    print("여기1-2")
+                else:
+                    retList.append(
+                        tag.div.dl.dt.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ',
+                                                                                                            '').strip())
+                    print("여기1-3")
+            elif tag.a:
+                print("여기2")
+                retList.append('%s(%s)' % (tag.a.text, tag.a['href']))
+                continue
+            if tag.div and tag.div.dl and tag.div.dl.dd:
+                print("여기3")
+                # print('[Continue]', tag.div.dl.dd)
+                continue
+            if tag.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip() == '헤더' \
+                or tag.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip() == '내용':
+                print("여기4")
+                continue
+            print(tag.text)
+            retList.append(tag.text.replace(u'\xa0', '').replace('\n', '').replace('  ', '').replace('   ', '').strip())
+    return retList
+
+
 def select_by_attr(soup, tagname, attr, condition, all=None):
     retTag = None
     if all:
@@ -1500,7 +1542,11 @@ def setting(header, items, datas):
             for idx, head in enumerate(header[1:]):
                 retHeader.append(head.replace('  ', '').replace('   ', ''))
             retKey = items
-
+            if len(datas) % len(retHeader) != 0:
+                while True:
+                    datas.append('')
+                    if len(datas) % len(retHeader) == 0:
+                        break
             for i in range(len(retKey)):
                 tmpData = []
                 for j in range(len(retHeader)):
@@ -1790,7 +1836,7 @@ def getFinanceDataTest(cmd=None):
         'gicode': '',
         'cID': '',
         'MenuYn': 'Y',
-        'ReportGB': 'D',  # D: 연결, B: 별도
+        'ReportGB': '',  # D: 연결, B: 별도, 없으면 Default?
         'NewMenuID': 0,
         'stkGb': 701,
     }
@@ -1806,7 +1852,7 @@ def getFinanceDataTest(cmd=None):
             if cmd >= 300:
                 stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='TLF', listing='Y', fnguide_exist='Y')
             else:
-                stockInfo = detective_db.Stocks.objects.filter(code='234340', listing='Y')
+                stockInfo = detective_db.Stocks.objects.filter(code='002840', listing='Y')
             #     jobtype = reportType[key]
             #     url = urlInfo[key]
             #     # getUSFinanceData(jobtype, url)
@@ -1909,6 +1955,191 @@ def getFinanceDataTest(cmd=None):
         err_messeage_to_telegram(errmsg)
 
 
+def getFinanceDataRetry(cmd, code):
+    import sys
+    import os
+    import django
+    from multiprocessing import Pool
+    from functools import partial
+    getConfig()
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+
+    # CHROMEDRIVER_PATH = chrome_path
+    options = Options()
+    options.headless = True
+    # driver = webdriver.Chrome(CHROMEDRIVER_PATH, chrome_options=options)
+    # driver.implicitly_wait(3)
+
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    from django.db.models import Q
+    global marketTxt
+
+    yyyymmdd = str(datetime.now())[:10]
+    # yyyymmdd = '2020-08-04'
+    url = "http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp"
+    reportType = {
+        101: 'snapshot',
+        103: 'financeReport',
+        104: 'financeRatio',
+        108: 'consensus',
+        200: 'ROE',
+        300: 'GlobalCompanyProfile',
+        301: 'GlobalFinancialSummary',
+        302: 'GlobalConsensus',
+        303: 'GlobalFinancialStatement'
+
+    }  # 101 : snapshot, 103 : financeReport, 104 : financeRatio
+    urlInfo = {
+        101: 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
+        103: 'http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp',
+        104: 'http://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp',
+        108: 'http://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp',
+        200: 'http://comp.fnguide.com/SVO2/json/chart/01_04/chart_A{}_D.json',
+        300: 'https://api.nasdaq.com/api/company/{}/company-profile|https://api.nasdaq.com/api/quote/{}/info?assetclass=stocks',
+        301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}',
+        302: 'http://compglobal.wisereport.co.kr/Company/GetConsensusData1?cmp_cd={}-US&curr=USD&en={}',
+        303: 'http://compglobal.wisereport.co.kr/company/getFinStatement?cmp_cd={}-US&term=A&typ=IS&curr=LOC&en={}',
+    }
+
+    fileInfo = {
+        101: 'html',
+        103: 'html',
+        104: 'html',
+        108: 'html',
+        200: 'json',
+        300: 'json',
+        301: 'json',
+        302: 'json',
+        303: 'json',
+    }
+    # 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/Company/Snap?cmp_cd={}-US&en={}'
+
+    data = {
+        'pGB': 1,
+        'gicode': '',
+        'cID': '',
+        'MenuYn': 'Y',
+        'ReportGB': '',  # D: 연결, B: 별도, 없으면 Default?
+        'NewMenuID': 0,
+        'stkGb': 701,
+    }
+
+    xmlString = ''
+    result = None
+
+    try:
+        for key in reportType.keys():
+            if cmd >= 300:
+                stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker=code, listing='Y', fnguide_exist='Y')
+            else:
+                stockInfo = detective_db.Stocks.objects.filter(code=code, listing='Y')
+            #     jobtype = reportType[key]
+            #     url = urlInfo[key]
+            #     # getUSFinanceData(jobtype, url)
+            #     getUSFinanceDataStandalone(jobtype, url)
+            #     continue
+
+            # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y')
+            workDir = r'%s\%s\%s' % (path, reportType[key], yyyymmdd)
+            if not os.path.exists(workDir):
+                os.makedirs(workDir)
+
+            data['NewMenuID'] = key
+            # ext = 'json' if cmd == 200 else 'html'
+            # 신규코드(multiprocessing) 시작
+            if cmd == 200:
+                agents = 1
+                j = jobs()
+                j.filetype = fileInfo[key]
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                s = stockInfo.values()
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+            elif cmd == 300:
+                agents = 1
+                j = jobs()
+                j.filetype = fileInfo[key]
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                s = stockInfo.values()
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+
+                for r in result:
+                    retArr = r.split('|')
+                    if len(retArr) < 3: continue
+
+                    if retArr[2] != '' and retArr[0] == 'GlobalCompanyProfile':
+                        USStockMarketTextUpdateAdvcd(retArr[1], retArr[2], retArr[3], retArr[4], retArr[5],
+                                                     retArr[6], retArr[7], retArr[8], retArr[9])
+                        # 0 j.jobtype,
+                        # 1 ticker,
+                        # 2 category_code,
+                        # 3 category_name,
+                        # 4 category_detail,
+                        # 5 tel,
+                        # 6 address,
+                        # 7 location,
+                        # 8 description,
+                        # 9 issued_shares
+                if len(stockInfo) != len(result):
+                    print(
+                        "Total target stocks : {}\n requested stocks : {}\nPlease check out the process.\nTerminating this program.".format(
+                            len(stockInfo), len(result)))
+                    exit(0)
+            elif cmd == 301:
+                agents = 1
+                j = jobs()
+                j.filetype = fileInfo[key]
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                s = stockInfo.values()
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+            else:
+                agents = 1
+                j = jobs()
+                j.filetype = fileInfo[key]
+                j.workDir = workDir
+                j.jobtype = reportType[key]
+                j.url = urlInfo[key]
+                j.reqdata = data
+                # j.driver = driver
+                s = stockInfo.values()
+                # j.driver = cc.ChromeDriver()
+                func = partial(getTargetFile, j)
+                with Pool(processes=agents) as pool:
+                    result = pool.map(func, s)
+
+                for r in result:
+                    retArr = r.split('|')
+                    if len(retArr) < 3: continue
+                    if retArr[3] != '' and retArr[0] == 'snapshot':
+                        StockMarketTextUpdate(retArr[1], retArr[3].replace('\xa0', ' '), retArr[4].replace('\xa0', ' '),
+                                              retArr[5].replace('\xa0', ' '))
+                # if len(stockInfo) != len(result):
+                #     print(
+                #         "Total target stocks : {}\n requested stocks : {}\nPlease check out the process.\nTerminating this program.".format(
+                #             len(stockInfo), len(result)))
+                #     exit(0)
+        print("FnGuideDataCollection job finished")
+    except Exception as e:
+        errmsg = '{}\n{}'.format('getFinanceData', str(e))
+        err_messeage_to_telegram(errmsg)
+
+
 def getStocksByMarketCapitalRank():
     import sys
     import os
@@ -1952,10 +2183,10 @@ if __name__ == '__main__':
     # getFinanceData(200)
     # getFinanceData(103)
     # getFinanceData(108)
-    # getFinanceDataTest(101)
+    getFinanceDataTest(200)
     # getUSFinanceData()
     # print(generateEncCode())
-    getStocksByMarketCapitalRank()
+    # getStocksByMarketCapitalRank()
     # url = 'https://api.nasdaq.com/api/company/ainv/company-profile'
     # header = {
     #     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
