@@ -8,18 +8,19 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import csv
 import xmltodict
-
+import OpenDartReader
 
 
 def getConfig():
     import configparser
-    global search_api_key, company_api_key, search_url, company_url
+    global search_api_key, company_api_key, search_url, company_url, dart
     config = configparser.ConfigParser()
     config.read('config.ini')
     search_api_key = config['DART']['SEARCH-API-KEY']
     company_api_key = config['DART']['COMPANY-API-KEY']
     search_url = config['DART']['SEARCH-URL']
     company_url = config['DART']['COMPANY-URL']
+    dart = OpenDartReader(search_api_key)
 
 
 def getDartInfo():
@@ -120,4 +121,10 @@ def httpRequest(url, data, method='POST'):
 
 
 if __name__ == '__main__':
-    getDartInfo()
+    getConfig()
+    result = dart.list(start='20201101', kind='A')
+    print(result.to_string())
+    # for row_idx, value in result.iterrows():
+    #     print(row_idx, value.corp_code, value.corp_name, value.stock_code)
+
+    # getDartInfo()
