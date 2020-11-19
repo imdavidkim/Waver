@@ -81,6 +81,7 @@ class USNasdaqStocks(models.Model):
     listing = models.CharField(max_length=1, default='Y')
     founded = models.TextField(null=True)
     description = models.TextField(null=True)
+    fnguide_exist = models.CharField(max_length=1, default='Y')
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -162,15 +163,37 @@ class DartRequestIndex(models.Model):
     req_time = models.DateTimeField()
 
 
-class DartRequestResult(models.Model):
-    rcp_no = models.CharField(max_length=20, unique=True, primary_key=True)
-    crp_cls = models.CharField(max_length=1)
-    crp_nm = models.TextField()
-    crp_cd = models.CharField(max_length=20)
-    rpt_nm = models.TextField()
+class DartRequestListResult(models.Model):
+    rcept_no = models.CharField(max_length=20, unique=True, primary_key=True)
+    corp_cls = models.CharField(max_length=1)
+    stock_code = models.CharField(max_length=20)
+    corp_name = models.TextField()
+    corp_code = models.CharField(max_length=20)
+    report_nm = models.TextField()
     flr_nm = models.TextField()
-    rcp_dt = models.CharField(max_length=8)
-    rmk = models.TextField(null=True)
+    rcept_dt = models.CharField(max_length=8)
+    rm = models.TextField(null=True)
+    link = models.TextField(null=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class DartRequestMajorStockResult(models.Model):
+    rcept_no = models.CharField(max_length=20, unique=True, primary_key=True)
+    rcept_dt = models.CharField(max_length=8)
+    stock_code = models.CharField(max_length=20)
+    cmpny_nm = models.TextField(default='')
+    report_tp = models.TextField(default='')
+    repror = models.TextField(default='')
+    stkqy = models.TextField(default='')
+    stkqy_irds = models.TextField(default='')
+    stkrt = models.TextField(default='')
+    stkrt_irds = models.TextField(default='')
+    ctr_stkqy = models.TextField(default='')
+    ctr_stkrt = models.TextField(default='')
+    report_resn = models.TextField(default='')
+    create_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class FnGuideDailySnapShot(models.Model):
