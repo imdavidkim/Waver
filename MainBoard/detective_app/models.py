@@ -181,8 +181,8 @@ class DartRequestListResult(models.Model):
 class DartRequestMajorStockResult(models.Model):
     rcept_no = models.CharField(max_length=20, unique=True, primary_key=True)
     rcept_dt = models.CharField(max_length=8)
-    stock_code = models.CharField(max_length=20)
-    cmpny_nm = models.TextField(default='')
+    corp_code = models.CharField(max_length=20)
+    corp_name = models.TextField(default='')
     report_tp = models.TextField(default='')
     repror = models.TextField(default='')
     stkqy = models.TextField(default='')
@@ -192,6 +192,7 @@ class DartRequestMajorStockResult(models.Model):
     ctr_stkqy = models.TextField(default='')
     ctr_stkrt = models.TextField(default='')
     report_resn = models.TextField(default='')
+    link = models.TextField(null=True)
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
