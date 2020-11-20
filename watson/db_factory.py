@@ -135,3 +135,109 @@ def UpdateFnguideExist(ticker):
         print("[UpdateFnguideExist][%s] information updated not to use successfully" % ticker)
     except Exception as e:
         print('[Error on UpdateFnguideExist]\n', '*' * 50, e)
+
+
+def ResultListDataStore(retJson):
+    import sys
+    import os
+    import django
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        for jsonData in retJson["data"]:
+            info = detective_db.DartRequestListResult.objects.update_or_create(rcept_no=jsonData['rcept_no'],
+                                                                               defaults={
+                                                                                   'corp_cls': jsonData['corp_cls'],
+                                                                                   'stock_code': jsonData['stock_code'],
+                                                                                   'corp_name': jsonData['corp_name'],
+                                                                                   'corp_code': jsonData['corp_code'],
+                                                                                   'report_nm': jsonData['report_nm'],
+                                                                                   'flr_nm': jsonData['flr_nm'],
+                                                                                   'rcept_dt': jsonData['rcept_dt'],
+                                                                                   'rm': jsonData['rm'],
+                                                                                   'link': "http://dart.fss.or.kr/dsaf001/main.do?rcpNo=" +
+                                                                                           jsonData['rcept_no'],
+                                                                               }
+                                                                               )
+            print("[{}][{}][{}][{}] information stored successfully".format(jsonData['rcept_dt'], jsonData['rcept_no'],
+                                                                            jsonData['corp_name'],
+                                                                            jsonData['report_nm']))
+    except Exception as e:
+        print('[Error on ResultListDataStore]\n', '*' * 50, e)
+
+
+def ResultMajorShareholderDataStore(retJson):
+    import sys
+    import os
+    import django
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        for jsonData in retJson["data"]:
+            info = detective_db.DartRequestMajorStockResult.objects.update_or_create(rcept_no=jsonData['rcept_no'],
+                                                                                     defaults={
+                                                                                         'rcept_dt': jsonData['rcept_dt'],
+                                                                                         'corp_code': jsonData['corp_code'],
+                                                                                         'corp_name': jsonData['corp_name'],
+                                                                                         'report_tp': jsonData['report_tp'],
+                                                                                         'repror': jsonData['repror'],
+                                                                                         'stkqy': jsonData['stkqy'],
+                                                                                         'stkqy_irds': jsonData['stkqy_irds'],
+                                                                                         'stkrt': jsonData['stkrt'],
+                                                                                         'stkrt_irds': jsonData['stkrt_irds'],
+                                                                                         'ctr_stkqy': jsonData['ctr_stkqy'],
+                                                                                         'ctr_stkrt': jsonData['ctr_stkrt'],
+                                                                                         'report_resn': jsonData['report_resn'],
+                                                                                         'link': "http://dart.fss.or.kr/dsaf001/main.do?rcpNo=" +
+                                                                                                 jsonData['rcept_no'],
+                                                                                     }
+                                                                                     )
+            print("[{}][{}][{}][{}][{}][{}][{}][{}] {}".format(jsonData['rcept_dt'], jsonData['corp_name'],
+                                                               jsonData['repror'], jsonData['stkqy'],
+                                                               jsonData['stkrt_irds'], jsonData['ctr_stkqy'],
+                                                               jsonData['ctr_stkrt'],
+                                                               "http://dart.fss.or.kr/dsaf001/main.do?rcpNo=" +
+                                                               jsonData['rcept_no'],
+                                                               jsonData['report_resn']))
+
+        #     rcept_no = models.CharField(max_length=20, unique=True, primary_key=True)
+        #     rcept_dt = models.CharField(max_length=8)
+        #     stock_code = models.CharField(max_length=20)
+        #     cmpny_nm = models.TextField(default='')
+        #     report_tp = models.TextField(default='')
+        #     repror = models.TextField(default='')
+        #     stkqy = models.TextField(default='')
+        #     stkqy_irds = models.TextField(default='')
+        #     stkrt = models.TextField(default='')
+        #     stkrt_irds = models.TextField(default='')
+        #     ctr_stkqy = models.TextField(default='')
+        #     ctr_stkrt = models.TextField(default='')
+        #     report_resn = models.TextField(default='')
+    except Exception as e:
+        print('[Error on ResultListDataStore]\n', '*' * 50, e)
+
+
+def getMajorShareholderReportingInfo(date):
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(corp_cls="Y").filter(report_nm__contains="대량보유").values("corp_code").distinct()
+
+    corp_code_list = [corp_code["corp_code"] for corp_code in result]
+    return corp_code_list
