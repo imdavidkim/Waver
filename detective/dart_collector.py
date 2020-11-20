@@ -87,34 +87,7 @@ def IndexDataStore(retDict):
         print('[Error on IndexDataStore]\n', '*'*50, e)
 
 
-def ResultListDataStore(retJson):
-    import sys
-    import os
-    import django
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
-    django.setup()
-    import detective_app.models as detective_db
-    try:
-        for jsonData in retJson["data"]:
-            info = detective_db.DartRequestListResult.objects.update_or_create(rcept_no=jsonData['rcept_no'],
-                                                                               defaults={
-                                                                                   'corp_cls': jsonData['corp_cls'],
-                                                                                   'stock_code': jsonData['stock_code'],
-                                                                                   'corp_name': jsonData['corp_name'],
-                                                                                   'corp_code': jsonData['corp_code'],
-                                                                                   'report_nm': jsonData['report_nm'],
-                                                                                   'flr_nm': jsonData['flr_nm'],
-                                                                                   'rcept_dt': jsonData['rcept_dt'],
-                                                                                   'rm': jsonData['rm'],
-                                                                                   'link': "http://dart.fss.or.kr/dsaf001/main.do?rcpNo=" + jsonData['rcept_no'],
-                                                                           }
-                                                                           )
-            print("[{}][{}][{}][{}] information stored successfully".format(jsonData['rcept_dt'], jsonData['rcept_no'], jsonData['corp_name'], jsonData['report_nm']))
-    except Exception as e:
-        print('[Error on ResultListDataStore]\n', '*' * 50, e)
+
 
 
 def httpRequest(url, data, method='POST'):
@@ -131,12 +104,17 @@ def httpRequest(url, data, method='POST'):
 
 if __name__ == '__main__':
     getConfig()
+    import watson.db_factory as db
     # result = dart.list(start='20201101', kind='A') # 정기공시
-    result = dart.list(start='20201101', kind='D') # 지분공시
+    # result = dart.list(start='20201101', kind='D') # 지분공시
 
     # print(result.to_json(orient="table"))
-    ResultListDataStore(json.loads(result.to_json(orient="table")))
-    # for row_idx, value in result.iterrows():
-    #     print(row_idx, value.corp_code, value.corp_name, value.stock_code)
+    # db.ResultListDataStore(json.loads(result.to_json(orient="table")))
 
-    # getDartInfo()
+
+    date = "20201116"
+    corp_code_list = db.getMajorShareholderReportingInfo(date)
+    for corp_code in corp_code_list:
+        result = dart.major_shareholders(corp_code)
+        db.ResultMajorShareholderDataStore(json.loads(result.to_json(orient="table")))
+
