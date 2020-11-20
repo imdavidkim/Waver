@@ -15,3 +15,17 @@
 {"categories":[{"id":22,"name":"Interest Rates","parent_id":32991},{"id":15,"name":"Exchange Rates","parent_id":32991},{"id":24,"name":"Monetary Data","parent_id":32991},{"id":46,"name":"Financial Indicators","parent_id":32991},{"id":23,"name":"Banking","parent_id":32991},{"id":32360,"name":"Business Lending","parent_id":32991},{"id":32145,"name":"Foreign Exchange Intervention","parent_id":32991,"notes":"In addition to the listed daily intervention series, intra-day series from the Swiss National Bank are available at: \r\n\r\nhttp:\/\/research.stlouisfed.org\/fei\/\r\n\r\nUnited Kingdom foreign exchange intervention data can be downloaded from Her Majesty"s Treasury at the following:\r\nhttp:\/\/www.hm-treasury.gov.uk\r\n\r\nLinks to foreign exchange rate data for: \r\nAustralia: http:\/\/research.stlouisfed.org\/fred2\/categories\/287\r\nGermany: http:\/\/research.stlouisfed.org\/fred2\/categories\/277\r\nItaly: http:\/\/research.stlouisfed.org\/fred2\/categories\/276\r\nJapan: http:\/\/research.stlouisfed.org\/fred2\/categories\/275\r\nSwitzerland: http:\/\/research.stlouisfed.org\/fred2\/categories\/257"}]}
 {"categories":[{"id":33833,"name":"Banking and Monetary Statistics 1914-1941","parent_id":33060,"notes":"This data is from the Board of Governors" Banking and Monetary Statistics 1914-1941 publication."},{"id":33825,"name":"Data on the nominal term structure model from Kim and Wright","parent_id":33060},{"id":33891,"name":"Historical Federal Reserve Data","parent_id":33060},{"id":33061,"name":"NBER Macrohistory Database","parent_id":33060},{"id":33100,"name":"Penn World Table 7.1","parent_id":33060},{"id":33402,"name":"Penn World Table 9.0","parent_id":33060},{"id":33120,"name":"Recession Probabilities","parent_id":33060},{"id":33123,"name":"Weekly U.S. and State Bond Prices, 1855-1865","parent_id":33060},{"id":33201,"name":"Economic Policy Uncertainty","parent_id":33060},{"id":33442,"name":"Sticky Wages and Comovement","parent_id":33060},{"id":33839,"name":"A Millennium of Macroeconomic Data for the UK","parent_id":33060}]}
 {"categories":[{"id":112,"name":"Domestic Capital Account (Saving & Investment)","parent_id":18},{"id":108,"name":"Foreign Transactions","parent_id":18},{"id":33697,"name":"Fixed Assets","parent_id":18},{"id":33122,"name":"Gross Domestic Income","parent_id":18},{"id":106,"name":"GDP\/GNP","parent_id":18},{"id":107,"name":"Gov"t Receipts, Expenditures & Investment","parent_id":18},{"id":33719,"name":"Health Care Spending","parent_id":18},{"id":33054,"name":"Imputations","parent_id":18},{"id":33045,"name":"Industry","parent_id":18},{"id":110,"name":"Personal Income & Outlays","parent_id":18},{"id":21,"name":"Price Indexes & Deflators","parent_id":18},{"id":109,"name":"Private Enterprise Income","parent_id":18},{"id":33021,"name":"Quantity Indexes","parent_id":18},{"id":33401,"name":"Effect of ARRA on Selected NIPA Estimates","parent_id":18}]}
+
+재무상태표 : 현금 및 현금성자산, 유무형자산 우상향, 이익잉여금의 증가로 인한 자본증가
+영업순환주기 우하향
+
+시가총액이 자본보다 낮은데 돈은 잘 버는 기업?
+
+주식대량보유 증가 변경기업 => 재무제표 조회 => 텔레그램
+
+정기보고서 재무제표/현금흐름표/당기순이익 Valuation  => 전기 사업보고서 => 성장기업 추출
+
+사업의 내용 분석기
+
+주주지분율과 배당성향
+
