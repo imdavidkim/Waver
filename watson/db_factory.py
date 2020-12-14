@@ -148,7 +148,8 @@ def ResultListDataStore(retJson):
     django.setup()
     import detective_app.models as detective_db
     try:
-        for jsonData in retJson["data"]:
+        print(retJson)
+        for jsonData in retJson["list"]:
             info = detective_db.DartRequestListResult.objects.update_or_create(rcept_no=jsonData['rcept_no'],
                                                                                defaults={
                                                                                    'corp_cls': jsonData['corp_cls'],
@@ -181,7 +182,7 @@ def ResultMajorShareholderDataStore(retJson):
     django.setup()
     import detective_app.models as detective_db
     try:
-        for jsonData in retJson["data"]:
+        for jsonData in retJson["list"]:
             info = detective_db.DartRequestMajorStockResult.objects.update_or_create(rcept_no=jsonData['rcept_no'],
                                                                                      defaults={
                                                                                          'rcept_dt': jsonData['rcept_dt'],
@@ -200,8 +201,8 @@ def ResultMajorShareholderDataStore(retJson):
                                                                                                  jsonData['rcept_no'],
                                                                                      }
                                                                                      )
-            print("[{}][{}][{}][{}][{}][{}][{}][{}] {}".format(jsonData['rcept_dt'], jsonData['corp_name'],
-                                                               jsonData['repror'], jsonData['stkqy'],
+            print("[{}][{}][{}][{}][{}({})][{}][{}][{}] {}".format(jsonData['rcept_dt'], jsonData['corp_name'],
+                                                               jsonData['repror'], jsonData['stkqy'], jsonData['stkrt'],
                                                                jsonData['stkrt_irds'], jsonData['ctr_stkqy'],
                                                                jsonData['ctr_stkrt'],
                                                                "http://dart.fss.or.kr/dsaf001/main.do?rcpNo=" +
@@ -237,7 +238,9 @@ def getMajorShareholderReportingInfo(date):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
-    result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(corp_cls="Y").filter(report_nm__contains="대량보유").values("corp_code").distinct()
+    result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
+        report_nm__contains="대량보유").values("corp_code").distinct()
+    # result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(corp_cls="Y").filter(report_nm__contains="대량보유").values("corp_code").distinct()
 
     corp_code_list = [corp_code["corp_code"] for corp_code in result]
     return corp_code_list
