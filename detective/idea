@@ -16,6 +16,7 @@
 {"categories":[{"id":33833,"name":"Banking and Monetary Statistics 1914-1941","parent_id":33060,"notes":"This data is from the Board of Governors" Banking and Monetary Statistics 1914-1941 publication."},{"id":33825,"name":"Data on the nominal term structure model from Kim and Wright","parent_id":33060},{"id":33891,"name":"Historical Federal Reserve Data","parent_id":33060},{"id":33061,"name":"NBER Macrohistory Database","parent_id":33060},{"id":33100,"name":"Penn World Table 7.1","parent_id":33060},{"id":33402,"name":"Penn World Table 9.0","parent_id":33060},{"id":33120,"name":"Recession Probabilities","parent_id":33060},{"id":33123,"name":"Weekly U.S. and State Bond Prices, 1855-1865","parent_id":33060},{"id":33201,"name":"Economic Policy Uncertainty","parent_id":33060},{"id":33442,"name":"Sticky Wages and Comovement","parent_id":33060},{"id":33839,"name":"A Millennium of Macroeconomic Data for the UK","parent_id":33060}]}
 {"categories":[{"id":112,"name":"Domestic Capital Account (Saving & Investment)","parent_id":18},{"id":108,"name":"Foreign Transactions","parent_id":18},{"id":33697,"name":"Fixed Assets","parent_id":18},{"id":33122,"name":"Gross Domestic Income","parent_id":18},{"id":106,"name":"GDP\/GNP","parent_id":18},{"id":107,"name":"Gov"t Receipts, Expenditures & Investment","parent_id":18},{"id":33719,"name":"Health Care Spending","parent_id":18},{"id":33054,"name":"Imputations","parent_id":18},{"id":33045,"name":"Industry","parent_id":18},{"id":110,"name":"Personal Income & Outlays","parent_id":18},{"id":21,"name":"Price Indexes & Deflators","parent_id":18},{"id":109,"name":"Private Enterprise Income","parent_id":18},{"id":33021,"name":"Quantity Indexes","parent_id":18},{"id":33401,"name":"Effect of ARRA on Selected NIPA Estimates","parent_id":18}]}
 
+유무형자산 => 재고 => 재고채권 => 현금
 재무상태표 : 현금 및 현금성자산, 유무형자산 우상향, 이익잉여금의 증가로 인한 자본증가
 영업순환주기 우하향
 
@@ -28,6 +29,13 @@
 사업의 내용 분석기
 
 주주지분율과 배당성향
+
+부채증가에 대한 이자비용보다 매출총이익의 증가가 더 크면 레버리지 효과를 누리고 있다고 생각할 수 있음
+
+영업현금흐름(CFO) = 영업이익 + 매출원가/판관비/개발비의 감가상각비 + 채권,재고,매입채무 증-감+
+
+감가상각비 : 비익비용 대응의 원칙
+             생산장비의 감가비는 매출원가 판관비에 묻혀있다
 
 지분변동 감지 => 해당기업 3년치 재무제표 검색 => RIM분석을 통한 적정주가, 현재주가, 시가총액, 매출액, 당기순익, ROA, ROE 분석 및 그래프 전송
 무상증자 감지 => 무상증자 공시문서 입수 => 해당기업 3년치 재무제표 검색 => 재원, 신주배당주수, RIM분석을 통한 적정주가, 현재주가, 시가총액, 매출액, 당기순익, ROA, ROE 분석 및 그래프 전송
