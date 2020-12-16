@@ -170,7 +170,7 @@ def ResultListDataStore(retJson):
         print('[Error on ResultListDataStore]\n', '*' * 50, e)
 
 
-def ResultMajorShareholderDataStore(retJson):
+def ResultMajorShareholderDataStore(jsonData):
     import sys
     import os
     import django
@@ -181,32 +181,32 @@ def ResultMajorShareholderDataStore(retJson):
     django.setup()
     import detective_app.models as detective_db
     try:
-        for jsonData in retJson["list"]:
-            info = detective_db.DartRequestMajorStockResult.objects.update_or_create(rcept_no=jsonData['rcept_no'],
-                                                                                     defaults={
-                                                                                         'rcept_dt': jsonData['rcept_dt'],
-                                                                                         'corp_code': jsonData['corp_code'],
-                                                                                         'corp_name': jsonData['corp_name'],
-                                                                                         'report_tp': jsonData['report_tp'],
-                                                                                         'repror': jsonData['repror'],
-                                                                                         'stkqy': jsonData['stkqy'],
-                                                                                         'stkqy_irds': jsonData['stkqy_irds'],
-                                                                                         'stkrt': jsonData['stkrt'],
-                                                                                         'stkrt_irds': jsonData['stkrt_irds'],
-                                                                                         'ctr_stkqy': jsonData['ctr_stkqy'],
-                                                                                         'ctr_stkrt': jsonData['ctr_stkrt'],
-                                                                                         'report_resn': jsonData['report_resn'],
-                                                                                         'link': "http://dart.fss.or.kr/dsaf001/main.do?rcpNo=" +
-                                                                                                 jsonData['rcept_no'],
-                                                                                     }
-                                                                                     )
-            print("[{}][{}][{}][{}][{}({})][{}][{}][{}] {}".format(jsonData['rcept_dt'], jsonData['corp_name'],
-                                                               jsonData['repror'], jsonData['stkqy'], jsonData['stkrt'],
-                                                               jsonData['stkrt_irds'], jsonData['ctr_stkqy'],
-                                                               jsonData['ctr_stkrt'],
-                                                               "http://dart.fss.or.kr/dsaf001/main.do?rcpNo=" +
-                                                               jsonData['rcept_no'],
-                                                               jsonData['report_resn']))
+        # for jsonData in retJson["list"]:
+        info = detective_db.DartRequestMajorStockResult.objects.update_or_create(rcept_no=jsonData['rcept_no'],
+                                                                                 defaults={
+                                                                                     'rcept_dt': jsonData['rcept_dt'],
+                                                                                     'corp_code': jsonData['corp_code'],
+                                                                                     'corp_name': jsonData['corp_name'],
+                                                                                     'report_tp': jsonData['report_tp'],
+                                                                                     'repror': jsonData['repror'],
+                                                                                     'stkqy': jsonData['stkqy'],
+                                                                                     'stkqy_irds': jsonData['stkqy_irds'],
+                                                                                     'stkrt': jsonData['stkrt'],
+                                                                                     'stkrt_irds': jsonData['stkrt_irds'],
+                                                                                     'ctr_stkqy': jsonData['ctr_stkqy'],
+                                                                                     'ctr_stkrt': jsonData['ctr_stkrt'],
+                                                                                     'report_resn': jsonData['report_resn'],
+                                                                                     'link': "http://dart.fss.or.kr/dsaf001/main.do?rcpNo=" +
+                                                                                             jsonData['rcept_no'],
+                                                                                 }
+                                                                                 )
+        print("[{}][{}][{}][{}][{}({})][{}][{}][{}] {}".format(jsonData['rcept_dt'], jsonData['corp_name'],
+                                                           jsonData['repror'], jsonData['stkqy'], jsonData['stkrt'],
+                                                           jsonData['stkrt_irds'], jsonData['ctr_stkqy'],
+                                                           jsonData['ctr_stkrt'],
+                                                           "http://dart.fss.or.kr/dsaf001/main.do?rcpNo=" +
+                                                           jsonData['rcept_no'],
+                                                           jsonData['report_resn']))
 
         #     rcept_no = models.CharField(max_length=20, unique=True, primary_key=True)
         #     rcept_dt = models.CharField(max_length=8)
