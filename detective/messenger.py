@@ -25,13 +25,15 @@
 def getConfig():
     from datetime import datetime
     import configparser
-    global daddy, ggmsg, chart, error, chat_id_kh, chat_id_km, yyyymmdd
+    global daddy, ggmsg, chart, error, chat_id_kh, chat_id_km, yyyymmdd, free, share
     config = configparser.ConfigParser()
     config.read('config.ini')
     daddy = config['TELEGRAM']['DADDY']
     ggmsg = config['TELEGRAM']['GGMSG']
     chart = config['TELEGRAM']['CHART']
     error = config['TELEGRAM']['ERROR']
+    free = config['TELEGRAM']['FREECAPITAL']
+    share = config['TELEGRAM']['MAJORSHAREHOLDER']
     chat_id_kh = config['TELEGRAM']['CHAT_ID_KH']
     chat_id_km = config['TELEGRAM']['CHAT_ID_KM']
     yyyymmdd = str(datetime.now())[:10]
@@ -81,6 +83,37 @@ def img_messeage_to_telegram(img_path, dbg=False):
         else:
             sendMessage(chart, chat_id_kh, yyyymmdd)
             sendImage(chart, chat_id_kh, img_path)
+
+def free_cap_inc_message_to_telegram(txt):
+    import time
+    getConfig()
+    DEBUG = True
+    print(txt)
+    if txt is not None and txt != '':
+        if not DEBUG:
+            msg = yyyymmdd + '\n' + txt
+            sendMessage(free, chat_id_kh, msg)
+            time.sleep(3)
+            sendMessage(daddy, chat_id_km, msg)
+        else:
+            msg = yyyymmdd + '\n' + txt
+            sendMessage(free, chat_id_kh, msg)
+
+
+def major_shareholder_message_to_telegram(txt):
+    import time
+    getConfig()
+    DEBUG = True
+    print(txt)
+    if txt is not None and txt != '':
+        if not DEBUG:
+            msg = yyyymmdd + '\n' + txt
+            sendMessage(share, chat_id_kh, msg)
+            time.sleep(3)
+            sendMessage(daddy, chat_id_km, msg)
+        else:
+            msg = yyyymmdd + '\n' + txt
+            sendMessage(share, chat_id_kh, msg)
 
 
 def err_messeage_to_telegram(txt):
