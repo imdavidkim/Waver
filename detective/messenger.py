@@ -27,7 +27,7 @@ def getConfig():
     import configparser
     global daddy, ggmsg, chart, error, chat_id_kh, chat_id_km, yyyymmdd, free, share
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read(r'D:\Waver\detective\config.ini')
     daddy = config['TELEGRAM']['DADDY']
     ggmsg = config['TELEGRAM']['GGMSG']
     chart = config['TELEGRAM']['CHART']
@@ -39,11 +39,11 @@ def getConfig():
     yyyymmdd = str(datetime.now())[:10]
 
 
-def sendMessage(token, chatid, txt):
+def sendMessage(token, chatid, txt, mode=None):
     import telegram
     bot = telegram.Bot(token=token)
     print(txt)
-    bot.sendMessage(chat_id=chatid, text=txt)
+    bot.sendMessage(chat_id=chatid, text=txt, parse_mode=mode)
 
 
 def sendImage(token, chatid, img_path):
@@ -87,17 +87,17 @@ def img_messeage_to_telegram(img_path, dbg=False):
 def free_cap_inc_message_to_telegram(txt):
     import time
     getConfig()
-    DEBUG = True
+    DEBUG = False
     print(txt)
     if txt is not None and txt != '':
         if not DEBUG:
-            msg = yyyymmdd + '\n' + txt
-            sendMessage(free, chat_id_kh, msg)
+            msg = yyyymmdd + ' 무상증자공시정보\n\n' + txt
+            sendMessage(free, chat_id_kh, msg, "HTML")
             time.sleep(3)
-            sendMessage(daddy, chat_id_km, msg)
+            sendMessage(daddy, chat_id_km, msg, "HTML")
         else:
-            msg = yyyymmdd + '\n' + txt
-            sendMessage(free, chat_id_kh, msg)
+            msg = yyyymmdd + ' 무상증자공시정보\n\n' + txt
+            sendMessage(free, chat_id_kh, msg, "HTML")
 
 
 def major_shareholder_message_to_telegram(txt):
@@ -130,14 +130,14 @@ def check_messenger_bot(token):
         print(i)
 
 
-def sendMessage(token, chatid, txt):
-    import telegram
-    bot = telegram.Bot(token)
-    bot.sendMessage(chat_id=chatid, text=txt)
+# def sendMessage(token, chatid, txt):
+#     import telegram
+#     bot = telegram.Bot(token)
+#     bot.sendMessage(chat_id=chatid, text=txt)
 
 if __name__ == '__main__':
-    chart_messenger_token = '1267762976:AAFIwmUknc3jIP8vqH4qqmT78AYFUKs0Umw'
+    chart_messenger_token = '1355279067:AAG1BdVstG8XQ6wg6QPis-Bq74huv0bHv9c'
     chat_target_id = '568559695'
-    message = '20200717 ChartInfo'
+    message = '20201218 FreeCapitalIncInfo'
     sendMessage(chart_messenger_token, chat_target_id, message)
     # check_messenger_bot()
