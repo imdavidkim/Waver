@@ -84,20 +84,19 @@ def img_messeage_to_telegram(img_path, dbg=False):
             sendMessage(chart, chat_id_kh, yyyymmdd)
             sendImage(chart, chat_id_kh, img_path)
 
+            
 def free_cap_inc_message_to_telegram(txt):
     import time
     getConfig()
-    DEBUG = False
+    DEBUG = True
     print(txt)
     if txt is not None and txt != '':
         if not DEBUG:
-            msg = yyyymmdd + ' 무상증자공시정보\n\n' + txt
-            sendMessage(free, chat_id_kh, msg, "HTML")
+            sendMessage(free, chat_id_kh, txt, "HTML")
             time.sleep(3)
-            sendMessage(daddy, chat_id_km, msg, "HTML")
+            sendMessage(daddy, chat_id_km, txt, "HTML")
         else:
-            msg = yyyymmdd + ' 무상증자공시정보\n\n' + txt
-            sendMessage(free, chat_id_kh, msg, "HTML")
+            sendMessage(free, chat_id_kh, txt, "HTML")
 
 
 def major_shareholder_message_to_telegram(txt):
