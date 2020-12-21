@@ -43,3 +43,14 @@
 6. 신주의 배당기산일 = DV_ST_DT
 8. 신주의 상장 예정일 = LST_PLN_DT
 5. 1주당 신주배정 주식수 = NEW_ASN_CST
+
+
+재무상태표	thstrm_dt	    frmtrm_dt
+          thstrm_amount	frmtrm_amount
+          thstrm_dt   	frmtrm_dt   	bfefrmtrm_dt
+          thstrm_amount	frmtrm_amount	bfefrmtrm_amount
+손익계산서	thstrm_dt   	    frmtrm_dt
+        	thstrm_amount	    frmtrm_amount
+        	thstrm_add_amount	frmtrm_add_amount
+
+
