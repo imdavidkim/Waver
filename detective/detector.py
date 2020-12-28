@@ -98,9 +98,11 @@ def get_dateDict():
 def new_get_dateDict():
     retDict = {}
     yyyymmdd = str(datetime.now())[:10]
+    before730date = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=730)
     retDict['yyyy'] = yyyymmdd[:4]
     retDict['mm'] = yyyymmdd[5:7]
     retDict['dd'] = yyyymmdd[-2:]
+    retDict['yyyy2'] = before730date.strftime("%Y%m%d")
     # print(retDict)
     return retDict
 
