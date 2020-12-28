@@ -1141,6 +1141,72 @@ def new_find_hidden_pearl():
             json.dump(trash, fp)
 
 
+def new_find_hidden_pearl_with_dartpipe():
+    import sys
+    import os
+    import django
+    from OpenDartPipe import pipe
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    import json
+    import logging
+
+    logfile = 'detector'
+    if not os.path.exists('./logs'):
+        os.makedirs('./logs')
+    now = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('[%(asctime)s][%(filename)s:%(lineno)s] >> %(message)s')
+
+    streamHandler = logging.StreamHandler()
+    fileHandler = logging.FileHandler("./logs/{}_{}.log".format(logfile, now))
+
+    streamHandler.setFormatter(formatter)
+    fileHandler.setFormatter(formatter)
+
+    logger.addHandler(streamHandler)
+    logger.addHandler(fileHandler)
+    logger.setLevel(level=logging.INFO)
+
+    # logging
+    # logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
+    # logging.debug("Log started at %s", str(datetime.datetime.now()))
+
+    pass_reason = ''
+    req_rate = 8.0
+    treasure = {}
+    trash = {}
+    data = {}
+    # 날짜 정보 셋팅
+    dateDict = new_get_dateDict()
+    # 종목 정보 셋팅
+    # DEBUG = True
+    DEBUG = False
+    # USE_JSON = False
+    USE_JSON = True
+    # stockInfo = detective_db.Stocks.objects.filter(market_text__contains="제조", market_text_detail__contains="장비", listing='Y')
+    stockInfo = detective_db.Stocks.objects.filter(code="005930", listing='Y')
+    dart = pipe.Pipe()
+    dart.create()
+    for stock in stockInfo:
+        print(stock)
+        ret, code = dart.get_corp_code(stock.code)
+        if ret:
+            print(dateDict["yyyy2"], dateDict)
+            lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
+            for l in lists:
+                print(l)
+            req_list = dart.get_req_lists(lists)
+            dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
+            
+            
 def dataInit():
     import sys
     import os
