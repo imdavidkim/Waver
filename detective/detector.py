@@ -1199,7 +1199,7 @@ def new_find_hidden_pearl_with_dartpipe():
     stockInfo = detective_db.Stocks.objects.filter(code="005930", listing='Y')
     dart = pipe.Pipe()
     dart.create()
-    for stock in stockInfo:
+        for stock in stockInfo:
         print(stock)
         ret, code = dart.get_corp_code(stock.code)
         if ret:
@@ -1213,7 +1213,7 @@ def new_find_hidden_pearl_with_dartpipe():
                 for report in result[key].keys():
                     if report == "재무상태표":
                         for acc in result[key][report].keys():
-                            for category in result[key][report][acc].keys():
+                            for category in sorted(result[key][report][acc].keys()):
                                 print(key, report, acc, category, result[key][report][acc][category])
                                 # for k in result[key][report][acc][category].keys():
                                 #     print(key, report, acc, category, k, result[key][report][acc][category][k])
@@ -1221,7 +1221,7 @@ def new_find_hidden_pearl_with_dartpipe():
                         for acc in result[key][report].keys():
                             for category in result[key][report][acc].keys():
                                 # print(key, report, acc, category, result[key][report][acc][category])
-                                for k in result[key][report][acc][category].keys():
+                                for k in sorted(result[key][report][acc][category].keys()):
                                     print(key, report, acc, category, k, result[key][report][acc][category][k])
 
 
