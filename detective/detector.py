@@ -686,9 +686,11 @@ def new_find_hidden_pearl():
             data['업종구분'] = marketTxt.replace('\n', '')
             marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt2').text.replace(' ', '')  # 업종분류
             data['업종구분상세'] = marketTxt.replace('\n', '')
+            sttl_month = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt3').text.replace(' ', '')  # 업종분류
+            data['결산월'] = sttl_month.replace('\n', '')
             # print(data['업종구분'], data['업종구분상세'], stock.market_text)
             if (data['업종구분'] != '' and stock.market_text is None) or (data['업종구분상세'] != '' and stock.market_text_detail is None):
-                fnguide.StockMarketTextUpdate(stock.code, data['업종구분'], data['업종구분상세'])
+                fnguide.StockMarketTextUpdate(stock.code, data['업종구분'], data['업종구분상세'], data['결산월'])
             # # 업종구분까지 업데이트 한 후 Valuation 정보가 부족한 종목은 Pass
             # if info_lack:
             #     # print("Lack of information")
@@ -1206,9 +1208,23 @@ def new_find_hidden_pearl_with_dartpipe():
             for l in lists:
                 print(l)
             req_list = dart.get_req_lists(lists)
-            dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
-            
-            
+            result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
+            for key in result.keys():
+                for report in result[key].keys():
+                    if report == "재무상태표":
+                        for acc in result[key][report].keys():
+                            for category in result[key][report][acc].keys():
+                                print(key, report, acc, category, result[key][report][acc][category])
+                                # for k in result[key][report][acc][category].keys():
+                                #     print(key, report, acc, category, k, result[key][report][acc][category][k])
+                    else:
+                        for acc in result[key][report].keys():
+                            for category in result[key][report][acc].keys():
+                                # print(key, report, acc, category, result[key][report][acc][category])
+                                for k in result[key][report][acc][category].keys():
+                                    print(key, report, acc, category, k, result[key][report][acc][category][k])
+
+
 def dataInit():
     import sys
     import os
@@ -1382,9 +1398,9 @@ def test():
     DEBUG = True
     dateDict = new_get_dateDict()
     treasure = {}
-    yyyymmdd = '2020-11-10'
+    yyyymmdd = '2020-11-30'
     import detective_app.models as detective_db
-    stockInfo = detective_db.Stocks.objects.filter(code='010960', listing='Y')  # 삼성전자
+    stockInfo = detective_db.Stocks.objects.filter(code='199820', listing='Y')  # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
           align_string('R', 'Name', 20),
@@ -1428,10 +1444,12 @@ def test():
         data['업종구분'] = marketTxt.replace('\n', '')
         marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt2').text.replace(' ', '')  # 업종분류
         data['업종구분상세'] = marketTxt.replace('\n', '')
+        sttl_month = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt3').text.replace(' ', '')  # 업종분류
+        data['결산월'] = sttl_month.replace('\n', '')
         # print(data['업종구분'], data['업종구분상세'], stock.market_text)
         if (data['업종구분'] != '' and stock.market_text is None) or (
                 data['업종구분상세'] != '' and stock.market_text_detail is None):
-            fnguide.StockMarketTextUpdate(stock.code, data['업종구분'], data['업종구분상세'])
+            fnguide.StockMarketTextUpdate(stock.code, data['업종구분'], data['업종구분상세'], data['결산월'])
 
         yearly_highlight = fnguide.select_by_attr(soup, 'div', 'id', 'highlight_D_Y')  # Snapshot FinancialHighlight
         # print(yearly_highlight)
@@ -2188,4 +2206,5 @@ if __name__ == '__main__':
     # hidden_pearl_in_usmarket_test()
     # print(get_nasdaq_high_ranked_stock())
     # get_nasdaq_high_ranked_stock_with_closeprice()
-    test()
+    # test()
+    new_find_hidden_pearl_with_dartpipe()
