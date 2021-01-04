@@ -1209,20 +1209,26 @@ def new_find_hidden_pearl_with_dartpipe():
                 print(l)
             req_list = dart.get_req_lists(lists)
             result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
-            for key in result.keys():
-                for report in result[key].keys():
-                    if report == "재무상태표":
-                        for acc in result[key][report].keys():
-                            for category in sorted(result[key][report][acc].keys()):
-                                print(key, report, acc, category, result[key][report][acc][category])
-                                # for k in result[key][report][acc][category].keys():
-                                #     print(key, report, acc, category, k, result[key][report][acc][category][k])
-                    else:
-                        for acc in result[key][report].keys():
-                            for category in result[key][report][acc].keys():
-                                # print(key, report, acc, category, result[key][report][acc][category])
-                                for k in sorted(result[key][report][acc][category].keys()):
-                                    print(key, report, acc, category, k, result[key][report][acc][category][k])
+            if result is not {} and "연결재무제표" in result.keys():
+                
+            # for key in result.keys():  # key = ["연결재무제표", "재무제표"]
+            #     for report in result[key].keys():  # report = ["재무상태표", "손익계산서"]
+            #         if report == "재무상태표":
+            #             for acc in result[key][report].keys():
+            #                 # acc = ["유동자산", "비유동자산", "자산총계", "유동부채", "비유동부채", "부채총계", "자본금", "이익잉여금", "자본총계"]
+            #                 for category in sorted(result[key][report][acc].keys()):
+            #                     # category = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
+            #                     print(key, report, acc, category, result[key][report][acc][category])
+            #                     # for k in result[key][report][acc][category].keys():
+            #                     #     print(key, report, acc, category, k, result[key][report][acc][category][k])
+            #         else:
+            #             for acc in result[key][report].keys():
+            #                 # acc = ["매출액", 영업이익", "법인세차감전", "당기순이익"]
+            #                 for category in result[key][report][acc].keys():
+            #                     # category = ["누계", "당기"]
+            #                     for k in sorted(result[key][report][acc][category].keys()):
+            #                         # k = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
+            #                         print(key, report, acc, category, k, result[key][report][acc][category][k])
 
 
 def dataInit():
