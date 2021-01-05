@@ -1183,8 +1183,7 @@ def new_find_hidden_pearl_with_dartpipe():
     # logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
     # logging.debug("Log started at %s", str(datetime.datetime.now()))
 
-    pass_reason = ''
-    req_rate = 8.0
+    current_pos = None
     treasure = {}
     trash = {}
     data = {}
@@ -1195,40 +1194,87 @@ def new_find_hidden_pearl_with_dartpipe():
     DEBUG = False
     # USE_JSON = False
     USE_JSON = True
+    stockInfo = detective_db.Stocks.objects.filter(category_name__contains="화학", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(market_text__contains="제조", market_text_detail__contains="장비", listing='Y')
-    stockInfo = detective_db.Stocks.objects.filter(code="005930", listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(code="299030", listing='Y')
     dart = pipe.Pipe()
     dart.create()
-        for stock in stockInfo:
-        print(stock)
+    for stock in stockInfo:
+        # print(stock)
         ret, code = dart.get_corp_code(stock.code)
-        if ret:
-            print(dateDict["yyyy2"], dateDict)
-            lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
-            for l in lists:
-                print(l)
-            req_list = dart.get_req_lists(lists)
-            result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
-            if result is not {} and "연결재무제표" in result.keys():
-                
-            # for key in result.keys():  # key = ["연결재무제표", "재무제표"]
-            #     for report in result[key].keys():  # report = ["재무상태표", "손익계산서"]
-            #         if report == "재무상태표":
-            #             for acc in result[key][report].keys():
-            #                 # acc = ["유동자산", "비유동자산", "자산총계", "유동부채", "비유동부채", "부채총계", "자본금", "이익잉여금", "자본총계"]
-            #                 for category in sorted(result[key][report][acc].keys()):
-            #                     # category = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
-            #                     print(key, report, acc, category, result[key][report][acc][category])
-            #                     # for k in result[key][report][acc][category].keys():
-            #                     #     print(key, report, acc, category, k, result[key][report][acc][category][k])
-            #         else:
-            #             for acc in result[key][report].keys():
-            #                 # acc = ["매출액", 영업이익", "법인세차감전", "당기순이익"]
-            #                 for category in result[key][report][acc].keys():
-            #                     # category = ["누계", "당기"]
-            #                     for k in sorted(result[key][report][acc][category].keys()):
-            #                         # k = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
-            #                         print(key, report, acc, category, k, result[key][report][acc][category][k])
+        try:
+            if ret:
+                data[stock.code] = {"corp_code": code, "corp_name": stock.name, "Valuation": {"Y": {}, "Q": {}}}
+                # print(dateDict["yyyy2"], dateDict)
+                lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
+                for l in lists:
+                    print(l)
+                req_list = dart.get_req_lists(lists)
+                result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
+                current_pos = result
+                # for key in result.keys():  # key = ["연결재무제표", "재무제표"]
+                #     for report in result[key].keys():  # report = ["재무상태표", "손익계산서"]
+                #         if report == "재무상태표":
+                #             for acc in result[key][report].keys():
+                #                 # acc = ["유동자산", "비유동자산", "자산총계", "유동부채", "비유동부채", "부채총계", "자본금", "이익잉여금", "자본총계"]
+                #                 for category in sorted(result[key][report][acc].keys()):
+                #                     # category = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
+                #                     print(key, report, acc, category, result[key][report][acc][category])
+                #                     # for k in result[key][report][acc][category].keys():
+                #                     #     print(key, report, acc, category, k, result[key][report][acc][category][k])
+                #         else:
+                #             for acc in result[key][report].keys():
+                #                 # acc = ["매출액", 영업이익", "법인세차감전", "당기순이익"]
+                #                 for category in result[key][report][acc].keys():
+                #                     # category = ["누계", "당기"]
+                #                     for k in sorted(result[key][report][acc][category].keys()):
+                #                         # k = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
+                #                         print(key, report, acc, category, k, result[key][report][acc][category][k])
+                if result is not {} and "연결재무제표" in result.keys():
+                    d1 = result["연결재무제표"]["손익계산서"]["매출액"]["누계"]
+                    d2 = result["연결재무제표"]["손익계산서"]["영업이익"]["누계"]
+                    d3 = result["연결재무제표"]["손익계산서"]["매출액"]["당기"]
+                    d4 = result["연결재무제표"]["손익계산서"]["영업이익"]["당기"]
+                    for key1 in d1.keys():
+                        if "4/4" in key1:
+                            data[stock.code]["Valuation"]["Y"]["매출액영업이익률"] = {
+                            k: round(float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
+                                     2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0 for k in d1[key1]}
+                        else:
+                            if len(data[stock.code]["Valuation"]["Q"]) == 0: data[stock.code]["Valuation"]["Q"][
+                                "매출액영업이익률"] = {}
+                            for k in d1[key1]:
+                                data[stock.code]["Valuation"]["Q"]["매출액영업이익률"][k] = round(
+                                    float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
+                                    2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0
+                else:
+                    d1 = result["재무제표"]["손익계산서"]["매출액"]["누계"]
+                    d2 = result["재무제표"]["손익계산서"]["영업이익"]["누계"]
+                    d3 = result["재무제표"]["손익계산서"]["매출액"]["당기"]
+                    d4 = result["재무제표"]["손익계산서"]["영업이익"]["당기"]
+                    for key1 in d1.keys():
+                        if "4/4" in key1:
+                            data[stock.code]["Valuation"]["Y"]["매출액영업이익률"] = {
+                                k: round(
+                                    float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
+                                    2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0 for k in d1[key1]}
+                        else:
+                            if len(data[stock.code]["Valuation"]["Q"]) == 0: data[stock.code]["Valuation"]["Q"][
+                                "매출액영업이익률"] = {}
+                            for k in d1[key1]:
+                                data[stock.code]["Valuation"]["Q"]["매출액영업이익률"][k] = round(
+                                    float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
+                                    2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0
+        except Exception as e:
+            print(e)
+            print(current_pos)
+
+    for k in data.keys():
+        print(k, data[k]["corp_name"])
+        print(
+            sorted(data[k]["Valuation"]["Y"]["매출액영업이익률"].items()) if len(data[k]["Valuation"]["Y"].keys()) > 0 else {})
+        print(
+            sorted(data[k]["Valuation"]["Q"]["매출액영업이익률"].items()) if len(data[k]["Valuation"]["Q"].keys()) > 0 else {})
 
 
 def dataInit():
