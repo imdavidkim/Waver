@@ -1194,9 +1194,9 @@ def new_find_hidden_pearl_with_dartpipe():
     DEBUG = False
     # USE_JSON = False
     USE_JSON = True
-    stockInfo = detective_db.Stocks.objects.filter(category_name__contains="화학", listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="화학", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(market_text__contains="제조", market_text_detail__contains="장비", listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code="299030", listing='Y')
+    stockInfo = detective_db.Stocks.objects.filter(code="005930", listing='Y')
     dart = pipe.Pipe()
     dart.create()
     for stock in stockInfo:
@@ -1212,69 +1212,94 @@ def new_find_hidden_pearl_with_dartpipe():
                 req_list = dart.get_req_lists(lists)
                 result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
                 current_pos = result
-                # for key in result.keys():  # key = ["연결재무제표", "재무제표"]
-                #     for report in result[key].keys():  # report = ["재무상태표", "손익계산서"]
-                #         if report == "재무상태표":
-                #             for acc in result[key][report].keys():
-                #                 # acc = ["유동자산", "비유동자산", "자산총계", "유동부채", "비유동부채", "부채총계", "자본금", "이익잉여금", "자본총계"]
-                #                 for category in sorted(result[key][report][acc].keys()):
-                #                     # category = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
-                #                     print(key, report, acc, category, result[key][report][acc][category])
-                #                     # for k in result[key][report][acc][category].keys():
-                #                     #     print(key, report, acc, category, k, result[key][report][acc][category][k])
-                #         else:
-                #             for acc in result[key][report].keys():
-                #                 # acc = ["매출액", 영업이익", "법인세차감전", "당기순이익"]
-                #                 for category in result[key][report][acc].keys():
-                #                     # category = ["누계", "당기"]
-                #                     for k in sorted(result[key][report][acc][category].keys()):
-                #                         # k = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
-                #                         print(key, report, acc, category, k, result[key][report][acc][category][k])
+                for key in result.keys():  # key = ["연결재무제표", "재무제표"]
+                    for report in result[key].keys():  # report = ["재무상태표", "손익계산서"]
+                        if report == "재무상태표":
+                            for acc in result[key][report].keys():
+                                # acc = ["유동자산", "비유동자산", "자산총계", "유동부채", "비유동부채", "부채총계", "자본금", "이익잉여금", "자본총계"]
+                                for category in sorted(result[key][report][acc].keys()):
+                                    # category = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
+                                    print(key, report, acc, category, result[key][report][acc][category])
+                                    # for k in result[key][report][acc][category].keys():
+                                    #     print(key, report, acc, category, k, result[key][report][acc][category][k])
+                        else:
+                            for acc in result[key][report].keys():
+                                # acc = ["매출액", 영업이익", "법인세차감전", "당기순이익"]
+                                for category in result[key][report][acc].keys():
+                                    # category = ["누계", "당기"]
+                                    for k in sorted(result[key][report][acc][category].keys()):
+                                        # k = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
+                                        print(key, report, acc, category, k, result[key][report][acc][category][k])
+                d1 = None
+                d2 = None
+                d3 = None
+                d4 = None
+                dicTemp0 = {}
+                dicTemp1 = {}
+                dicTemp2 = {}
+                dicTemp3 = {}
+                dicTemp4 = {}
+
                 if result is not {} and "연결재무제표" in result.keys():
                     d1 = result["연결재무제표"]["손익계산서"]["매출액"]["누계"]
                     d2 = result["연결재무제표"]["손익계산서"]["영업이익"]["누계"]
                     d3 = result["연결재무제표"]["손익계산서"]["매출액"]["당기"]
                     d4 = result["연결재무제표"]["손익계산서"]["영업이익"]["당기"]
-                    for key1 in d1.keys():
-                        if "4/4" in key1:
-                            data[stock.code]["Valuation"]["Y"]["매출액영업이익률"] = {
-                            k: round(float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
-                                     2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0 for k in d1[key1]}
-                        else:
-                            if len(data[stock.code]["Valuation"]["Q"]) == 0: data[stock.code]["Valuation"]["Q"][
-                                "매출액영업이익률"] = {}
-                            for k in d1[key1]:
-                                data[stock.code]["Valuation"]["Q"]["매출액영업이익률"][k] = round(
-                                    float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
-                                    2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0
                 else:
                     d1 = result["재무제표"]["손익계산서"]["매출액"]["누계"]
                     d2 = result["재무제표"]["손익계산서"]["영업이익"]["누계"]
                     d3 = result["재무제표"]["손익계산서"]["매출액"]["당기"]
                     d4 = result["재무제표"]["손익계산서"]["영업이익"]["당기"]
-                    for key1 in d1.keys():
-                        if "4/4" in key1:
-                            data[stock.code]["Valuation"]["Y"]["매출액영업이익률"] = {
-                                k: round(
-                                    float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
-                                    2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0 for k in d1[key1]}
-                        else:
-                            if len(data[stock.code]["Valuation"]["Q"]) == 0: data[stock.code]["Valuation"]["Q"][
-                                "매출액영업이익률"] = {}
-                            for k in d1[key1]:
-                                data[stock.code]["Valuation"]["Q"]["매출액영업이익률"][k] = round(
-                                    float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
-                                    2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0
+
+                for key1 in d1.keys():
+                    if "4/4" in key1:
+                        data[stock.code]["Valuation"]["Y"]["매출액영업이익률"] = dict(sorted({
+                        k: round(float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
+                                 2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0 for k in d1[key1]}.items()))
+                        data[stock.code]["Valuation"]["Y"]["매출액"] = dict(
+                            sorted({k: float(d1[key1][k].replace(",", "")) for k in
+                                    d1[key1]}.items()))
+                        data[stock.code]["Valuation"]["Y"]["영업이익"] = dict(
+                            sorted({k: float(d2[key1][k].replace(",", "")) for k in
+                                    d2[key1]}.items()))
+                    else:
+                        for k in sorted(d1[key1]):
+                            dicTemp0[k] = round(
+                                float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
+                                2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0
+
+                        for k in sorted(d1[key1]):
+                            dicTemp1[k] = float(d1[key1][k].replace(",", ""))
+                            # data[stock.code]["Valuation"]["Q"]["누계매출액"][k] = float(d1[key1][k].replace(",", ""))
+
+                        for k in sorted(d2[key1]):
+                            dicTemp2[k] = float(d2[key1][k].replace(",", ""))
+                            # data[stock.code]["Valuation"]["Q"]["누계영업이익"][k] = float(d2[key1][k].replace(",", ""))
+
+                        for k in sorted(d3[key1]):
+                            dicTemp3[k] = float(d3[key1][k].replace(",", ""))
+                            # data[stock.code]["Valuation"]["Q"]["당기매출액"][k] = float(d3[key1][k].replace(",", ""))
+
+                        for k in sorted(d4[key1]):
+                            dicTemp4[k] = float(d4[key1][k].replace(",", ""))
+                            # data[stock.code]["Valuation"]["Q"]["당기영업이익"][k] = float(d4[key1][k].replace(",", ""))
+
+                        data[stock.code]["Valuation"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
+                        data[stock.code]["Valuation"]["Q"]["누계매출액"] = dict(sorted(dicTemp1.items()))
+                        data[stock.code]["Valuation"]["Q"]["누계영업이익"] = dict(sorted(dicTemp2.items()))
+                        data[stock.code]["Valuation"]["Q"]["당기매출액"] = dict(sorted(dicTemp3.items()))
+                        data[stock.code]["Valuation"]["Q"]["당기영업이익"] = dict(sorted(dicTemp4.items()))
+
         except Exception as e:
             print(e)
             print(current_pos)
 
     for k in data.keys():
-        print(k, data[k]["corp_name"])
-        print(
-            sorted(data[k]["Valuation"]["Y"]["매출액영업이익률"].items()) if len(data[k]["Valuation"]["Y"].keys()) > 0 else {})
-        print(
-            sorted(data[k]["Valuation"]["Q"]["매출액영업이익률"].items()) if len(data[k]["Valuation"]["Q"].keys()) > 0 else {})
+        print(k, data[k]["corp_name"], "*"*100)
+        for key in data[k]["Valuation"]["Y"].keys():
+            print("연간", key, data[k]["Valuation"]["Y"][key])
+        for key in data[k]["Valuation"]["Q"].keys():
+            print("당기", key, data[k]["Valuation"]["Q"][key])
 
 
 def dataInit():
