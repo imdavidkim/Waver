@@ -1204,12 +1204,12 @@ def new_find_hidden_pearl_with_dartpipe():
         ret, code = dart.get_corp_code(stock.code)
         try:
             if ret:
-                data[stock.code] = {"corp_code": code, "corp_name": stock.name, "Valuation": {"Y": {}, "Q": {}}}
+                data[stock.code] = {"corp_code": code, "corp_name": stock.name, "Valuation": {"Y": {}, "Q": {}}, "AverageRate": {"Y": {}, "Q": {}}}
                 # print(dateDict["yyyy2"], dateDict)
                 lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
                 for l in lists:
                     print(l)
-                req_list = dart.get_req_lists(lists)
+                req_list, req_list2 = dart.get_req_lists(lists)
                 result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
                 current_pos = result
                 for key in result.keys():  # key = ["연결재무제표", "재무제표"]
@@ -1252,6 +1252,7 @@ def new_find_hidden_pearl_with_dartpipe():
                     d4 = result["재무제표"]["손익계산서"]["영업이익"]["당기"]
 
                 for key1 in d1.keys():
+                    if "Rate" in key1: continue
                     if "4/4" in key1:
                         data[stock.code]["Valuation"]["Y"]["매출액영업이익률"] = dict(sorted({
                         k: round(float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
@@ -1289,7 +1290,24 @@ def new_find_hidden_pearl_with_dartpipe():
                         data[stock.code]["Valuation"]["Q"]["누계영업이익"] = dict(sorted(dicTemp2.items()))
                         data[stock.code]["Valuation"]["Q"]["당기매출액"] = dict(sorted(dicTemp3.items()))
                         data[stock.code]["Valuation"]["Q"]["당기영업이익"] = dict(sorted(dicTemp4.items()))
-
+                data[stock.code]["AverageRate"]["Y"]["매출액영업이익률"] = round(sum(
+                    data[stock.code]["Valuation"]["Y"]["매출액영업이익률"].values()) / float(
+                    len(data[stock.code]["Valuation"]["Y"]["매출액영업이익률"])), 2)
+                data[stock.code]["AverageRate"]["Y"]["매출액"] = round(sum(
+                    data[stock.code]["Valuation"]["Y"]["매출액"].values()) / float(
+                    len(data[stock.code]["Valuation"]["Y"]["매출액"])), 0)
+                data[stock.code]["AverageRate"]["Y"]["영업이익"] = round(sum(
+                    data[stock.code]["Valuation"]["Y"]["영업이익"].values()) / float(
+                    len(data[stock.code]["Valuation"]["Y"]["영업이익"])), 0)
+                data[stock.code]["AverageRate"]["Q"]["매출액영업이익률"] = round(sum(
+                    data[stock.code]["Valuation"]["Q"]["매출액영업이익률"].values()) / float(
+                    len(data[stock.code]["Valuation"]["Q"]["매출액영업이익률"])), 2)
+                data[stock.code]["AverageRate"]["Q"]["매출액"] = round(sum(
+                    data[stock.code]["Valuation"]["Q"]["당기매출액"].values()) / float(
+                    len(data[stock.code]["Valuation"]["Q"]["당기매출액"])), 0)
+                data[stock.code]["AverageRate"]["Q"]["영업이익"] = round(sum(
+                    data[stock.code]["Valuation"]["Q"]["당기영업이익"].values()) / float(
+                    len(data[stock.code]["Valuation"]["Q"]["당기영업이익"])), 0)
         except Exception as e:
             print(e)
             print(current_pos)
@@ -1298,8 +1316,10 @@ def new_find_hidden_pearl_with_dartpipe():
         print(k, data[k]["corp_name"], "*"*100)
         for key in data[k]["Valuation"]["Y"].keys():
             print("연간", key, data[k]["Valuation"]["Y"][key])
+        print("연간", data[k]["AverageRate"]["Y"])
         for key in data[k]["Valuation"]["Q"].keys():
             print("당기", key, data[k]["Valuation"]["Q"][key])
+        print("당기", data[k]["AverageRate"]["Q"])
 
 
 def dataInit():
