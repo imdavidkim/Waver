@@ -1201,7 +1201,7 @@ def new_find_hidden_pearl_with_dartpipe():
     DEBUG = False
     # USE_JSON = False
     USE_JSON = True
-    stockInfo = detective_db.Stocks.objects.filter(category_name__contains="화학", listing='Y')
+    stockInfo = detective_db.Stocks.objects.filter(category_name__contains="반도체", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="특수", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(market_text__contains="제조", market_text_detail__contains="장비", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(code="306620", listing='Y')
