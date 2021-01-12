@@ -1520,6 +1520,110 @@ def new_find_hidden_pearl_with_dartpipe():
     return best, better, good
 
 
+def new_find_hidden_pearl_with_dartpipe_test():
+    import sys
+    import os
+    import django
+    from OpenDartPipe import pipe
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    import json
+    import numpy as np
+    import requests
+    import logging
+
+    logfile = 'detector'
+    if not os.path.exists('./logs'):
+        os.makedirs('./logs')
+    now = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('[%(asctime)s][%(filename)s:%(lineno)s] >> %(message)s')
+
+    streamHandler = logging.StreamHandler()
+    fileHandler = logging.FileHandler("./logs/{}_{}.log".format(logfile, now))
+
+    streamHandler.setFormatter(formatter)
+    fileHandler.setFormatter(formatter)
+
+    logger.addHandler(streamHandler)
+    logger.addHandler(fileHandler)
+    logger.setLevel(level=logging.INFO)
+
+    # logging
+    # logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
+    # logging.debug("Log started at %s", str(datetime.datetime.now()))
+
+    current_pos = None
+    treasure = {}
+    trash = {}
+    data = {}
+    best = {}
+    better = {}
+    good = {}
+    soso = {}
+    info_lack = {}
+    # 날짜 정보 셋팅
+    dateDict = new_get_dateDict()
+    # 종목 정보 셋팅
+    # DEBUG = True
+    DEBUG = False
+    # USE_JSON = False
+    USE_JSON = True
+    # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="일반 목적", listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="특수", listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(market_text__contains="제조", market_text_detail__contains="장비", listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(code="306620", listing='Y')
+    stockInfo = detective_db.Stocks.objects.filter(code="005930", listing='Y')
+    dart = pipe.Pipe()
+    dart.create()
+    for stock in stockInfo:
+        # print(stock)
+        ret, code = dart.get_corp_code(stock.code)
+        try:
+            if ret:
+                data[stock.code] = {"corp_code": code,
+                                    "corp_name": stock.name,
+                                    "PL": {"Y": {}, "Q": {}},
+                                    "FS": {"TotalAsset": {}, "TotalDebt": {}, "RetainedEarnings": {}},
+                                    "AverageRate": {"Y": {}, "Q": {}}}
+                # print(dateDict["yyyy2"], dateDict)
+                lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
+                for l in lists:
+                    logger.info(l)
+                req_list, req_list2 = dart.get_req_lists(lists)
+                # result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list, "ALL")
+                result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
+                current_pos = result
+                for key in result.keys():  # key = ["연결재무제표", "재무제표"]
+                    for report in result[key].keys():  # report = ["재무상태표", "손익계산서"]
+                        if report == "재무상태표":
+                            for acc in result[key][report].keys():
+                                # acc = ["유동자산", "비유동자산", "자산총계", "유동부채", "비유동부채", "부채총계", "자본금", "이익잉여금", "자본총계"]
+                                for category in sorted(result[key][report][acc].keys()):
+                                    # category = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
+                                    print(key, report, acc, category, result[key][report][acc][category])
+                                    # for k in result[key][report][acc][category].keys():
+                                    #     print(key, report, acc, category, k, result[key][report][acc][category][k])
+                        else:
+                            for acc in result[key][report].keys():
+                                # acc = ["매출액", 영업이익", "법인세차감전", "당기순이익"]
+                                for category in result[key][report][acc].keys():
+                                    # category = ["누계", "당기"]
+                                    for k in sorted(result[key][report][acc][category].keys()):
+                                        # k = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
+                                        print(key, report, acc, category, k, result[key][report][acc][category][k])
+        except Exception as e:
+            print(e)
+            print(current_pos)
+
+
 def dataInit():
     import sys
     import os
@@ -2502,4 +2606,5 @@ if __name__ == '__main__':
     # print(get_nasdaq_high_ranked_stock())
     # get_nasdaq_high_ranked_stock_with_closeprice()
     # test()
-    new_find_hidden_pearl_with_dartpipe()
+    # new_find_hidden_pearl_with_dartpipe()
+    new_find_hidden_pearl_with_dartpipe_test()
