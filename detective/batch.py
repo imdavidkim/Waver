@@ -13,6 +13,8 @@ from detective.fred import make_graph as fred_make_graph
 from detective.kofia import make_graph as kofia_make_graph
 from detective.yahoo_price_info import make_USDKRW_graph as usdkrw_make_graph
 from detective.oecd_api import make_CLI_graph as cli_make_graph
+from detective.yahoo_price_info import make_ISMIndex_graph as ism_make_graph
+from detective.yahoo_price_info import make_SvcPMIIndex_graph as svc_pmi_make_graph
 import multiprocessing.pool
 
 
@@ -32,19 +34,21 @@ class NonDaemonicPool(multiprocessing.pool.Pool):
 
 if __name__ == '__main__':
     getStockInfo()
-    get_list_day(None)
+    # get_list_day(None)
     cli_make_graph()
+    ism_make_graph()
+    svc_pmi_make_graph()
     usdkrw_make_graph()
     kofia_make_graph()
     fred_make_graph()
 
-    run_info = [101, 200]
-    agents = 2
-
-    with NonDaemonicPool(processes=agents) as pool:
-        result = pool.map(getFinanceData, run_info)
-    new_find_hidden_pearl()
-    messeage_to_telegram(get_high_ranked_stock())
-    get_high_ranked_stock_with_closeprice()
+    # run_info = [101, 200]
+    # agents = 2
+    #
+    # with NonDaemonicPool(processes=agents) as pool:
+    #     result = pool.map(getFinanceData, run_info)
+    # new_find_hidden_pearl()
+    # messeage_to_telegram(get_high_ranked_stock())
+    # get_high_ranked_stock_with_closeprice()
 
 
