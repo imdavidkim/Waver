@@ -262,3 +262,20 @@ def getFreeCapitalIncreaseEventReportingInfo(date):
 
     return result
 
+def getProvisionalPerformanceReportingInfo(date):
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
+        report_nm__contains="(잠정)실적").values("rcept_no", "stock_code", "corp_code", "corp_name").distinct()
+    # result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(corp_cls="Y").filter(report_nm__contains="대량보유").values("corp_code").distinct()
+
+    return result
