@@ -1579,8 +1579,8 @@ def new_find_hidden_pearl_with_dartpipe_test():
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="일반 목적", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="특수", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(market_text__contains="제조", market_text_detail__contains="장비", listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code="306620", listing='Y')
-    stockInfo = detective_db.Stocks.objects.filter(code="005930", listing='Y')
+    stockInfo = detective_db.Stocks.objects.filter(code="306620", listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(code="005930", listing='Y')
     dart = pipe.Pipe()
     dart.create()
     for stock in stockInfo:
@@ -1598,12 +1598,12 @@ def new_find_hidden_pearl_with_dartpipe_test():
                 for l in lists:
                     logger.info(l)
                 req_list, req_list2 = dart.get_req_lists(lists)
-                # result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list, "ALL")
-                result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
+                result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list, "ALL")
+                # result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list)
                 current_pos = result
                 for key in result.keys():  # key = ["연결재무제표", "재무제표"]
                     for report in result[key].keys():  # report = ["재무상태표", "손익계산서"]
-                        if report == "재무상태표":
+                        if report not in ["손익계산서", "포괄손익계산서"]: # ["재무상태표", "현금흐름표", "자본변동표"]:
                             for acc in result[key][report].keys():
                                 # acc = ["유동자산", "비유동자산", "자산총계", "유동부채", "비유동부채", "부채총계", "자본금", "이익잉여금", "자본총계"]
                                 for category in sorted(result[key][report][acc].keys()):
