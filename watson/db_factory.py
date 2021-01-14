@@ -238,7 +238,7 @@ def getMajorShareholderReportingInfo(date):
     django.setup()
     import detective_app.models as detective_db
     result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
-        report_nm__contains="대량보유").values("rcept_no", "stock_code", "corp_code", "corp_name").distinct()
+        report_nm__contains="대량보유").values("rcept_no", "stock_code", "corp_code", "corp_name", "report_nm").distinct()
     # result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(corp_cls="Y").filter(report_nm__contains="대량보유").values("corp_code").distinct()
 
     return result
@@ -257,7 +257,7 @@ def getFreeCapitalIncreaseEventReportingInfo(date):
     django.setup()
     import detective_app.models as detective_db
     result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
-        report_nm__contains="무상").values("rcept_no", "stock_code", "corp_code", "corp_name").distinct()
+        report_nm__contains="무상").values("rcept_no", "stock_code", "corp_code", "corp_name", "report_nm").distinct()
     # result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(corp_cls="Y").filter(report_nm__contains="대량보유").values("corp_code").distinct()
 
     return result
