@@ -55,6 +55,181 @@ def getMarketInfo():
 
     return retDic
 
+def dataStore(retDict):
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        count = 0
+        print("Stock Information crawling started")
+        for key in retDict.keys():
+            info = detective_db.Stocks.objects.update_or_create(code=key,
+                                                                defaults={
+                                                                    'name': retDict[key]['종목명'],
+                                                                    'category_code': retDict[key]['업종코드'],
+                                                                    'category_name': retDict[key]['업종명'],
+                                                                    'dart_corp_code': retDict[key]['DART코드'],
+                                                                    'issued_shares': float(
+                                                                        retDict[key]['상장주식수'].replace(',', '')),
+                                                                    'capital': float(
+                                                                        retDict[key]['자본금'].replace(',', '')),
+                                                                    'par_value': float(
+                                                                        retDict[key]['액면가'].replace(',', '')) if
+                                                                    retDict[key]['액면가'] != "무액면" else 0,
+                                                                    'tel': retDict[key]['전화번호'].replace(' ', ''),
+                                                                    'address': retDict[key]['주소'],
+                                                                    'curr': retDict[key]['통화'],
+                                                                    'listing': 'Y'
+                                                                }
+                                                                )
+            count += 1
+            if count % 100 == 0:
+                print("%d Stock Information on processing..." % count)
+        print("Total %d" % count)
+    except Exception as e:
+        print(count, key, retDict[key])
+        print(e)
+
+
+def dataInit():
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        detective_db.Stocks.objects.update(listing='N')
+    except Exception as e:
+        print("Stock data initialization Failed with", e)
+
+
+def USDataInit():
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        detective_db.USStocks.objects.update(listing='N')
+    except Exception as e:
+        print("USStocks data initialization Failed with", e)
+
+
+def USNasdaqDataInit():
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        detective_db.USNasdaqStocks.objects.update(listing='N')
+    except Exception as e:
+        print("USNasdaqStocks data initialization Failed with", e)
+
+
+
+
+
+def USDataStore(retDict):
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        count = 0
+        print("USStock Information crawled data storing started!!")
+        for key in retDict.keys():
+            # print(retDict[key])
+            info = detective_db.USStocks.objects.update_or_create(cik=retDict[key]['CIK'],
+                                                                  defaults={
+                                                                      'security': retDict[key]['Security'],
+                                                                      'ticker': retDict[key]['Ticker'],
+                                                                      'ticker_symbol_link': retDict[key]['TickerLink'],
+                                                                      'security_wiki_link': retDict[key]['SecurityLink'],
+                                                                      'category_name': retDict[key]['CategoryName'],
+                                                                      'category_detail': retDict[key]['CategoryDetail'],
+                                                                      'sec_filing': retDict[key]['SecurityFiling'],
+                                                                      'location': retDict[key]['Address'],
+                                                                      'location_link': retDict[key]['AddressLink'],
+                                                                      'date_first_added': retDict[key]['DateFirstAdded'],
+                                                                      'founded': retDict[key]['Founded'],
+                                                                      'listing': 'Y'
+                                                                }
+                                                                )
+            count += 1
+            if count % 100 == 0:
+                print("%d USStock Information on processing..." % count)
+        print("Total %d" % count)
+    except Exception as e:
+        print(e, key, retDict[key])
+
+
+def USNasdaqDataStore(retDict):
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    try:
+        count = 0
+        print("USNasdaqStock Information crawled data storing started!!")
+        for key in retDict.keys():
+            # print(retDict[key])
+            info = detective_db.USNasdaqStocks.objects.update_or_create(security=retDict[key]['Security'],
+                                                                        defaults={
+                                                                      'ticker': retDict[key]['Ticker'],
+                                                                      'ticker_symbol_link': retDict[key]['TickerLink'],
+                                                                      'security_wiki_link': retDict[key]['SecurityLink'],
+                                                                      'listing': 'Y'
+                                                                }
+                                                                )
+            count += 1
+            if count % 100 == 0:
+                print("%d USNasdaqStock Information on processing..." % count)
+        print("Total %d" % count)
+    except Exception as e:
+        print(e, key, retDict[key])
+
+
 def InstrumentResister(ins_info):
     import sys
     import os
@@ -262,7 +437,7 @@ def getFreeCapitalIncreaseEventReportingInfo(date):
 
     return result
 
-def getProvisionalPerformanceReportingInfo(date):
+def getProvisionalPerformanceReportingInfo(date, target_date=None):
     import sys
     import os
     import django
@@ -274,8 +449,12 @@ def getProvisionalPerformanceReportingInfo(date):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
-    result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
-        report_nm__contains="(잠정)실적").values("rcept_no", "stock_code", "corp_code", "corp_name").distinct()
-    # result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(corp_cls="Y").filter(report_nm__contains="대량보유").values("corp_code").distinct()
-
+    result = None
+    if target_date is None:
+        result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
+            report_nm__contains="(잠정)실적").values("rcept_no", "stock_code", "corp_code", "corp_name", "report_nm").distinct()
+    else:
+        result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
+            rcept_dt__lte=target_date).filter(
+            report_nm__contains="(잠정)실적").values("rcept_no", "stock_code", "corp_code", "corp_name", "report_nm").distinct()
     return result
