@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 import csv
 import sys
 import time
+import watson.db_factory as db
 sys.path.append(r'C:\ProgramData\Anaconda3\envs\Waver\DLLs')
 
 def getConfig():
