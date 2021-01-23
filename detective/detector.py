@@ -1625,7 +1625,7 @@ def new_find_hidden_pearl_with_dartpipe_test():
             print(current_pos)
 
 
-def new_find_hidden_pearl_with_dartpipe_provision(bgn_dt, end_dt=None):
+def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
     import sys
     import os
     import django
@@ -1690,10 +1690,10 @@ def new_find_hidden_pearl_with_dartpipe_provision(bgn_dt, end_dt=None):
     dart = pipe.Pipe()
     dart.create()
     if end_dt is None:
-        # dart.get_krx_reporting(bgn_dt)
+        if search: dart.get_krx_reporting(bgn_dt)
         provision_info = dart.get_provisional_performance_reporting_corp_info(bgn_dt)
     else:
-        # dart.get_krx_reporting(bgn_dt, end_dt)
+        if search: dart.get_krx_reporting(bgn_dt, end_dt)
         provision_info = dart.get_provisional_performance_reporting_corp_info(bgn_dt, end_dt)
     for stock in provision_info.keys():
         # print(stock)
@@ -1748,8 +1748,8 @@ def new_find_hidden_pearl_with_dartpipe_provision(bgn_dt, end_dt=None):
             dicTemp5 = {}
             dicTemp6 = {}
             dicTemp7 = {}
-            # if stock == "003620":
-            #     print(stock)
+            # if stock == "009540":
+            #     print()
             if result is not {} and "연결재무제표" in result.keys():
                 d1 = result["연결재무제표"]["손익계산서"]["매출액"]["누계"]
                 d2 = result["연결재무제표"]["손익계산서"]["영업이익"]["누계"]
@@ -1785,23 +1785,33 @@ def new_find_hidden_pearl_with_dartpipe_provision(bgn_dt, end_dt=None):
                     if "매출액" in provision_info[stock]["PL"]["Y"].keys() and \
                         "영업이익" in provision_info[stock]["PL"]["Y"].keys() and \
                         provision_info[stock]["PL"]["Y"]["매출액"] != 0:
-                        data[stock]["PL"]["Y"]["매출액영업이익률"]["LAST"] = round(provision_info[stock]["PL"]["Y"]["영업이익"] / provision_info[stock]["PL"]["Y"]["매출액"] * 100, 2)
+                        data[stock]["PL"]["Y"]["매출액영업이익률"]["LAST"] = round(
+                            provision_info[stock]["PL"]["Y"]["영업이익"] / provision_info[stock]["PL"]["Y"]["매출액"] * 100, 2)
+                    else:
+                        data[stock]["PL"]["Y"]["매출액영업이익률"]["LAST"] = 0
                     data[stock]["PL"]["Y"]["매출액"] = dict(
                         sorted({k: float(d1[key1][k].replace(",", "")) for k in
                                 d1[key1]}.items()))
-                    data[stock]["PL"]["Y"]["매출액"]["LAST"] = provision_info[stock]["PL"]["Y"]["매출액"]
+                    data[stock]["PL"]["Y"]["매출액"]["LAST"] = provision_info[stock]["PL"]["Y"]["매출액"] if "매출액" in \
+                                                                                                       provision_info[
+                                                                                                           stock]["PL"][
+                                                                                                           "Y"].keys() else 0
                     # data[stock]["PL"]["Y"]["매출액"]["LAST"] = provision_info[stock]["PL"]["Y"]["매출액"]
                     data[stock]["PL"]["Y"]["영업이익"] = dict(
                         sorted({k: float(d2[key1][k].replace(",", "")) for k in
                                 d2[key1]}.items()))
-                    data[stock]["PL"]["Y"]["영업이익"]["LAST"] = provision_info[stock]["PL"]["Y"]["영업이익"]
+                    data[stock]["PL"]["Y"]["영업이익"]["LAST"] = provision_info[stock]["PL"]["Y"]["영업이익"] if "영업이익" in \
+                                                                                                         provision_info[
+                                                                                                             stock][
+                                                                                                             "PL"][
+                                                                                                             "Y"].keys() else 0
                     # data[stock]["PL"]["Y"]["영업이익"]["LAST"] = provision_info[stock]["PL"]["Y"]["영업이익"]
                     for k in sorted(d1[key1]):
                         dicTemp1[k] = float(d1[key1][k].replace(",", ""))
-                    dicTemp1["LAST"] = provision_info[stock]["PL"]["Y"]["매출액"]
+                    dicTemp1["LAST"] = provision_info[stock]["PL"]["Y"]["매출액"] if "매출액" in provision_info[stock]["PL"]["Y"].keys() else 0
                     for k in sorted(d2[key1]):
                         dicTemp2[k] = float(d2[key1][k].replace(",", ""))
-                    dicTemp2["LAST"] = provision_info[stock]["PL"]["Y"]["영업이익"]
+                    dicTemp2["LAST"] = provision_info[stock]["PL"]["Y"]["영업이익"] if "영업이익" in provision_info[stock]["PL"]["Y"].keys() else 0
                 else:
                     for k in sorted(d1[key1]):
                         dicTemp0[k] = round(
@@ -2883,5 +2893,5 @@ if __name__ == '__main__':
     # print(get_nasdaq_high_ranked_stock())
     # get_nasdaq_high_ranked_stock_with_closeprice()
     # test()
-#     new_find_hidden_pearl_with_dartpipe()
-    new_find_hidden_pearl_with_dartpipe_provision("20210101")
+    # new_find_hidden_pearl_with_dartpipe()
+    new_find_hidden_pearl_with_dartpipe_provision(search=False, bgn_dt="20210121")
