@@ -83,28 +83,89 @@ def getStockInfo():
     #                , 'Content-Type': 'application/x-www-form-urlencoded'
     #                }
     response = httpRequest(down_url, down_data, down_header)
-    # print(response)
+    print(response)
     dic = dataCleansing(response)
-    dataInit()
-    dataStore(dic)
+    db.dataInit()
+    db.dataStore(dic)
     # df = pd.read_csv(BytesIO(r.content), header=0, thousands=',')
     # print(df)
 
+
+def getStockInfoNew():
+    import json
+    getConfig()
+    print("[Crawler] Requesting Stock Information...")
+    down_url = "http://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd"
+    down_data = {
+        'bld': 'dbms/MDC/STAT/standard/MDCSTAT03402',
+        'mktTpCd': '0',
+        'tboxisuSrtCd_finder_listisu0_0': '전체',
+        'isuSrtCd': 'ALL',
+        'isuSrtCd2': 'ALL',
+        'codeNmisuSrtCd_finder_listisu0_0': '',
+        'param1isuSrtCd_finder_listisu0_0': '',
+        'sortType': 'A',
+        'stdIndCd': 'ALL',
+        'sectTpCd': 'ALL',
+        'parval': 'ALL',
+        'mktcap': 'ALL',
+        'acntclsMm': 'ALL',
+        'tboxmktpartcNo_finder_designadvser0_0': '',
+        'mktpartcNo': '',
+        'mktpartcNo2': '',
+        'codeNmmktpartcNo_finder_designadvser0_0': '',
+        'param1mktpartcNo_finder_designadvser0_0': '',
+        'condListShrs': '1',
+        'listshrs': '',
+        'listshrs2': '',
+        'condCap': '1',
+        'cap': '',
+        'cap2': '',
+        'share': '1',
+        'money': '1',
+        'csvxls_isNo': 'false',
+    }
+    down_header = {'User-Agent': 'User-Agent: Mozilla/5.0'
+                   , 'Accept': 'gzip, deflate'
+                   , 'Referer': 'http://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020201'
+                   , 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                   }
+
+    response = httpRequest(down_url, down_data, down_header)
+    # print(response.decode('utf-8'))
+    retDict = {}
+    tmpList = json.loads(response.decode('utf-8'))["block1"]
+    dart_info = get_corpcode(dart_auth_key)
+    for da in tmpList:
+        retDict[da["REP_ISU_SRT_CD"]] = {
+            '종목명': da["COM_ABBRV"],
+            '업종코드': da["STD_IND_CD"],
+            '업종명': da["IND_NM"],
+            '상장주식수': da["LIST_SHRS"],
+            '자본금': da["CAP"],
+            '액면가': da["PARVAL"],
+            '통화': da["ISO_CD"][da["ISO_CD"].find('(') + 1:da["ISO_CD"].find(')')],
+            '전화번호': da["TEL_NO"],
+            '주소': da["ADDR"],
+            'DART코드': dart_info[da["REP_ISU_SRT_CD"]]
+        }
+    db.dataInit()
+    db.dataStore(retDict)
 
 def getSnP500StockInfo():
     url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
     response = httpRequest(url)
     dic = wikiDataCleansing(response)
-    USDataInit()
-    USDataStore(dic)
+    db.USDataInit()
+    db.USDataStore(dic)
 
 
 def getNasdaq100StockInfo():
     url = 'https://en.wikipedia.org/wiki/NASDAQ-100'
     response = httpRequest(url)
     dic = wikiDataCleansing2(response)
-    USNasdaqDataInit()
-    USNasdaqDataStore(dic)
+    db.USNasdaqDataInit()
+    db.USNasdaqDataStore(dic)
 
 
 def getNasdaqStockInfo():
@@ -117,8 +178,8 @@ def getNasdaqStockInfo():
         response = httpRequest(url)
         targets = stocklistCleansing(targets, response)
 
-    USNasdaqDataInit()
-    USNasdaqDataStore(targets)
+    db.USNasdaqDataInit()
+    db.USNasdaqDataStore(targets)
 
 
 def getYieldCurveInfo():
@@ -296,177 +357,6 @@ def dataCleansing(content):
     return retDict
 
 
-def dataInit():
-    import sys
-    import os
-    import django
-    # sys.path.append(r'E:\Github\\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
-    django.setup()
-    import detective_app.models as detective_db
-    try:
-        detective_db.Stocks.objects.update(listing='N')
-    except Exception as e:
-        print("Stock data initialization Failed with", e)
-
-
-def USDataInit():
-    import sys
-    import os
-    import django
-    # sys.path.append(r'E:\Github\\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
-    django.setup()
-    import detective_app.models as detective_db
-    try:
-        detective_db.USStocks.objects.update(listing='N')
-    except Exception as e:
-        print("USStocks data initialization Failed with", e)
-
-
-def USNasdaqDataInit():
-    import sys
-    import os
-    import django
-    # sys.path.append(r'E:\Github\\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
-    django.setup()
-    import detective_app.models as detective_db
-    try:
-        detective_db.USNasdaqStocks.objects.update(listing='N')
-    except Exception as e:
-        print("USNasdaqStocks data initialization Failed with", e)
-
-
-def dataStore(retDict):
-    import sys
-    import os
-    import django
-    # sys.path.append(r'E:\Github\\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
-    django.setup()
-    import detective_app.models as detective_db
-    try:
-        count = 0
-        print("Stock Information crawling started")
-        for key in retDict.keys():
-            info = detective_db.Stocks.objects.update_or_create(code=key,
-                                                                defaults={
-                                                                    'name': retDict[key]['종목명'],
-                                                                    'category_code': retDict[key]['업종코드'],
-                                                                    'category_name': retDict[key]['업종명'],
-                                                                    'dart_corp_code': retDict[key]['DART코드'],
-                                                                    'issued_shares': float(
-                                                                        retDict[key]['상장주식수'].replace(',', '')),
-                                                                    'capital': float(
-                                                                        retDict[key]['자본금'].replace(',', '')),
-                                                                    'par_value': float(
-                                                                        retDict[key]['액면가'].replace(',', '')),
-                                                                    'tel': retDict[key]['전화번호'].replace(' ', ''),
-                                                                    'address': retDict[key]['주소'],
-                                                                    'curr': retDict[key]['통화'],
-                                                                    'listing': 'Y'
-                                                                }
-                                                                )
-            count += 1
-            if count % 100 == 0:
-                print("%d Stock Information on processing..." % count)
-        print("Total %d" % count)
-    except Exception as e:
-        print(count, key, retDict[key])
-        print(e)
-
-
-def USDataStore(retDict):
-    import sys
-    import os
-    import django
-    # sys.path.append(r'E:\Github\\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
-    django.setup()
-    import detective_app.models as detective_db
-    try:
-        count = 0
-        print("USStock Information crawled data storing started!!")
-        for key in retDict.keys():
-            # print(retDict[key])
-            info = detective_db.USStocks.objects.update_or_create(cik=retDict[key]['CIK'],
-                                                                  defaults={
-                                                                      'security': retDict[key]['Security'],
-                                                                      'ticker': retDict[key]['Ticker'],
-                                                                      'ticker_symbol_link': retDict[key]['TickerLink'],
-                                                                      'security_wiki_link': retDict[key]['SecurityLink'],
-                                                                      'category_name': retDict[key]['CategoryName'],
-                                                                      'category_detail': retDict[key]['CategoryDetail'],
-                                                                      'sec_filing': retDict[key]['SecurityFiling'],
-                                                                      'location': retDict[key]['Address'],
-                                                                      'location_link': retDict[key]['AddressLink'],
-                                                                      'date_first_added': retDict[key]['DateFirstAdded'],
-                                                                      'founded': retDict[key]['Founded'],
-                                                                      'listing': 'Y'
-                                                                }
-                                                                )
-            count += 1
-            if count % 100 == 0:
-                print("%d USStock Information on processing..." % count)
-        print("Total %d" % count)
-    except Exception as e:
-        print(e, key, retDict[key])
-
-
-def USNasdaqDataStore(retDict):
-    import sys
-    import os
-    import django
-    # sys.path.append(r'E:\Github\\Waver\MainBoard')
-    # sys.path.append(r'E:\Github\\Waver\MainBoard\MainBoard')
-    getConfig()
-    sys.path.append(django_path)
-    sys.path.append(main_path)
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
-    django.setup()
-    import detective_app.models as detective_db
-    try:
-        count = 0
-        print("USNasdaqStock Information crawled data storing started!!")
-        for key in retDict.keys():
-            # print(retDict[key])
-            info = detective_db.USNasdaqStocks.objects.update_or_create(security=retDict[key]['Security'],
-                                                                        defaults={
-                                                                      'ticker': retDict[key]['Ticker'],
-                                                                      'ticker_symbol_link': retDict[key]['TickerLink'],
-                                                                      'security_wiki_link': retDict[key]['SecurityLink'],
-                                                                      'listing': 'Y'
-                                                                }
-                                                                )
-            count += 1
-            if count % 100 == 0:
-                print("%d USNasdaqStock Information on processing..." % count)
-        print("Total %d" % count)
-    except Exception as e:
-        print(e, key, retDict[key])
-
-
 def get_corpcode(crtfc_key):
     import io
     import zipfile
@@ -517,4 +407,5 @@ if __name__ == '__main__':
     # getSnP500StockInfo()
     # getYieldCurveInfo()
     # getNasdaq100StockInfo()
-    getNasdaqStockInfo()
+    # getNasdaqStockInfo()
+    getStockInfoNew()
