@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from detective.fnguide_collector import getFinanceData
-from detective.crawler import getStockInfo
+from detective.crawler import getStockInfoNew
 
 from detective.detector import new_find_hidden_pearl
 from detective.detector import get_high_ranked_stock
@@ -33,7 +33,7 @@ class NonDaemonicPool(multiprocessing.pool.Pool):
 
 
 if __name__ == '__main__':
-    getStockInfo()
+    getStockInfoNew()
     # get_list_day(None)
     cli_make_graph()
     ism_make_graph()
