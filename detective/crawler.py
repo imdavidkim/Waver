@@ -138,6 +138,8 @@ def getStockInfoNew():
     tmpList = json.loads(response.decode('utf-8'))["block1"]
     dart_info = get_corpcode(dart_auth_key)
     for da in tmpList:
+        if da["REP_ISU_SRT_CD"] not in dart_info.keys():
+            continue
         retDict[da["REP_ISU_SRT_CD"]] = {
             '종목명': da["COM_ABBRV"],
             '업종코드': da["STD_IND_CD"],
