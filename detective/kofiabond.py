@@ -53,12 +53,16 @@ def get_list_day(target_date):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
     django.setup()
     import detective_app.models as detective_db
+
+    obj_structure = None
     url = 'http://www.kofiabond.or.kr/proframeWeb/XMLSERVICES/'
 
     url_date = 'http://www.kofiabond.or.kr/websquare//serverTime.wq?pattern=yyyyMMdd'
 
-    server_date = ET.fromstring(str(get_date(url_date)))
-    if target_date is None: target_date = server_date[1].text
+    # server_date = ET.fromstring(str(get_date(url_date)))
+    server_date = get_date(url_date)
+    # if target_date is None: target_date = server_date[1].text
+    if target_date is None: target_date = server_date.text
     # target_date = '20190806'
     xml = """<?xml version='1.0' encoding='utf-8'?>
     <message>
@@ -89,6 +93,7 @@ def get_list_day(target_date):
     print("Response parsing Start...")
     try:
         obj = xmltodict.parse(str(soup))
+        # print(type(obj), obj)
         obj_structure = obj['html']['body']['root']['message']['biscomdspdatlistdto']['biscomdspdatdto']
     except Exception as e:
         print(e)
@@ -104,7 +109,8 @@ def get_list_day(target_date):
     mkt_info = db.getMarketInfo()
     for o in obj_structure:
         # 15:30 전에 이 함수를 실행하면 val4 가 닫히지 않은 상태로 데이터가 와서 에러발생
-        val20 = o['val13']['val14']['val15']['val16']['val17']['val18']['val19']['val20']
+        # val20 = o['val13']['val14']['val15']['val16']['val17']['val18']['val19']['val20']
+        val20 = o['val20']
         # print(val20, type(val20))
         if val20 in ins_info.keys():
             pass
