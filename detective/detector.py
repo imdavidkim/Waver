@@ -1644,15 +1644,15 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
     import logging
 
     logfile = 'detector'
-    if not os.path.exists('./logs'):
-        os.makedirs('./logs')
+    if not os.path.exists(r'C:\Users\Kim\Documents\Projects\Waver\detective\logs'):
+        os.makedirs(r'C:\Users\Kim\Documents\Projects\Waver\detective\logs')
     now = datetime.now().strftime("%Y%m%d%H%M%S")
 
     logger = logging.getLogger(__name__)
     formatter = logging.Formatter('[%(asctime)s][%(filename)s:%(lineno)s] >> %(message)s')
 
     streamHandler = logging.StreamHandler()
-    fileHandler = logging.FileHandler("./logs/{}_{}.log".format(logfile, now))
+    fileHandler = logging.FileHandler(r"C:\Users\Kim\Documents\Projects\Waver\detective/logs/{}_{}.log".format(logfile, now))
 
     streamHandler.setFormatter(formatter)
     fileHandler.setFormatter(formatter)
@@ -1751,8 +1751,8 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
             dicTemp5 = {}
             dicTemp6 = {}
             dicTemp7 = {}
-            if stock == "064350":
-                print()
+            # if stock == "064350":
+            #     print()
             if result is not {} and "연결재무제표" in result.keys():
                 if "포괄손익계산서" in result["연결재무제표"].keys():
                     if "매출" in result["연결재무제표"]["포괄손익계산서"].keys():
@@ -1915,57 +1915,57 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                     if "매출액" in provision_info[stock]["PL"]["Y"].keys() and \
                         "영업이익" in provision_info[stock]["PL"]["Y"].keys() and \
                         provision_info[stock]["PL"]["Y"]["매출액"] != 0:
-                        data[stock]["PL"]["Y"]["매출액영업이익률"]["LAST"] = round(
+                        data[stock]["PL"]["Y"]["매출액영업이익률"]["최근"] = round(
                             provision_info[stock]["PL"]["Y"]["영업이익"] / provision_info[stock]["PL"]["Y"]["매출액"] * 100, 2)
                     else:
-                        data[stock]["PL"]["Y"]["매출액영업이익률"]["LAST"] = 0
+                        data[stock]["PL"]["Y"]["매출액영업이익률"]["최근"] = 0
                     data[stock]["PL"]["Y"]["매출액"] = dict(
                         sorted({k: float(d1[key1][k].replace(",", "")) for k in
                                 d1[key1]}.items()))
-                    data[stock]["PL"]["Y"]["매출액"]["LAST"] = provision_info[stock]["PL"]["Y"]["매출액"] if "매출액" in \
+                    data[stock]["PL"]["Y"]["매출액"]["최근"] = provision_info[stock]["PL"]["Y"]["매출액"] if "매출액" in \
                                                                                                        provision_info[
                                                                                                            stock]["PL"][
                                                                                                            "Y"].keys() else 0
-                    # data[stock]["PL"]["Y"]["매출액"]["LAST"] = provision_info[stock]["PL"]["Y"]["매출액"]
+                    # data[stock]["PL"]["Y"]["매출액"]["최근"] = provision_info[stock]["PL"]["Y"]["매출액"]
                     data[stock]["PL"]["Y"]["영업이익"] = dict(
                         sorted({k: float(d2[key1][k].replace(",", "")) for k in
                                 d2[key1]}.items()))
-                    data[stock]["PL"]["Y"]["영업이익"]["LAST"] = provision_info[stock]["PL"]["Y"]["영업이익"] if "영업이익" in \
+                    data[stock]["PL"]["Y"]["영업이익"]["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"] if "영업이익" in \
                                                                                                          provision_info[
                                                                                                              stock][
                                                                                                              "PL"][
                                                                                                              "Y"].keys() else 0
-                    # data[stock]["PL"]["Y"]["영업이익"]["LAST"] = provision_info[stock]["PL"]["Y"]["영업이익"]
+                    # data[stock]["PL"]["Y"]["영업이익"]["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"]
                     for k in sorted(d1[key1]):
                         dicTemp1[k] = float(d1[key1][k].replace(",", ""))
-                    dicTemp1["LAST"] = provision_info[stock]["PL"]["Y"]["매출액"] if "매출액" in provision_info[stock]["PL"]["Y"].keys() else 0
+                    dicTemp1["최근"] = provision_info[stock]["PL"]["Y"]["매출액"] if "매출액" in provision_info[stock]["PL"]["Y"].keys() else 0
                     for k in sorted(d2[key1]):
                         dicTemp2[k] = float(d2[key1][k].replace(",", ""))
-                    dicTemp2["LAST"] = provision_info[stock]["PL"]["Y"]["영업이익"] if "영업이익" in provision_info[stock]["PL"]["Y"].keys() else 0
+                    dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"] if "영업이익" in provision_info[stock]["PL"]["Y"].keys() else 0
                 else:
                     for k in sorted(d1[key1]):
                         dicTemp0[k] = round(
                             float(d2[key1][k].replace(",", "")) / float(d1[key1][k].replace(",", "")) * 100,
                             2) if float(d1[key1][k].replace(",", "")) != 0.0 else 0
-                    dicTemp0["LAST"] = round(
+                    dicTemp0["최근"] = round(
                         provision_info[stock]["PL"]["Q"]["영업이익"] / provision_info[stock]["PL"]["Q"]["매출액"] * 100, 2) if \
                         provision_info[stock]["PL"]["Q"]["매출액"] != 0 else 0
                     for k in sorted(d1[key1]):
                         dicTemp1[k] = float(d1[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["누계매출액"][k] = float(d1[key1][k].replace(",", ""))
-                    dicTemp1["LAST"] = provision_info[stock]["PL"]["Y"]["매출액"]
+                    dicTemp1["최근"] = provision_info[stock]["PL"]["Y"]["매출액"]
                     for k in sorted(d2[key1]):
                         dicTemp2[k] = float(d2[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["누계영업이익"][k] = float(d2[key1][k].replace(",", ""))
-                    dicTemp2["LAST"] = provision_info[stock]["PL"]["Y"]["영업이익"]
+                    dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"]
                     for k in sorted(d3[key1]):
                         dicTemp3[k] = float(d3[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["당기매출액"][k] = float(d3[key1][k].replace(",", ""))
-                    dicTemp3["LAST"] = provision_info[stock]["PL"]["Q"]["매출액"]
+                    dicTemp3["최근"] = provision_info[stock]["PL"]["Q"]["매출액"]
                     for k in sorted(d4[key1]):
                         dicTemp4[k] = float(d4[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["당기영업이익"][k] = float(d4[key1][k].replace(",", ""))
-                    dicTemp4["LAST"] = provision_info[stock]["PL"]["Q"]["영업이익"]
+                    dicTemp4["최근"] = provision_info[stock]["PL"]["Q"]["영업이익"]
                     data[stock]["PL"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
                     data[stock]["PL"]["Q"]["누계매출액추이"] = dict(sorted(dicTemp1.items()))
                     data[stock]["PL"]["Q"]["누계영업이익추이"] = dict(sorted(dicTemp2.items()))
