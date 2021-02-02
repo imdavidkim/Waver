@@ -458,3 +458,25 @@ def getProvisionalPerformanceReportingInfo(date, target_date=None):
             rcept_dt__lte=target_date).filter(
             report_nm__contains="(잠정)실적").values("rcept_no", "stock_code", "corp_code", "corp_name", "report_nm").distinct()
     return result
+
+
+def getProvisionalPerformanceReportingInfoWithStockCode(code, date, target_date=None):
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    result = None
+    if target_date is None:
+        result = detective_db.DartRequestListResult.objects.filter(stock_code=code, rcept_dt__gte=date).filter(
+            report_nm__contains="(잠정)실적").values("rcept_no", "stock_code", "corp_code", "corp_name", "report_nm").distinct()
+    else:
+        result = detective_db.DartRequestListResult.objects.filter(stock_code=code, rcept_dt__gte=date, rcept_dt__lte=target_date).filter(
+            report_nm__contains="(잠정)실적").values("rcept_no", "stock_code", "corp_code", "corp_name", "report_nm").distinct()
+    return result
