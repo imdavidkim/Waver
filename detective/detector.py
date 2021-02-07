@@ -1678,8 +1678,8 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
     # 날짜 정보 셋팅
     dateDict = new_get_dateDict()
     # 종목 정보 셋팅
-    # DEBUG = True
-    DEBUG = False
+    DEBUG = True
+    # DEBUG = False
     # USE_JSON = False
     USE_JSON = True
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="일반 목적", listing='Y')
@@ -1743,6 +1743,8 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
             d5 = None
             d6 = None
             d7 = None
+            d8 = None
+            d9 = None
             dicTemp0 = {}
             dicTemp1 = {}
             dicTemp2 = {}
@@ -1751,146 +1753,121 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
             dicTemp5 = {}
             dicTemp6 = {}
             dicTemp7 = {}
+            dicTemp8 = {}
+            dicTemp9 = {}
+            # if stock == "006360":
+            #     print()
+            d1keys = ["매출", "수익(매출액)", "I.  매출액", "영업수익", "매출액", "Ⅰ. 매출액"]
+            d2keys = ["영업이익(손실)", "영업이익 (손실)", "영업이익", "영업손익", "V. 영업손익", "Ⅴ. 영업이익", "Ⅴ. 영업이익(손실)"]
+            d8keys = ["당기순이익(손실)", "당기순이익 (손실)", "당기순이익", "분기순이익", "반기순이익", "당기순이익(손실)", "분기순이익(손실)", "반기순이익(손실)",
+                      "연결당기순이익", "연결분기순이익", "연결반기순이익", "연결당기순이익(손실)", "연결분기순이익(손실)", "연결반기순이익(손실)", "당기순손익", "분기순손익",
+                      "반기순손익", "지배기업 소유주지분", "지배기업의 소유주에게 귀속되는 당기순이익(손실)", "당기순손실", "분기순손실", "반기순손실", "Ⅷ. 당기순이익(손실)",
+                      "Ⅷ. 당기순이익", "VIII. 당기순이익", "지배기업 소유주", "VIII. 분기순손익", "VIII. 분기순이익", "I.당기순이익", "I.반기순이익",
+                      "I.분기순이익", "반기연결순이익(손실)", "지배기업의 소유주지분"]
             # if stock == "006360":
             #     print()
             if result is not {} and "연결재무제표" in result.keys():
                 logger.info("연결재무제표 start")
                 if "포괄손익계산서" in result["연결재무제표"].keys():
-                    # logger.info("연결재무제표 포괄손익계산서 start")
-                    if "매출" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("연결재무제표 포괄손익계산서 매출 start")
-                        if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["매출"]["누계"]
-                        else: d1.update(result["연결재무제표"]["포괄손익계산서"]["매출"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["매출"]["당기"]
-                        else: d3.update(result["연결재무제표"]["포괄손익계산서"]["매출"]["당기"])
-                    if "수익(매출액)" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("연결재무제표 포괄손익계산서 수익(매출액) start")
-                        if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"]
-                        else: d1.update(result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"]
-                        else: d3.update(result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"])
-                    if "매출액" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("연결재무제표 포괄손익계산서 매출액 start")
-                        if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["매출액"]["누계"]
-                        else: d1.update(result["연결재무제표"]["포괄손익계산서"]["매출액"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["매출액"]["당기"]
-                        else: d3.update(result["연결재무제표"]["포괄손익계산서"]["매출액"]["당기"])
-                    if "I.  매출액" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("연결재무제표 포괄손익계산서 I.  매출액 start")
-                        if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"]
-                        else: d1.update(result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"]
-                        else: d3.update(result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"])
-                    if "영업수익" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("연결재무제표 포괄손익계산서 영업수익 start")
-                        if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["영업수익"]["누계"]
-                        else: d1.update(result["연결재무제표"]["포괄손익계산서"]["영업수익"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["영업수익"]["당기"]
-                        else: d3.update(result["연결재무제표"]["포괄손익계산서"]["영업수익"]["당기"])
-                    else:
-                        pass
-                    if "영업이익(손실)" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("연결재무제표 포괄손익계산서 영업이익(손실) start")
-                        if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"]
-                        else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"]
-                        else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"])
-                    if "영업이익 (손실)" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("연결재무제표 포괄손익계산서 영업이익 (손실) start")
-                        if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"]
-                        else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"]
-                        else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"])
-                    if "영업이익" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("연결재무제표 포괄손익계산서 영업이익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업이익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업이익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업이익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업이익"]["당기"])
-                    if "영업손익" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("연결재무제표 포괄손익계산서 영업손익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업손익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업손익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업손익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업손익"]["당기"])
-                    if "V. 영업손익" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("연결재무제표 포괄손익계산서 V. 영업손익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"])
-                    else:
-                        pass
+                    logger.info("연결재무제표 포괄손익계산서 start")
+                    tmp_result1 = {key: result["연결재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result2 = {key: result["연결재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result3 = {key: result["연결재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result4 = {key: result["연결재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result8 = {key: result["연결재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d8keys}}
+                    tmp_result9 = {key: result["연결재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d8keys}}
+                    if tmp_result1:
+                        for key in tmp_result1.keys():
+                            if d1 is None:
+                                d1 = tmp_result1[key]
+                            else:
+                                d1.update(tmp_result1[key])
+                    if tmp_result2:
+                        for key in tmp_result2.keys():
+                            if d2 is None:
+                                d2 = tmp_result2[key]
+                            else:
+                                d2.update(tmp_result2[key])
+                    if tmp_result3:
+                        for key in tmp_result3.keys():
+                            if d3 is None:
+                                d3 = tmp_result3[key]
+                            else:
+                                d3.update(tmp_result3[key])
+                    if tmp_result4:
+                        for key in tmp_result4.keys():
+                            if d4 is None:
+                                d4 = tmp_result4[key]
+                            else:
+                                d4.update(tmp_result4[key])
+                    if tmp_result8:
+                        for key in tmp_result8.keys():
+                            if d8 is None:
+                                d8 = tmp_result8[key]
+                            else:
+                                d8.update(tmp_result8[key])
+                    if tmp_result9:
+                        for key in tmp_result9.keys():
+                            if d9 is None:
+                                d9 = tmp_result9[key]
+                            else:
+                                d9.update(tmp_result9[key])
                 if "손익계산서" in result["연결재무제표"].keys():
-                    # logger.info("연결재무제표 손익계산서 start")
-                    if "매출" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 매출 start")
-                        if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["매출"]["누계"]
-                        else: d1.update(result["연결재무제표"]["손익계산서"]["매출"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["매출"]["당기"]
-                        else: d3.update(result["연결재무제표"]["손익계산서"]["매출"]["당기"])
-                    if "수익(매출액)" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 수익(매출액) start")
-                        if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["수익(매출액)"]["누계"]
-                        else: d1.update(result["연결재무제표"]["손익계산서"]["수익(매출액)"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["수익(매출액)"]["당기"]
-                        else: d3.update(result["연결재무제표"]["손익계산서"]["수익(매출액)"]["당기"])
-                    if "매출액" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 매출액 start")
-                        if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["매출액"]["누계"]
-                        else: d1.update(result["연결재무제표"]["손익계산서"]["매출액"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["매출액"]["당기"]
-                        else: d3.update(result["연결재무제표"]["손익계산서"]["매출액"]["당기"])
-                    if "I.  매출액" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 I.  매출액 start")
-                        if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["I.  매출액"]["누계"]
-                        else: d1.update(result["연결재무제표"]["손익계산서"]["I.  매출액"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["I.  매출액"]["당기"]
-                        else: d3.update(result["연결재무제표"]["손익계산서"]["I.  매출액"]["당기"])
-                    if "영업수익" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 영업수익 start")
-                        if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["영업수익"]["누계"]
-                        else: d1.update(result["연결재무제표"]["손익계산서"]["영업수익"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["영업수익"]["당기"]
-                        else: d3.update(result["연결재무제표"]["손익계산서"]["영업수익"]["당기"])
-                    else:
-                        pass
-                    if "영업이익(손실)" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 영업이익(손실) start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["당기"])
-                    if "영업이익 (손실)" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 영업이익 (손실) start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"])
-                    if "영업이익" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 영업이익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업이익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["영업이익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업이익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["영업이익"]["당기"])
-                    if "V. 영업이익" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 V. 영업이익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["V. 영업이익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["V. 영업이익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["V. 영업이익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["V. 영업이익"]["당기"])
-                    if "영업손익" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 영업손익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업손익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["영업손익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업손익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["영업손익"]["당기"])
-                    if "V. 영업손익" in result["연결재무제표"]["손익계산서"].keys():
-                        # logger.info("연결재무제표 손익계산서 V. 영업손익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["V. 영업손익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["V. 영업손익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["V. 영업손익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["V. 영업손익"]["당기"])
+                    logger.info("연결재무제표 손익계산서 start")
+                    tmp_result1 = {key: result["연결재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result2 = {key: result["연결재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result3 = {key: result["연결재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result4 = {key: result["연결재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result8 = {key: result["연결재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d8keys}}
+                    tmp_result9 = {key: result["연결재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d8keys}}
+                    if tmp_result1:
+                        for key in tmp_result1.keys():
+                            if d1 is None:
+                                d1 = tmp_result1[key]
+                            else:
+                                d1.update(tmp_result1[key])
+                    if tmp_result2:
+                        for key in tmp_result2.keys():
+                            if d2 is None:
+                                d2 = tmp_result2[key]
+                            else:
+                                d2.update(tmp_result2[key])
+                    if tmp_result3:
+                        for key in tmp_result3.keys():
+                            if d3 is None:
+                                d3 = tmp_result3[key]
+                            else:
+                                d3.update(tmp_result3[key])
+                    if tmp_result4:
+                        for key in tmp_result4.keys():
+                            if d4 is None:
+                                d4 = tmp_result4[key]
+                            else:
+                                d4.update(tmp_result4[key])
+                    if tmp_result8:
+                        for key in tmp_result8.keys():
+                            if d8 is None:
+                                d8 = tmp_result8[key]
+                            else:
+                                d8.update(tmp_result8[key])
+                    if tmp_result9:
+                        for key in tmp_result9.keys():
+                            if d9 is None:
+                                d9 = tmp_result9[key]
+                            else:
+                                d9.update(tmp_result9[key])
                 d5 = result["연결재무제표"]["재무상태표"]["자산총계"] if "자산총계" in result["연결재무제표"]["재무상태표"].keys() else None
                 d6 = result["연결재무제표"]["재무상태표"]["부채총계"] if "부채총계" in result["연결재무제표"]["재무상태표"].keys() else None
                 d7 = result["연결재무제표"]["재무상태표"]["이익잉여금"] if "이익잉여금" in result["연결재무제표"]["재무상태표"].keys() else None
@@ -1901,147 +1878,107 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                     if "이익잉여금(결손금)" in result["연결재무제표"]["재무상태표"].keys():
                         d7.update(result["연결재무제표"]["재무상태표"]["이익잉여금(결손금)"])
             else:
-                # logger.info("재무제표 start")
+                logger.info("재무제표 start")
                 if "포괄손익계산서" in result["재무제표"].keys():
-                    # logger.info("재무제표 포괄손익계산서 start")
-                    if "매출" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 매출 start")
-                        if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["매출"]["누계"]
-                        else: d1.update(result["재무제표"]["포괄손익계산서"]["매출"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["매출"]["당기"]
-                        else: d3.update(result["재무제표"]["포괄손익계산서"]["매출"]["당기"])
-                    if "수익(매출액)" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 수익(매출액) start")
-                        if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"]
-                        else: d1.update(result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"]
-                        else: d3.update(result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"])
-                    if "매출액" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 매출액 start")
-                        if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["매출액"]["누계"]
-                        else: d1.update(result["재무제표"]["포괄손익계산서"]["매출액"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["매출액"]["당기"]
-                        else: d3.update(result["재무제표"]["포괄손익계산서"]["매출액"]["당기"])
-                    if "I.  매출액" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 I.  매출액 start")
-                        if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"]
-                        else: d1.update(result["재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"]
-                        else: d3.update(result["재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"])
-                    if "영업수익" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 영업수익 start")
-                        if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["영업수익"]["누계"]
-                        else: d1.update(result["재무제표"]["포괄손익계산서"]["영업수익"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["영업수익"]["당기"]
-                        else: d3.update(result["재무제표"]["포괄손익계산서"]["영업수익"]["당기"])
-                    else:
-                        pass
-                    if "영업이익(손실)" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 영업이익(손실) start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"])
-                    if "영업이익 (손실)" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 영업이익 (손실) start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"])
-                    if "영업이익" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 영업이익 start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업이익"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["영업이익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업이익"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["영업이익"]["당기"])
-                    if "V. 영업이익" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 V. 영업이익 start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["당기"])
-                    if "영업손익" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 영업손익 start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업손익"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["영업손익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업손익"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["영업손익"]["당기"])
-                    if "V. 영업손익" in result["재무제표"]["포괄손익계산서"].keys():
-                        # logger.info("재무제표 포괄손익계산서 V. 영업손익 start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"])
+                    logger.info("재무제표 포괄손익계산서 start")
+                    tmp_result1 = {key: result["재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result2 = {key: result["재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result3 = {key: result["재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result4 = {key: result["재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result8 = {key: result["재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d8keys}}
+                    tmp_result9 = {key: result["재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d8keys}}
+                    if tmp_result1:
+                        for key in tmp_result1.keys():
+                            if d1 is None:
+                                d1 = tmp_result1[key]
+                            else:
+                                d1.update(tmp_result1[key])
+                    if tmp_result2:
+                        for key in tmp_result2.keys():
+                            if d2 is None:
+                                d2 = tmp_result2[key]
+                            else:
+                                d2.update(tmp_result2[key])
+                    if tmp_result3:
+                        for key in tmp_result3.keys():
+                            if d3 is None:
+                                d3 = tmp_result3[key]
+                            else:
+                                d3.update(tmp_result3[key])
+                    if tmp_result4:
+                        for key in tmp_result4.keys():
+                            if d4 is None:
+                                d4 = tmp_result4[key]
+                            else:
+                                d4.update(tmp_result4[key])
+                    if tmp_result8:
+                        for key in tmp_result8.keys():
+                            if d8 is None:
+                                d8 = tmp_result8[key]
+                            else:
+                                d8.update(tmp_result8[key])
+                    if tmp_result9:
+                        for key in tmp_result9.keys():
+                            if d9 is None:
+                                d9 = tmp_result9[key]
+                            else:
+                                d9.update(tmp_result9[key])
                 if "손익계산서" in result["재무제표"].keys():
-                    # logger.info("재무제표 손익계산서 매출 start")
-                    if "매출" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 매출 start")
-                        if d1 is None: d1 = result["재무제표"]["손익계산서"]["매출"]["누계"]
-                        else: d1.update(result["재무제표"]["손익계산서"]["매출"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["손익계산서"]["매출"]["당기"]
-                        else: d3.update(result["재무제표"]["손익계산서"]["매출"]["당기"])
-                    if "수익(매출액)" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 수익(매출액) start")
-                        if d1 is None: d1 = result["재무제표"]["손익계산서"]["수익(매출액)"]["누계"]
-                        else: d1.update(result["재무제표"]["손익계산서"]["수익(매출액)"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["손익계산서"]["수익(매출액)"]["당기"]
-                        else: d3.update(result["재무제표"]["손익계산서"]["수익(매출액)"]["당기"])
-                    if "매출액" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 매출액 start")
-                        if d1 is None: d1 = result["재무제표"]["손익계산서"]["매출액"]["누계"]
-                        else: d1.update(result["재무제표"]["손익계산서"]["매출액"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["손익계산서"]["매출액"]["당기"]
-                        else: d3.update(result["재무제표"]["손익계산서"]["매출액"]["당기"])
-                    if "I.  매출액" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 I.  매출액 start")
-                        if d1 is None: d1 = result["재무제표"]["손익계산서"]["I.  매출액"]["누계"]
-                        else: d1.update(result["재무제표"]["손익계산서"]["I.  매출액"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["손익계산서"]["I.  매출액"]["당기"]
-                        else: d3.update(result["재무제표"]["손익계산서"]["I.  매출액"]["당기"])
-                    if "영업수익" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 영업수익 start")
-                        if d1 is None: d1 = result["재무제표"]["손익계산서"]["영업수익"]["누계"]
-                        else: d1.update(result["재무제표"]["손익계산서"]["영업수익"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["손익계산서"]["영업수익"]["당기"]
-                        else: d3.update(result["재무제표"]["손익계산서"]["영업수익"]["당기"])
-                    else:
-                        pass
-                    if "영업이익(손실)" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 영업이익(손실) start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업이익(손실)"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["영업이익(손실)"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업이익(손실)"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["영업이익(손실)"]["당기"])
-                    if "영업이익 (손실)" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 영업이익 (손실) start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"])
-                    if "영업이익" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 영업이익 start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업이익"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["영업이익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업이익"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["영업이익"]["당기"])
-                    if "V. 영업이익" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 V. 영업이익 start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["V. 영업이익"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["V. 영업이익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["V. 영업이익"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["V. 영업이익"]["당기"])
-                    if "영업손익" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 영업손익 start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업손익"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["영업손익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업손익"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["영업손익"]["당기"])
-                    if "V. 영업손익" in result["재무제표"]["손익계산서"].keys():
-                        # logger.info("재무제표 손익계산서 V. 영업손익 start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["V. 영업손익"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["V. 영업손익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["V. 영업손익"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["V. 영업손익"]["당기"])
+                    logger.info("재무제표 손익계산서 매출 start")
+                    tmp_result1 = {key: result["재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result2 = {key: result["재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result3 = {key: result["재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result4 = {key: result["재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result8 = {key: result["재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d8keys}}
+                    tmp_result9 = {key: result["재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d8keys}}
+                    if tmp_result1:
+                        for key in tmp_result1.keys():
+                            if d1 is None:
+                                d1 = tmp_result1[key]
+                            else:
+                                d1.update(tmp_result1[key])
+                    if tmp_result2:
+                        for key in tmp_result2.keys():
+                            if d2 is None:
+                                d2 = tmp_result2[key]
+                            else:
+                                d2.update(tmp_result2[key])
+                    if tmp_result3:
+                        for key in tmp_result3.keys():
+                            if d3 is None:
+                                d3 = tmp_result3[key]
+                            else:
+                                d3.update(tmp_result3[key])
+                    if tmp_result4:
+                        for key in tmp_result4.keys():
+                            if d4 is None:
+                                d4 = tmp_result4[key]
+                            else:
+                                d4.update(tmp_result4[key])
+                    if tmp_result8:
+                        for key in tmp_result8.keys():
+                            if d8 is None:
+                                d8 = tmp_result8[key]
+                            else:
+                                d8.update(tmp_result8[key])
+                    if tmp_result9:
+                        for key in tmp_result9.keys():
+                            if d9 is None:
+                                d9 = tmp_result9[key]
+                            else:
+                                d9.update(tmp_result9[key])
                 d5 = result["재무제표"]["재무상태표"]["자산총계"] if "자산총계" in result["재무제표"]["재무상태표"].keys() else None
                 d6 = result["재무제표"]["재무상태표"]["부채총계"] if "부채총계" in result["재무제표"]["재무상태표"].keys() else None
                 d7 = result["재무제표"]["재무상태표"]["이익잉여금"] if "이익잉여금" in result["재무제표"]["재무상태표"].keys() else None
@@ -2051,6 +1988,15 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                 else:
                     if "이익잉여금(결손금)" in result["재무제표"]["재무상태표"].keys():
                         d7.update(result["재무제표"]["재무상태표"]["이익잉여금(결손금)"])
+            logger.info(d1)  # 매출액 누계
+            logger.info(d2)  # 영업이익 누계
+            logger.info(d3)  # 매출액 당기
+            logger.info(d4)  # 영업이익 당기
+            logger.info(d5)  # 자산총계
+            logger.info(d6)  # 부채총계
+            logger.info(d7)  # 이익잉여금
+            logger.info(d8)  # 당기순이익 누계
+            logger.info(d9)  # 당기순이익
             for key1 in d1.keys():
                 current_key = key1
                 # if key1 == "2019 4/4":
@@ -2060,16 +2006,16 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                 if "Rate" in key1: continue
                 if "4/4" in key1:
                     data[stock]["PL"]["Y"]["매출액영업이익률"] = dict(sorted({
-                                                                              k: round(float(
-                                                                                  d2[key1][k].replace(",", "")) / float(
-                                                                                  d1[key1][k].replace(",", "")) * 100,
-                                                                                       2) if float(
-                                                                                  d1[key1][k].replace(",",
-                                                                                                      "")) != 0.0 else 0
-                                                                          for k in d1[key1]}.items()))
+                                                                         k: round(float(
+                                                                             d2[key1][k].replace(",", "")) / float(
+                                                                             d1[key1][k].replace(",", "")) * 100,
+                                                                                  2) if float(
+                                                                             d1[key1][k].replace(",",
+                                                                                                 "")) != 0.0 else 0
+                                                                         for k in d1[key1]}.items()))
                     if "매출액" in provision_info[stock]["PL"]["Y"].keys() and \
-                        "영업이익" in provision_info[stock]["PL"]["Y"].keys() and \
-                        provision_info[stock]["PL"]["Y"]["매출액"] != 0:
+                            "영업이익" in provision_info[stock]["PL"]["Y"].keys() and \
+                            provision_info[stock]["PL"]["Y"]["매출액"] != 0:
                         data[stock]["PL"]["Y"]["매출액영업이익률"]["최근"] = round(
                             provision_info[stock]["PL"]["Y"]["영업이익"] / provision_info[stock]["PL"]["Y"]["매출액"] * 100, 2)
                     else:
@@ -2078,14 +2024,22 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                         sorted({k: float(d1[key1][k].replace(",", "")) for k in
                                 d1[key1]}.items()))
                     data[stock]["PL"]["Y"]["매출액"]["최근"] = provision_info[stock]["PL"]["Y"]["매출액"] if "매출액" in \
-                                                                                                       provision_info[
-                                                                                                           stock]["PL"][
-                                                                                                           "Y"].keys() else 0
+                                                                                                     provision_info[
+                                                                                                         stock]["PL"][
+                                                                                                         "Y"].keys() else 0
                     # data[stock]["PL"]["Y"]["매출액"]["최근"] = provision_info[stock]["PL"]["Y"]["매출액"]
                     data[stock]["PL"]["Y"]["영업이익"] = dict(
                         sorted({k: float(d2[key1][k].replace(",", "")) for k in
                                 d2[key1]}.items()))
                     data[stock]["PL"]["Y"]["영업이익"]["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"] if "영업이익" in \
+                                                                                                       provision_info[
+                                                                                                           stock][
+                                                                                                           "PL"][
+                                                                                                           "Y"].keys() else 0
+                    data[stock]["PL"]["Y"]["당기순이익"] = dict(
+                        sorted({k: float(d8[key1][k].replace(",", "")) for k in
+                                d8[key1]}.items()))
+                    data[stock]["PL"]["Y"]["당기순이익"]["최근"] = provision_info[stock]["PL"]["Y"]["당기순이익"] if "당기순이익" in \
                                                                                                          provision_info[
                                                                                                              stock][
                                                                                                              "PL"][
@@ -2093,10 +2047,17 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                     # data[stock]["PL"]["Y"]["영업이익"]["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"]
                     for k in sorted(d1[key1]):
                         dicTemp1[k] = float(d1[key1][k].replace(",", ""))
-                    dicTemp1["최근"] = provision_info[stock]["PL"]["Y"]["매출액"] if "매출액" in provision_info[stock]["PL"]["Y"].keys() else 0
+                    dicTemp1["최근"] = provision_info[stock]["PL"]["Y"]["매출액"] if "매출액" in provision_info[stock]["PL"][
+                        "Y"].keys() else 0
                     for k in sorted(d2[key1]):
                         dicTemp2[k] = float(d2[key1][k].replace(",", ""))
-                    dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"] if "영업이익" in provision_info[stock]["PL"]["Y"].keys() else 0
+                    dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"] if "영업이익" in provision_info[stock]["PL"][
+                        "Y"].keys() else 0
+                    for k in sorted(d8[key1]):
+                        dicTemp8[k] = float(d8[key1][k].replace(",", ""))
+                    dicTemp8["최근"] = provision_info[stock]["PL"]["Y"]["당기순이익"] if "당기순이익" in \
+                                                                                  provision_info[stock]["PL"][
+                                                                                      "Y"].keys() else 0
                 else:
                     for k in sorted(d1[key1]):
                         dicTemp0[k] = round(
@@ -2108,24 +2069,37 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                     for k in sorted(d1[key1]):
                         dicTemp1[k] = float(d1[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["누계매출액"][k] = float(d1[key1][k].replace(",", ""))
-                    dicTemp1["최근"] = provision_info[stock]["PL"]["Y"]["매출액"]
                     for k in sorted(d2[key1]):
                         dicTemp2[k] = float(d2[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["누계영업이익"][k] = float(d2[key1][k].replace(",", ""))
-                    dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"]
                     for k in sorted(d3[key1]):
                         dicTemp3[k] = float(d3[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["당기매출액"][k] = float(d3[key1][k].replace(",", ""))
-                    dicTemp3["최근"] = provision_info[stock]["PL"]["Q"]["매출액"]
                     for k in sorted(d4[key1]):
                         dicTemp4[k] = float(d4[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["당기영업이익"][k] = float(d4[key1][k].replace(",", ""))
-                    dicTemp4["최근"] = provision_info[stock]["PL"]["Q"]["영업이익"]
-                    data[stock]["PL"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
-                    data[stock]["PL"]["Q"]["누계매출액추이"] = dict(sorted(dicTemp1.items()))
-                    data[stock]["PL"]["Q"]["누계영업이익추이"] = dict(sorted(dicTemp2.items()))
-                    data[stock]["PL"]["Q"]["당기매출액"] = dict(sorted(dicTemp3.items()))
-                    data[stock]["PL"]["Q"]["당기영업이익"] = dict(sorted(dicTemp4.items()))
+                    for k in sorted(d8[key1]):
+                        dicTemp8[k] = float(d8[key1][k].replace(",", ""))
+                        # data[stock]["PL"]["Q"]["당기매출액"][k] = float(d3[key1][k].replace(",", ""))
+                    for k in sorted(d9[key1]):
+                        dicTemp9[k] = float(d9[key1][k].replace(",", ""))
+                        # data[stock]["PL"]["Q"]["당기영업이익"][k] = float(d4[key1][k].replace(",", ""))
+            # dicTemp1["최근"] = provision_info[stock]["PL"]["Y"]["매출액"]
+            # dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"]
+            dicTemp3["최근"] = provision_info[stock]["PL"]["Q"]["매출액"] if "매출액" in provision_info[stock]["PL"][
+                "Q"].keys() else 0
+            dicTemp4["최근"] = provision_info[stock]["PL"]["Q"]["영업이익"] if "영업이익" in provision_info[stock]["PL"][
+                "Q"].keys() else 0
+            # dicTemp8["최근"] = provision_info[stock]["PL"]["Y"]["당기순이익"]
+            dicTemp9["최근"] = provision_info[stock]["PL"]["Q"]["당기순이익"] if "당기순이익" in provision_info[stock]["PL"][
+                "Q"].keys() else 0
+            data[stock]["PL"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
+            data[stock]["PL"]["Q"]["누계매출액추이"] = dict(sorted(dicTemp1.items()))
+            data[stock]["PL"]["Q"]["누계영업이익추이"] = dict(sorted(dicTemp2.items()))
+            data[stock]["PL"]["Q"]["당기매출액"] = dict(sorted(dicTemp3.items()))
+            data[stock]["PL"]["Q"]["당기영업이익"] = dict(sorted(dicTemp4.items()))
+            data[stock]["PL"]["Q"]["누계당기순이익추이"] = dict(sorted(dicTemp8.items()))
+            data[stock]["PL"]["Q"]["당기순이익"] = dict(sorted(dicTemp9.items()))
             # print("MakeAvg1?")
             # print(data)
             data[stock]["AverageRate"]["Y"]["매출액영업이익률"] = round(sum(
@@ -2135,26 +2109,36 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
             # print("MakeAvg2?")
             data[stock]["AverageRate"]["Y"]["매출액"] = round(sum(
                 data[stock]["PL"]["Y"]["매출액"].values()) / float(
-                len(data[stock]["PL"]["Y"]["매출액"])), 0) if "매출액" in data[stock]["PL"]["Y"].keys() else None
+                len(data[stock]["PL"]["Y"]["매출액"])), 0) if "매출액" in data[stock]["PL"]["Y"].keys() and \
+                                                           len(data[stock]["PL"]["Y"]["매출액"]) != 0 else None
             # print("MakeAvg3?")
             data[stock]["AverageRate"]["Y"]["영업이익"] = round(sum(
                 data[stock]["PL"]["Y"]["영업이익"].values()) / float(
-                len(data[stock]["PL"]["Y"]["영업이익"])), 0) if "영업이익" in data[stock]["PL"]["Y"].keys() else None
+                len(data[stock]["PL"]["Y"]["영업이익"])), 0) if "영업이익" in data[stock]["PL"]["Y"].keys() and \
+                                                            len(data[stock]["PL"]["Y"]["영업이익"]) != 0 else None
+            data[stock]["AverageRate"]["Y"]["당기순이익"] = round(sum(
+                data[stock]["PL"]["Y"]["당기순이익"].values()) / float(
+                len(data[stock]["PL"]["Y"]["당기순이익"])), 0) if "당기순이익" in data[stock]["PL"]["Y"].keys() and \
+                                                             len(data[stock]["PL"]["Y"]["당기순이익"]) != 0 else None
             # print("MakeAvg4?")
             data[stock]["AverageRate"]["Q"]["매출액영업이익률"] = round(sum(
                 data[stock]["PL"]["Q"]["매출액영업이익률"].values()) / float(
-                len(data[stock]["PL"]["Q"]["매출액영업이익률"])), 2) if "매출액영업이익률" in data[stock]["PL"][
-                "Q"].keys() else None
+                len(data[stock]["PL"]["Q"]["매출액영업이익률"])), 2) if "매출액영업이익률" in data[stock]["PL"]["Q"].keys() and \
+                                                                len(data[stock]["PL"]["Q"]["매출액영업이익률"]) != 0 else None
             # print("MakeAvg5?")
             data[stock]["AverageRate"]["Q"]["매출액"] = round(sum(
                 data[stock]["PL"]["Q"]["당기매출액"].values()) / float(
-                len(data[stock]["PL"]["Q"]["당기매출액"])), 0) if "당기매출액" in data[stock]["PL"][
-                "Q"].keys() else None
+                len(data[stock]["PL"]["Q"]["당기매출액"])), 0) if "당기매출액" in data[stock]["PL"]["Q"].keys() and \
+                                                             len(data[stock]["PL"]["Q"]["당기매출액"]) != 0 else None
             # print("MakeAvg6?")
             data[stock]["AverageRate"]["Q"]["영업이익"] = round(sum(
                 data[stock]["PL"]["Q"]["당기영업이익"].values()) / float(
-                len(data[stock]["PL"]["Q"]["당기영업이익"])), 0) if "당기영업이익" in data[stock]["PL"][
-                "Q"].keys() else None
+                len(data[stock]["PL"]["Q"]["당기영업이익"])), 0) if "당기영업이익" in data[stock]["PL"]["Q"].keys() and \
+                                                              len(data[stock]["PL"]["Q"]["당기영업이익"]) != 0 else None
+            data[stock]["AverageRate"]["Q"]["당기순이익"] = round(sum(
+                data[stock]["PL"]["Q"]["당기순이익"].values()) / float(
+                len(data[stock]["PL"]["Q"]["당기순이익"])), 0) if "당기순이익" in data[stock]["PL"]["Q"].keys() and \
+                                                             len(data[stock]["PL"]["Q"]["당기순이익"]) != 0 else None
             # print("MakeAvg7?")
             # 손익계산서 분석 끝
             for key1 in d1.keys():
@@ -2177,12 +2161,13 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
             logger.error(current_key)
             for key in current_pos.keys():  # key = ["연결재무제표", "재무제표"]
                 for report in current_pos[key].keys():  # report = ["재무상태표", "손익계산서"]
-                    if report not in ["손익계산서", "포괄손익계산서"]: # ["재무상태표", "현금흐름표", "자본변동표"]:
+                    if report not in ["손익계산서", "포괄손익계산서"]:  # ["재무상태표", "현금흐름표", "자본변동표"]:
                         for acc in current_pos[key][report].keys():
                             # acc = ["유동자산", "비유동자산", "자산총계", "유동부채", "비유동부채", "부채총계", "자본금", "이익잉여금", "자본총계"]
                             for category in sorted(current_pos[key][report][acc].keys()):
                                 # category = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
-                                logger.error("{}\t{}\t{}\t{}\t{}".format(key, report, acc, category, current_pos[key][report][acc][category]))
+                                logger.error("{}\t{}\t{}\t{}\t{}".format(key, report, acc, category,
+                                                                         current_pos[key][report][acc][category]))
                                 # for k in result[key][report][acc][category].keys():
                                 #     print(key, report, acc, category, k, current_pos[key][report][acc][category][k])
                     else:
@@ -2192,20 +2177,25 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                                 # category = ["누계", "당기"]
                                 for k in sorted(current_pos[key][report][acc][category].keys()):
                                     # k = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
-                                    logger.error("{}\t{}\t{}\t{}\t{}\t{}".format(key, report, acc, category, k, current_pos[key][report][acc][category][k]))
-    # logger.info(data)
+                                    logger.error("{}\t{}\t{}\t{}\t{}\t{}".format(key, report, acc, category, k,
+                                                                                 current_pos[key][report][acc][
+                                                                                     category][k]))
+    logger.info(data)
 
     for k in data.keys():
         avg_sales_op_profit_rate = None
         avg_sales = None
         avg_op_profit = None
+        avg_net_income = None
         last_sales_op_profit_rate = None
         last_sales = None
         last_op_profit = None
+        last_net_income = None
         before_sales = None
         before_op_profit = None
+        before_net_income = None
 
-        print(k, data[k]["corp_name"], "*"*100)
+        print(k, data[k]["corp_name"], "*" * 100)
         for key in data[k]["PL"]["Y"].keys():
             print("연간", key, data[k]["PL"]["Y"][key])
         print("연간", data[k]["AverageRate"]["Y"])
@@ -2217,38 +2207,51 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
         print("재무상태표-이익잉여금", data[k]["FS"]["RetainedEarnings"])
         # print("here1?")
         if "매출액영업이익률" in data[k]["AverageRate"]["Y"].keys() \
-            and "매출액" in data[k]["AverageRate"]["Y"].keys() \
-            and "영업이익" in data[k]["AverageRate"]["Y"].keys():
+                and "매출액" in data[k]["AverageRate"]["Y"].keys() \
+                and "영업이익" in data[k]["AverageRate"]["Y"].keys() \
+                and "당기순이익" in data[k]["AverageRate"]["Y"].keys():
             # print("here2?")
             avg_sales_op_profit_rate = data[k]["AverageRate"]["Y"]["매출액영업이익률"]
             avg_sales = data[k]["AverageRate"]["Y"]["매출액"]
             avg_op_profit = data[k]["AverageRate"]["Y"]["영업이익"]
+            avg_net_income = data[k]["AverageRate"]["Y"]["당기순이익"]
 
             if "매출액영업이익률" in data[k]["PL"]["Q"].keys():
                 # print("here3?")
-                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1]
-                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1]
+                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1] if len(data[k]["PL"]["Q"]["매출액영업이익률"]) > 0 else None
+                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계매출액추이"]) > 0 else None
                 if "매출액" in data[k]["PL"]["Y"].keys():
-                    data[k]["PL"]["Y"]["매출액"].popitem()
-                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1]
-                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1]
+                    data[k]["PL"]["Y"]["매출액"].popitem() if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
+                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1] if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
+                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계영업이익추이"]) > 0 else None
                 if "영업이익" in data[k]["PL"]["Y"].keys():
-                    data[k]["PL"]["Y"]["영업이익"].popitem()
-                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1]
+                    data[k]["PL"]["Y"]["영업이익"].popitem() if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
+                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1] if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
+                last_net_income = data[k]["PL"]["Q"]["누계당기순이익추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계당기순이익추이"]) > 0 else None
+                if "당기순이익" in data[k]["PL"]["Y"].keys():
+                    data[k]["PL"]["Y"]["당기순이익"].popitem() if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
+                    before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
         # print("here4?")
         if avg_sales_op_profit_rate and last_sales_op_profit_rate:
             if last_sales_op_profit_rate > 0 and avg_sales_op_profit_rate > 0 and last_sales_op_profit_rate > avg_sales_op_profit_rate:
                 # print("here5?")
-                if avg_sales and last_sales and before_sales and last_sales > avg_sales and last_sales > before_sales:
+                if avg_sales and last_sales and before_sales and \
+                        avg_net_income and last_net_income and before_net_income and \
+                        last_sales > avg_sales and last_sales > before_sales and \
+                        last_net_income > avg_net_income and last_net_income > before_net_income:
                     if last_sales_op_profit_rate > 20:
-                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"],
+                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                   "corp_code": data[k]["corp_code"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                    "최근매출액": format(last_sales, ",") if last_sales is not None else None,
                                    "직전매출액": format(before_sales, ",") if before_sales is not None else None,
                                    "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                    "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                    "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                   "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                   "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                   "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                    }
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -2259,14 +2262,18 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                         best[k]["PBR"] = call["pbr"]
                         best[k]["현재가"] = f'{call["now"]:,}'
                     elif np.sign(last_sales_op_profit_rate) > np.sign(avg_sales_op_profit_rate):
-                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"],
+                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                   "corp_code": data[k]["corp_code"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                    "최근매출액": format(last_sales, ",") if last_sales is not None else None,
                                    "직전매출액": format(before_sales, ",") if before_sales is not None else None,
                                    "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                    "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                    "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None}
+                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                   "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                   "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                   "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None}
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
                                 k)).content.decode("utf-8"))
@@ -2276,14 +2283,19 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                         best[k]["PBR"] = call["pbr"]
                         best[k]["현재가"] = f'{call["now"]:,}'
                     else:
-                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"],
+                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                     "corp_code": data[k]["corp_code"],
                                      "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                      "최근매출액": format(last_sales, ",") if last_sales is not None else None,
                                      "직전매출액": format(before_sales, ",") if before_sales is not None else None,
                                      "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                      "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                      "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                     "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                                     "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                     "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                     "직전당기순이익": format(before_net_income,
+                                                       ",") if before_net_income is not None else None,
+                                     "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                      }
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -2295,14 +2307,19 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                         better[k]["현재가"] = f'{call["now"]:,}'
                 else:
                     if last_sales_op_profit_rate > 15:
-                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"],
+                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                     "corp_code": data[k]["corp_code"],
                                      "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                      "최근매출액": format(last_sales, ",") if last_sales is not None else None,
                                      "직전매출액": format(before_sales, ",") if before_sales is not None else None,
                                      "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                      "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                      "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                     "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                                     "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                     "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                     "직전당기순이익": format(before_net_income,
+                                                       ",") if before_net_income is not None else None,
+                                     "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                      }
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -2314,14 +2331,18 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                         better[k]["현재가"] = f'{call["now"]:,}'
                     else:
                         # print("here7?")
-                        good[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"],
+                        good[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                   "corp_code": data[k]["corp_code"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                    "최근매출액": format(last_sales, ",") if last_sales is not None else None,
                                    "직전매출액": format(before_sales, ",") if before_sales is not None else None,
                                    "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                    "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                    "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                   "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                   "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                   "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                    }
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -2340,7 +2361,10 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                                  "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                  "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                  "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                 "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                                 "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                 "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                 "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                 "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                  }
                     call = json.loads(requests.get(
                         "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -2358,7 +2382,10 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                                "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                               "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                               "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                               "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                               "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                               "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                }
                     call = json.loads(requests.get(
                         "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -2376,7 +2403,10 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                        "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                        "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                        "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                       "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                       "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                       "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                       "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                       "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                        }
             call = json.loads(requests.get(
                 "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -2520,6 +2550,8 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
             d5 = None
             d6 = None
             d7 = None
+            d8 = None
+            d9 = None
             dicTemp0 = {}
             dicTemp1 = {}
             dicTemp2 = {}
@@ -2528,146 +2560,407 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
             dicTemp5 = {}
             dicTemp6 = {}
             dicTemp7 = {}
+            dicTemp8 = {}
+            dicTemp9 = {}
+            d1keys = ["매출", "수익(매출액)", "I.  매출액", "영업수익", "매출액", "Ⅰ. 매출액"]
+            d2keys = ["영업이익(손실)", "영업이익 (손실)", "영업이익", "영업손익", "V. 영업손익", "Ⅴ. 영업이익", "Ⅴ. 영업이익(손실)"]
+            d8keys = ["당기순이익(손실)", "당기순이익 (손실)", "당기순이익", "분기순이익", "반기순이익", "당기순이익(손실)", "분기순이익(손실)", "반기순이익(손실)",
+                      "연결당기순이익", "연결분기순이익", "연결반기순이익", "연결당기순이익(손실)", "연결분기순이익(손실)", "연결반기순이익(손실)", "당기순손익", "분기순손익",
+                      "반기순손익", "지배기업 소유주지분", "지배기업의 소유주에게 귀속되는 당기순이익(손실)", "당기순손실", "분기순손실", "반기순손실", "Ⅷ. 당기순이익(손실)",
+                      "Ⅷ. 당기순이익", "VIII. 당기순이익", "지배기업 소유주", "VIII. 분기순손익", "VIII. 분기순이익", "I.당기순이익", "I.반기순이익",
+                      "I.분기순이익", "반기연결순이익(손실)", "지배기업의 소유주지분"]
             # if stock == "006360":
             #     print()
             if result is not {} and "연결재무제표" in result.keys():
                 logger.info("연결재무제표 start")
                 if "포괄손익계산서" in result["연결재무제표"].keys():
                     logger.info("연결재무제표 포괄손익계산서 start")
-                    if "매출" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        logger.info("연결재무제표 포괄손익계산서 매출 start")
-                        if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["매출"]["누계"]
-                        else: d1.update(result["연결재무제표"]["포괄손익계산서"]["매출"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["매출"]["당기"]
-                        else: d3.update(result["연결재무제표"]["포괄손익계산서"]["매출"]["당기"])
-                    if "수익(매출액)" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        logger.info("연결재무제표 포괄손익계산서 수익(매출액) start")
-                        if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"]
-                        else: d1.update(result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"]
-                        else: d3.update(result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"])
-                    if "매출액" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        logger.info("연결재무제표 포괄손익계산서 매출액 start")
-                        if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["매출액"]["누계"]
-                        else: d1.update(result["연결재무제표"]["포괄손익계산서"]["매출액"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["매출액"]["당기"]
-                        else: d3.update(result["연결재무제표"]["포괄손익계산서"]["매출액"]["당기"])
-                    if "I.  매출액" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        logger.info("연결재무제표 포괄손익계산서 I.  매출액 start")
-                        if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"]
-                        else: d1.update(result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"]
-                        else: d3.update(result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"])
-                    if "영업수익" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        logger.info("연결재무제표 포괄손익계산서 영업수익 start")
-                        if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["영업수익"]["누계"]
-                        else: d1.update(result["연결재무제표"]["포괄손익계산서"]["영업수익"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["영업수익"]["당기"]
-                        else: d3.update(result["연결재무제표"]["포괄손익계산서"]["영업수익"]["당기"])
-                    else:
-                        pass
-                    if "영업이익(손실)" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        logger.info("연결재무제표 포괄손익계산서 영업이익(손실) start")
-                        if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"]
-                        else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"]
-                        else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"])
-                    if "영업이익 (손실)" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        logger.info("연결재무제표 포괄손익계산서 영업이익 (손실) start")
-                        if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"]
-                        else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"]
-                        else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"])
-                    if "영업이익" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        logger.info("연결재무제표 포괄손익계산서 영업이익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업이익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업이익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업이익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업이익"]["당기"])
-                    if "영업손익" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        logger.info("연결재무제표 포괄손익계산서 영업손익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업손익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업손익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업손익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업손익"]["당기"])
-                    if "V. 영업손익" in result["연결재무제표"]["포괄손익계산서"].keys():
-                        logger.info("연결재무제표 포괄손익계산서 V. 영업손익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"])
-                    else:
-                        pass
+                    tmp_result1 = {key: result["연결재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result2 = {key: result["연결재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result3 = {key: result["연결재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result4 = {key: result["연결재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result8 = {key: result["연결재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d8keys}}
+                    tmp_result9 = {key: result["연결재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["포괄손익계산서"].keys() & {keys for keys in d8keys}}
+                    if tmp_result1:
+                        for key in tmp_result1.keys():
+                            if d1 is None: d1 = tmp_result1[key]
+                            else: d1.update(tmp_result1[key])
+                    if tmp_result2:
+                        for key in tmp_result2.keys():
+                            if d2 is None: d2 = tmp_result2[key]
+                            else: d2.update(tmp_result2[key])
+                    if tmp_result3:
+                        for key in tmp_result3.keys():
+                            if d3 is None: d3 = tmp_result3[key]
+                            else: d3.update(tmp_result3[key])
+                    if tmp_result4:
+                        for key in tmp_result4.keys():
+                            if d4 is None: d4 = tmp_result4[key]
+                            else: d4.update(tmp_result4[key])
+                    if tmp_result8:
+                        for key in tmp_result8.keys():
+                            if d8 is None: d8 = tmp_result8[key]
+                            else: d8.update(tmp_result8[key])
+                    if tmp_result9:
+                        for key in tmp_result9.keys():
+                            if d9 is None: d9 = tmp_result9[key]
+                            else: d9.update(tmp_result9[key])
+                    # if "매출" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 매출 start")
+                    #     if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["매출"]["누계"]
+                    #     else: d1.update(result["연결재무제표"]["포괄손익계산서"]["매출"]["누계"])
+                    #     if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["매출"]["당기"]
+                    #     else: d3.update(result["연결재무제표"]["포괄손익계산서"]["매출"]["당기"])
+                    # if "수익(매출액)" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 수익(매출액) start")
+                    #     if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"]
+                    #     else: d1.update(result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"])
+                    #     if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"]
+                    #     else: d3.update(result["연결재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"])
+                    # if "매출액" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 매출액 start")
+                    #     if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["매출액"]["누계"]
+                    #     else: d1.update(result["연결재무제표"]["포괄손익계산서"]["매출액"]["누계"])
+                    #     if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["매출액"]["당기"]
+                    #     else: d3.update(result["연결재무제표"]["포괄손익계산서"]["매출액"]["당기"])
+                    # if "I.  매출액" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 I.  매출액 start")
+                    #     if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"]
+                    #     else: d1.update(result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"])
+                    #     if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"]
+                    #     else: d3.update(result["연결재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"])
+                    # if "영업수익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 영업수익 start")
+                    #     if d1 is None: d1 = result["연결재무제표"]["포괄손익계산서"]["영업수익"]["누계"]
+                    #     else: d1.update(result["연결재무제표"]["포괄손익계산서"]["영업수익"]["누계"])
+                    #     if d3 is None: d3 = result["연결재무제표"]["포괄손익계산서"]["영업수익"]["당기"]
+                    #     else: d3.update(result["연결재무제표"]["포괄손익계산서"]["영업수익"]["당기"])
+                    # if "영업이익(손실)" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 영업이익(손실) start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"])
+                    # if "영업이익 (손실)" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 영업이익 (손실) start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"])
+                    # if "영업이익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 영업이익 start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업이익"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업이익"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업이익"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업이익"]["당기"])
+                    # if "영업손익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 영업손익 start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["영업손익"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["포괄손익계산서"]["영업손익"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["영업손익"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["포괄손익계산서"]["영업손익"]["당기"])
+                    # if "V. 영업손익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 V. 영업손익 start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"])
+                    # if "당기순이익(손실)" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 당기순이익(손실) start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["당기순이익(손실)"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["당기순이익(손실)"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["당기순이익(손실)"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["당기순이익(손실)"]["당기"])
+                    # if "당기순이익 (손실)" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 당기순이익 (손실) start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["당기순이익 (손실)"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["당기순이익 (손실)"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["당기순이익 (손실)"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["당기순이익 (손실)"]["당기"])
+                    # if "당기순이익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 당기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["당기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["당기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["당기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["당기순이익"]["당기"])
+                    # if "분기순이익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 분기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["분기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["분기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["분기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["분기순이익"]["당기"])
+                    # if "반기순이익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 반기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["반기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["반기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["반기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["반기순이익"]["당기"])
+                    # if "연결당기순이익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 연결당기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["연결당기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["연결당기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["연결당기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["연결당기순이익"]["당기"])
+                    # if "연결분기순이익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 연결분기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["연결분기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["연결분기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["연결분기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["연결분기순이익"]["당기"])
+                    # if "연결반기순이익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 연결반기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["연결반기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["연결반기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["연결반기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["연결반기순이익"]["당기"])
+                    # if "연결분기순이익(손실)" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 연결분기순이익(손실) start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["연결분기순이익(손실)"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["연결분기순이익(손실)"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["연결분기순이익(손실)"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["연결분기순이익(손실)"]["당기"])
+                    # if "분기순이익(손실)" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 분기순이익(손실) start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["분기순이익(손실)"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["분기순이익(손실)"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["분기순이익(손실)"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["분기순이익(손실)"]["당기"])
+                    # if "반기순손익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 반기순손익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["반기순손익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["반기순손익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["반기순손익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["반기순손익"]["당기"])
+                    # if "당기순손익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 당기순손익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["당기순손익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["당기순손익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["당기순손익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["당기순손익"]["당기"])
+                    # if "총포괄손익" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 총포괄손익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["총포괄손익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["총포괄손익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["총포괄손익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["총포괄손익"]["당기"])
+                    # if "지배기업 소유주지분" in result["연결재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("연결재무제표 포괄손익계산서 지배기업 소유주지분 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["포괄손익계산서"]["지배기업 소유주지분"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["포괄손익계산서"]["지배기업 소유주지분"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["포괄손익계산서"]["지배기업 소유주지분"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["포괄손익계산서"]["지배기업 소유주지분"]["당기"])
                 if "손익계산서" in result["연결재무제표"].keys():
                     logger.info("연결재무제표 손익계산서 start")
-                    if "매출" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 매출 start")
-                        if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["매출"]["누계"]
-                        else: d1.update(result["연결재무제표"]["손익계산서"]["매출"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["매출"]["당기"]
-                        else: d3.update(result["연결재무제표"]["손익계산서"]["매출"]["당기"])
-                    if "수익(매출액)" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 수익(매출액) start")
-                        if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["수익(매출액)"]["누계"]
-                        else: d1.update(result["연결재무제표"]["손익계산서"]["수익(매출액)"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["수익(매출액)"]["당기"]
-                        else: d3.update(result["연결재무제표"]["손익계산서"]["수익(매출액)"]["당기"])
-                    if "매출액" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 매출액 start")
-                        if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["매출액"]["누계"]
-                        else: d1.update(result["연결재무제표"]["손익계산서"]["매출액"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["매출액"]["당기"]
-                        else: d3.update(result["연결재무제표"]["손익계산서"]["매출액"]["당기"])
-                    if "I.  매출액" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 I.  매출액 start")
-                        if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["I.  매출액"]["누계"]
-                        else: d1.update(result["연결재무제표"]["손익계산서"]["I.  매출액"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["I.  매출액"]["당기"]
-                        else: d3.update(result["연결재무제표"]["손익계산서"]["I.  매출액"]["당기"])
-                    if "영업수익" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 영업수익 start")
-                        if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["영업수익"]["누계"]
-                        else: d1.update(result["연결재무제표"]["손익계산서"]["영업수익"]["누계"])
-                        if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["영업수익"]["당기"]
-                        else: d3.update(result["연결재무제표"]["손익계산서"]["영업수익"]["당기"])
-                    else:
-                        pass
-                    if "영업이익(손실)" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 영업이익(손실) start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["당기"])
-                    if "영업이익 (손실)" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 영업이익 (손실) start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"])
-                    if "영업이익" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 영업이익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업이익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["영업이익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업이익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["영업이익"]["당기"])
-                    if "V. 영업이익" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 V. 영업이익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["V. 영업이익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["V. 영업이익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["V. 영업이익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["V. 영업이익"]["당기"])
-                    if "영업손익" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 영업손익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업손익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["영업손익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업손익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["영업손익"]["당기"])
-                    if "V. 영업손익" in result["연결재무제표"]["손익계산서"].keys():
-                        logger.info("연결재무제표 손익계산서 V. 영업손익 start")
-                        if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["V. 영업손익"]["누계"]
-                        else: d2.update(result["연결재무제표"]["손익계산서"]["V. 영업손익"]["누계"])
-                        if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["V. 영업손익"]["당기"]
-                        else: d4.update(result["연결재무제표"]["손익계산서"]["V. 영업손익"]["당기"])
+                    tmp_result1 = {key: result["연결재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result2 = {key: result["연결재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result3 = {key: result["연결재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result4 = {key: result["연결재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result8 = {key: result["연결재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d8keys}}
+                    tmp_result9 = {key: result["연결재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["연결재무제표"]["손익계산서"].keys() & {keys for keys in d8keys}}
+                    if tmp_result1:
+                        for key in tmp_result1.keys():
+                            if d1 is None:
+                                d1 = tmp_result1[key]
+                            else:
+                                d1.update(tmp_result1[key])
+                    if tmp_result2:
+                        for key in tmp_result2.keys():
+                            if d2 is None:
+                                d2 = tmp_result2[key]
+                            else:
+                                d2.update(tmp_result2[key])
+                    if tmp_result3:
+                        for key in tmp_result3.keys():
+                            if d3 is None:
+                                d3 = tmp_result3[key]
+                            else:
+                                d3.update(tmp_result3[key])
+                    if tmp_result4:
+                        for key in tmp_result4.keys():
+                            if d4 is None:
+                                d4 = tmp_result4[key]
+                            else:
+                                d4.update(tmp_result4[key])
+                    if tmp_result8:
+                        for key in tmp_result8.keys():
+                            if d8 is None:
+                                d8 = tmp_result8[key]
+                            else:
+                                d8.update(tmp_result8[key])
+                    if tmp_result9:
+                        for key in tmp_result9.keys():
+                            if d9 is None:
+                                d9 = tmp_result9[key]
+                            else:
+                                d9.update(tmp_result9[key])
+                    # if "매출" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 매출 start")
+                    #     if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["매출"]["누계"]
+                    #     else: d1.update(result["연결재무제표"]["손익계산서"]["매출"]["누계"])
+                    #     if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["매출"]["당기"]
+                    #     else: d3.update(result["연결재무제표"]["손익계산서"]["매출"]["당기"])
+                    # if "수익(매출액)" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 수익(매출액) start")
+                    #     if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["수익(매출액)"]["누계"]
+                    #     else: d1.update(result["연결재무제표"]["손익계산서"]["수익(매출액)"]["누계"])
+                    #     if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["수익(매출액)"]["당기"]
+                    #     else: d3.update(result["연결재무제표"]["손익계산서"]["수익(매출액)"]["당기"])
+                    # if "매출액" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 매출액 start")
+                    #     if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["매출액"]["누계"]
+                    #     else: d1.update(result["연결재무제표"]["손익계산서"]["매출액"]["누계"])
+                    #     if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["매출액"]["당기"]
+                    #     else: d3.update(result["연결재무제표"]["손익계산서"]["매출액"]["당기"])
+                    # if "I.  매출액" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 I.  매출액 start")
+                    #     if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["I.  매출액"]["누계"]
+                    #     else: d1.update(result["연결재무제표"]["손익계산서"]["I.  매출액"]["누계"])
+                    #     if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["I.  매출액"]["당기"]
+                    #     else: d3.update(result["연결재무제표"]["손익계산서"]["I.  매출액"]["당기"])
+                    # if "영업수익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 영업수익 start")
+                    #     if d1 is None: d1 = result["연결재무제표"]["손익계산서"]["영업수익"]["누계"]
+                    #     else: d1.update(result["연결재무제표"]["손익계산서"]["영업수익"]["누계"])
+                    #     if d3 is None: d3 = result["연결재무제표"]["손익계산서"]["영업수익"]["당기"]
+                    #     else: d3.update(result["연결재무제표"]["손익계산서"]["영업수익"]["당기"])
+                    # if "영업이익(손실)" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 영업이익(손실) start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["손익계산서"]["영업이익(손실)"]["당기"])
+                    # if "영업이익 (손실)" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 영업이익 (손실) start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"])
+                    # if "영업이익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 영업이익 start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업이익"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["손익계산서"]["영업이익"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업이익"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["손익계산서"]["영업이익"]["당기"])
+                    # if "V. 영업이익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 V. 영업이익 start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["V. 영업이익"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["손익계산서"]["V. 영업이익"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["V. 영업이익"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["손익계산서"]["V. 영업이익"]["당기"])
+                    # if "영업손익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 영업손익 start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["영업손익"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["손익계산서"]["영업손익"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["영업손익"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["손익계산서"]["영업손익"]["당기"])
+                    # if "V. 영업손익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 V. 영업손익 start")
+                    #     if d2 is None: d2 = result["연결재무제표"]["손익계산서"]["V. 영업손익"]["누계"]
+                    #     else: d2.update(result["연결재무제표"]["손익계산서"]["V. 영업손익"]["누계"])
+                    #     if d4 is None: d4 = result["연결재무제표"]["손익계산서"]["V. 영업손익"]["당기"]
+                    #     else: d4.update(result["연결재무제표"]["손익계산서"]["V. 영업손익"]["당기"])
+                    # if "당기순이익(손실)" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 당기순이익(손실) start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["당기순이익(손실)"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["당기순이익(손실)"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["당기순이익(손실)"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["당기순이익(손실)"]["당기"])
+                    # if "반기순이익(손실)" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 반기순이익(손실) start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["반기순이익(손실)"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["반기순이익(손실)"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["반기순이익(손실)"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["반기순이익(손실)"]["당기"])
+                    # if "당기순이익 (손실)" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 당기순이익 (손실) start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["당기순이익 (손실)"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["당기순이익 (손실)"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["당기순이익 (손실)"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["당기순이익 (손실)"]["당기"])
+                    # if "당기순이익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 당기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["당기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["당기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["당기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["당기순이익"]["당기"])
+                    # if "분기순이익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 분기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["분기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["분기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["분기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["분기순이익"]["당기"])
+                    # if "반기순이익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 반기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["반기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["반기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["반기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["반기순이익"]["당기"])
+                    # if "연결당기순이익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 연결당기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["연결당기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["연결당기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["연결당기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["연결당기순이익"]["당기"])
+                    # if "연결분기순이익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 연결분기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["연결분기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["연결분기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["연결분기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["연결분기순이익"]["당기"])
+                    # if "연결반기순이익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 연결반기순이익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["연결반기순이익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["연결반기순이익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["연결반기순이익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["연결반기순이익"]["당기"])
+                    # if "연결분기순이익(손실)" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 연결분기순이익(손실) start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["연결분기순이익(손실)"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["연결분기순이익(손실)"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["연결분기순이익(손실)"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["연결분기순이익(손실)"]["당기"])
+                    # if "분기순이익(손실)" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 분기순이익(손실) start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["분기순이익(손실)"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["분기순이익(손실)"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["분기순이익(손실)"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["분기순이익(손실)"]["당기"])
+                    # if "반기순손익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 반기순손익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["반기순손익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["반기순손익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["반기순손익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["반기순손익"]["당기"])
+                    # if "당기순손익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 당기순손익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["당기순손익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["당기순손익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["당기순손익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["당기순손익"]["당기"])
+                    # if "총포괄손익" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 총포괄손익 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["총포괄손익"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["총포괄손익"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["총포괄손익"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["총포괄손익"]["당기"])
+                    # if "지배기업 소유주지분" in result["연결재무제표"]["손익계산서"].keys():
+                    #     logger.info("연결재무제표 손익계산서 지배기업 소유주지분 start")
+                    #     if d8 is None: d8 = result["연결재무제표"]["손익계산서"]["지배기업 소유주지분"]["누계"]
+                    #     else: d8.update(result["연결재무제표"]["손익계산서"]["지배기업 소유주지분"]["누계"])
+                    #     if d9 is None: d9 = result["연결재무제표"]["손익계산서"]["지배기업 소유주지분"]["당기"]
+                    #     else: d9.update(result["연결재무제표"]["손익계산서"]["지배기업 소유주지분"]["당기"])
                 d5 = result["연결재무제표"]["재무상태표"]["자산총계"] if "자산총계" in result["연결재무제표"]["재무상태표"].keys() else None
                 d6 = result["연결재무제표"]["재무상태표"]["부채총계"] if "부채총계" in result["연결재무제표"]["재무상태표"].keys() else None
                 d7 = result["연결재무제표"]["재무상태표"]["이익잉여금"] if "이익잉여금" in result["연결재무제표"]["재무상태표"].keys() else None
@@ -2681,144 +2974,416 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                 logger.info("재무제표 start")
                 if "포괄손익계산서" in result["재무제표"].keys():
                     logger.info("재무제표 포괄손익계산서 start")
-                    if "매출" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 매출 start")
-                        if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["매출"]["누계"]
-                        else: d1.update(result["재무제표"]["포괄손익계산서"]["매출"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["매출"]["당기"]
-                        else: d3.update(result["재무제표"]["포괄손익계산서"]["매출"]["당기"])
-                    if "수익(매출액)" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 수익(매출액) start")
-                        if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"]
-                        else: d1.update(result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"]
-                        else: d3.update(result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"])
-                    if "매출액" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 매출액 start")
-                        if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["매출액"]["누계"]
-                        else: d1.update(result["재무제표"]["포괄손익계산서"]["매출액"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["매출액"]["당기"]
-                        else: d3.update(result["재무제표"]["포괄손익계산서"]["매출액"]["당기"])
-                    if "I.  매출액" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 I.  매출액 start")
-                        if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"]
-                        else: d1.update(result["재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"]
-                        else: d3.update(result["재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"])
-                    if "영업수익" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 영업수익 start")
-                        if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["영업수익"]["누계"]
-                        else: d1.update(result["재무제표"]["포괄손익계산서"]["영업수익"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["영업수익"]["당기"]
-                        else: d3.update(result["재무제표"]["포괄손익계산서"]["영업수익"]["당기"])
-                    else:
-                        pass
-                    if "영업이익(손실)" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 영업이익(손실) start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"])
-                    if "영업이익 (손실)" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 영업이익 (손실) start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"])
-                    if "영업이익" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 영업이익 start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업이익"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["영업이익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업이익"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["영업이익"]["당기"])
-                    if "V. 영업이익" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 V. 영업이익 start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["당기"])
-                    if "영업손익" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 영업손익 start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업손익"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["영업손익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업손익"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["영업손익"]["당기"])
-                    if "V. 영업손익" in result["재무제표"]["포괄손익계산서"].keys():
-                        logger.info("재무제표 포괄손익계산서 V. 영업손익 start")
-                        if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"]
-                        else: d2.update(result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"]
-                        else: d4.update(result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"])
+                    tmp_result1 = {key: result["재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result2 = {key: result["재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result3 = {key: result["재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result4 = {key: result["재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result8 = {key: result["재무제표"]["포괄손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d8keys}}
+                    tmp_result9 = {key: result["재무제표"]["포괄손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["포괄손익계산서"].keys() & {keys for keys in d8keys}}
+                    if tmp_result1:
+                        for key in tmp_result1.keys():
+                            if d1 is None:
+                                d1 = tmp_result1[key]
+                            else:
+                                d1.update(tmp_result1[key])
+                    if tmp_result2:
+                        for key in tmp_result2.keys():
+                            if d2 is None:
+                                d2 = tmp_result2[key]
+                            else:
+                                d2.update(tmp_result2[key])
+                    if tmp_result3:
+                        for key in tmp_result3.keys():
+                            if d3 is None:
+                                d3 = tmp_result3[key]
+                            else:
+                                d3.update(tmp_result3[key])
+                    if tmp_result4:
+                        for key in tmp_result4.keys():
+                            if d4 is None:
+                                d4 = tmp_result4[key]
+                            else:
+                                d4.update(tmp_result4[key])
+                    if tmp_result8:
+                        for key in tmp_result8.keys():
+                            if d8 is None:
+                                d8 = tmp_result8[key]
+                            else:
+                                d8.update(tmp_result8[key])
+                    if tmp_result9:
+                        for key in tmp_result9.keys():
+                            if d9 is None:
+                                d9 = tmp_result9[key]
+                            else:
+                                d9.update(tmp_result9[key])
+                    # if "매출" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 매출 start")
+                    #     if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["매출"]["누계"]
+                    #     else: d1.update(result["재무제표"]["포괄손익계산서"]["매출"]["누계"])
+                    #     if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["매출"]["당기"]
+                    #     else: d3.update(result["재무제표"]["포괄손익계산서"]["매출"]["당기"])
+                    # if "수익(매출액)" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 수익(매출액) start")
+                    #     if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"]
+                    #     else: d1.update(result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["누계"])
+                    #     if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"]
+                    #     else: d3.update(result["재무제표"]["포괄손익계산서"]["수익(매출액)"]["당기"])
+                    # if "매출액" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 매출액 start")
+                    #     if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["매출액"]["누계"]
+                    #     else: d1.update(result["재무제표"]["포괄손익계산서"]["매출액"]["누계"])
+                    #     if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["매출액"]["당기"]
+                    #     else: d3.update(result["재무제표"]["포괄손익계산서"]["매출액"]["당기"])
+                    # if "I.  매출액" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 I.  매출액 start")
+                    #     if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"]
+                    #     else: d1.update(result["재무제표"]["포괄손익계산서"]["I.  매출액"]["누계"])
+                    #     if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"]
+                    #     else: d3.update(result["재무제표"]["포괄손익계산서"]["I.  매출액"]["당기"])
+                    # if "영업수익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 영업수익 start")
+                    #     if d1 is None: d1 = result["재무제표"]["포괄손익계산서"]["영업수익"]["누계"]
+                    #     else: d1.update(result["재무제표"]["포괄손익계산서"]["영업수익"]["누계"])
+                    #     if d3 is None: d3 = result["재무제표"]["포괄손익계산서"]["영업수익"]["당기"]
+                    #     else: d3.update(result["재무제표"]["포괄손익계산서"]["영업수익"]["당기"])
+                    # if "영업이익(손실)" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 영업이익(손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["영업이익(손실)"]["당기"])
+                    # if "영업이익 (손실)" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 영업이익 (손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["영업이익 (손실)"]["당기"])
+                    # if "영업이익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 영업이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["영업이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["영업이익"]["당기"])
+                    # if "V. 영업이익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 V. 영업이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["V. 영업이익"]["당기"])
+                    # if "영업손익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 영업손익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["영업손익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["영업손익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["영업손익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["영업손익"]["당기"])
+                    # if "V. 영업손익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 V. 영업손익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["V. 영업손익"]["당기"])
+                    # if "당기순이익(손실)" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 당기순이익(손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["당기순이익(손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["당기순이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["당기순이익(손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["당기순이익(손실)"]["당기"])
+                    # if "반기순이익(손실)" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 반기순이익(손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["반기순이익(손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["반기순이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["반기순이익(손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["반기순이익(손실)"]["당기"])
+                    # if "당기순이익 (손실)" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 당기순이익 (손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["당기순이익 (손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["당기순이익 (손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["당기순이익 (손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["당기순이익 (손실)"]["당기"])
+                    # if "당기순이익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 당기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["당기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["당기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["당기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["당기순이익"]["당기"])
+                    # if "분기순이익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 분기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["분기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["분기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["분기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["분기순이익"]["당기"])
+                    # if "반기순이익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 반기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["반기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["반기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["반기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["반기순이익"]["당기"])
+                    # if "연결당기순이익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 연결당기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["연결당기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["연결당기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["연결당기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["연결당기순이익"]["당기"])
+                    # if "연결분기순이익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 연결분기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["연결분기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["연결분기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["연결분기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["연결분기순이익"]["당기"])
+                    # if "연결반기순이익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 연결반기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["연결반기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["연결반기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["연결반기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["연결반기순이익"]["당기"])
+                    # if "연결분기순이익(손실)" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 연결분기순이익(손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["연결분기순이익(손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["연결분기순이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["연결분기순이익(손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["연결분기순이익(손실)"]["당기"])
+                    # if "분기순이익(손실)" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 분기순이익(손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["분기순이익(손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["분기순이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["분기순이익(손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["분기순이익(손실)"]["당기"])
+                    # if "반기순손익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 반기순손익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["반기순손익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["반기순손익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["반기순손익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["반기순손익"]["당기"])
+                    # if "당기순손익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 당기순손익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["포괄손익계산서"]["당기순손익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["포괄손익계산서"]["당기순손익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["포괄손익계산서"]["당기순손익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["포괄손익계산서"]["당기순손익"]["당기"])
+                    # if "총포괄손익" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 총포괄손익 start")
+                    #     if d8 is None: d8 = result["재무제표"]["포괄손익계산서"]["총포괄손익"]["누계"]
+                    #     else: d8.update(result["재무제표"]["포괄손익계산서"]["총포괄손익"]["누계"])
+                    #     if d9 is None: d9 = result["재무제표"]["포괄손익계산서"]["총포괄손익"]["당기"]
+                    #     else: d9.update(result["재무제표"]["포괄손익계산서"]["총포괄손익"]["당기"])
+                    # if "지배기업 소유주지분" in result["재무제표"]["포괄손익계산서"].keys():
+                    #     logger.info("재무제표 포괄손익계산서 지배기업 소유주지분 start")
+                    #     if d8 is None: d8 = result["재무제표"]["포괄손익계산서"]["지배기업 소유주지분"]["누계"]
+                    #     else: d8.update(result["재무제표"]["포괄손익계산서"]["지배기업 소유주지분"]["누계"])
+                    #     if d9 is None: d9 = result["재무제표"]["포괄손익계산서"]["지배기업 소유주지분"]["당기"]
+                    #     else: d9.update(result["재무제표"]["포괄손익계산서"]["지배기업 소유주지분"]["당기"])
                 if "손익계산서" in result["재무제표"].keys():
                     logger.info("재무제표 손익계산서 매출 start")
-                    if "매출" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 매출 start")
-                        if d1 is None: d1 = result["재무제표"]["손익계산서"]["매출"]["누계"]
-                        else: d1.update(result["재무제표"]["손익계산서"]["매출"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["손익계산서"]["매출"]["당기"]
-                        else: d3.update(result["재무제표"]["손익계산서"]["매출"]["당기"])
-                    if "수익(매출액)" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 수익(매출액) start")
-                        if d1 is None: d1 = result["재무제표"]["손익계산서"]["수익(매출액)"]["누계"]
-                        else: d1.update(result["재무제표"]["손익계산서"]["수익(매출액)"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["손익계산서"]["수익(매출액)"]["당기"]
-                        else: d3.update(result["재무제표"]["손익계산서"]["수익(매출액)"]["당기"])
-                    if "매출액" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 매출액 start")
-                        if d1 is None: d1 = result["재무제표"]["손익계산서"]["매출액"]["누계"]
-                        else: d1.update(result["재무제표"]["손익계산서"]["매출액"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["손익계산서"]["매출액"]["당기"]
-                        else: d3.update(result["재무제표"]["손익계산서"]["매출액"]["당기"])
-                    if "I.  매출액" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 I.  매출액 start")
-                        if d1 is None: d1 = result["재무제표"]["손익계산서"]["I.  매출액"]["누계"]
-                        else: d1.update(result["재무제표"]["손익계산서"]["I.  매출액"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["손익계산서"]["I.  매출액"]["당기"]
-                        else: d3.update(result["재무제표"]["손익계산서"]["I.  매출액"]["당기"])
-                    if "영업수익" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 영업수익 start")
-                        if d1 is None: d1 = result["재무제표"]["손익계산서"]["영업수익"]["누계"]
-                        else: d1.update(result["재무제표"]["손익계산서"]["영업수익"]["누계"])
-                        if d3 is None: d3 = result["재무제표"]["손익계산서"]["영업수익"]["당기"]
-                        else: d3.update(result["재무제표"]["손익계산서"]["영업수익"]["당기"])
-                    else:
-                        pass
-                    if "영업이익(손실)" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 영업이익(손실) start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업이익(손실)"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["영업이익(손실)"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업이익(손실)"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["영업이익(손실)"]["당기"])
-                    if "영업이익 (손실)" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 영업이익 (손실) start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"])
-                    if "영업이익" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 영업이익 start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업이익"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["영업이익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업이익"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["영업이익"]["당기"])
-                    if "V. 영업이익" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 V. 영업이익 start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["V. 영업이익"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["V. 영업이익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["V. 영업이익"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["V. 영업이익"]["당기"])
-                    if "영업손익" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 영업손익 start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업손익"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["영업손익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업손익"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["영업손익"]["당기"])
-                    if "V. 영업손익" in result["재무제표"]["손익계산서"].keys():
-                        logger.info("재무제표 손익계산서 V. 영업손익 start")
-                        if d2 is None: d2 = result["재무제표"]["손익계산서"]["V. 영업손익"]["누계"]
-                        else: d2.update(result["재무제표"]["손익계산서"]["V. 영업손익"]["누계"])
-                        if d4 is None: d4 = result["재무제표"]["손익계산서"]["V. 영업손익"]["당기"]
-                        else: d4.update(result["재무제표"]["손익계산서"]["V. 영업손익"]["당기"])
+                    tmp_result1 = {key: result["재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result2 = {key: result["재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result3 = {key: result["재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d1keys}}
+                    tmp_result4 = {key: result["재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d2keys}}
+                    tmp_result8 = {key: result["재무제표"]["손익계산서"][key]["누계"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d8keys}}
+                    tmp_result9 = {key: result["재무제표"]["손익계산서"][key]["당기"] for key in
+                                   result["재무제표"]["손익계산서"].keys() & {keys for keys in d8keys}}
+                    if tmp_result1:
+                        for key in tmp_result1.keys():
+                            if d1 is None:
+                                d1 = tmp_result1[key]
+                            else:
+                                d1.update(tmp_result1[key])
+                    if tmp_result2:
+                        for key in tmp_result2.keys():
+                            if d2 is None:
+                                d2 = tmp_result2[key]
+                            else:
+                                d2.update(tmp_result2[key])
+                    if tmp_result3:
+                        for key in tmp_result3.keys():
+                            if d3 is None:
+                                d3 = tmp_result3[key]
+                            else:
+                                d3.update(tmp_result3[key])
+                    if tmp_result4:
+                        for key in tmp_result4.keys():
+                            if d4 is None:
+                                d4 = tmp_result4[key]
+                            else:
+                                d4.update(tmp_result4[key])
+                    if tmp_result8:
+                        for key in tmp_result8.keys():
+                            if d8 is None:
+                                d8 = tmp_result8[key]
+                            else:
+                                d8.update(tmp_result8[key])
+                    if tmp_result9:
+                        for key in tmp_result9.keys():
+                            if d9 is None:
+                                d9 = tmp_result9[key]
+                            else:
+                                d9.update(tmp_result9[key])
+                    # if "매출" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 매출 start")
+                    #     if d1 is None: d1 = result["재무제표"]["손익계산서"]["매출"]["누계"]
+                    #     else: d1.update(result["재무제표"]["손익계산서"]["매출"]["누계"])
+                    #     if d3 is None: d3 = result["재무제표"]["손익계산서"]["매출"]["당기"]
+                    #     else: d3.update(result["재무제표"]["손익계산서"]["매출"]["당기"])
+                    # if "수익(매출액)" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 수익(매출액) start")
+                    #     if d1 is None: d1 = result["재무제표"]["손익계산서"]["수익(매출액)"]["누계"]
+                    #     else: d1.update(result["재무제표"]["손익계산서"]["수익(매출액)"]["누계"])
+                    #     if d3 is None: d3 = result["재무제표"]["손익계산서"]["수익(매출액)"]["당기"]
+                    #     else: d3.update(result["재무제표"]["손익계산서"]["수익(매출액)"]["당기"])
+                    # if "매출액" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 매출액 start")
+                    #     if d1 is None: d1 = result["재무제표"]["손익계산서"]["매출액"]["누계"]
+                    #     else: d1.update(result["재무제표"]["손익계산서"]["매출액"]["누계"])
+                    #     if d3 is None: d3 = result["재무제표"]["손익계산서"]["매출액"]["당기"]
+                    #     else: d3.update(result["재무제표"]["손익계산서"]["매출액"]["당기"])
+                    # if "I.  매출액" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 I.  매출액 start")
+                    #     if d1 is None: d1 = result["재무제표"]["손익계산서"]["I.  매출액"]["누계"]
+                    #     else: d1.update(result["재무제표"]["손익계산서"]["I.  매출액"]["누계"])
+                    #     if d3 is None: d3 = result["재무제표"]["손익계산서"]["I.  매출액"]["당기"]
+                    #     else: d3.update(result["재무제표"]["손익계산서"]["I.  매출액"]["당기"])
+                    # if "영업수익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 영업수익 start")
+                    #     if d1 is None: d1 = result["재무제표"]["손익계산서"]["영업수익"]["누계"]
+                    #     else: d1.update(result["재무제표"]["손익계산서"]["영업수익"]["누계"])
+                    #     if d3 is None: d3 = result["재무제표"]["손익계산서"]["영업수익"]["당기"]
+                    #     else: d3.update(result["재무제표"]["손익계산서"]["영업수익"]["당기"])
+                    # if "영업이익(손실)" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 영업이익(손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업이익(손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["영업이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업이익(손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["영업이익(손실)"]["당기"])
+                    # if "영업이익 (손실)" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 영업이익 (손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["영업이익 (손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["영업이익 (손실)"]["당기"])
+                    # if "영업이익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 영업이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["영업이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["영업이익"]["당기"])
+                    # if "V. 영업이익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 V. 영업이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["V. 영업이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["V. 영업이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["V. 영업이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["V. 영업이익"]["당기"])
+                    # if "영업손익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 영업손익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["영업손익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["영업손익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["영업손익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["영업손익"]["당기"])
+                    # if "V. 영업손익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 V. 영업손익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["V. 영업손익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["V. 영업손익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["V. 영업손익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["V. 영업손익"]["당기"])
+                    # if "당기순이익(손실)" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 당기순이익(손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["당기순이익(손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["당기순이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["당기순이익(손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["당기순이익(손실)"]["당기"])
+                    # if "반기순이익(손실)" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 반기순이익(손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["반기순이익(손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["반기순이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["반기순이익(손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["반기순이익(손실)"]["당기"])
+                    # if "당기순이익 (손실)" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 당기순이익 (손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["당기순이익 (손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["당기순이익 (손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["당기순이익 (손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["당기순이익 (손실)"]["당기"])
+                    # if "당기순이익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 당기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["당기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["당기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["당기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["당기순이익"]["당기"])
+                    # if "분기순이익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 분기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["분기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["분기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["분기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["분기순이익"]["당기"])
+                    # if "반기순이익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 반기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["반기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["반기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["반기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["반기순이익"]["당기"])
+                    # if "연결당기순이익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 연결당기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["연결당기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["연결당기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["연결당기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["연결당기순이익"]["당기"])
+                    # if "연결분기순이익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 연결분기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["연결분기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["연결분기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["연결분기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["연결분기순이익"]["당기"])
+                    # if "연결반기순이익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 연결반기순이익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["연결반기순이익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["연결반기순이익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["연결반기순이익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["연결반기순이익"]["당기"])
+                    # if "연결분기순이익(손실)" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 연결분기순이익(손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["연결분기순이익(손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["연결분기순이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["연결분기순이익(손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["연결분기순이익(손실)"]["당기"])
+                    # if "분기순이익(손실)" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 분기순이익(손실) start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["분기순이익(손실)"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["분기순이익(손실)"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["분기순이익(손실)"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["분기순이익(손실)"]["당기"])
+                    # if "반기순손익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 반기순손익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["반기순손익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["반기순손익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["반기순손익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["반기순손익"]["당기"])
+                    # if "당기순손익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 당기순손익 start")
+                    #     if d2 is None: d2 = result["재무제표"]["손익계산서"]["당기순손익"]["누계"]
+                    #     else: d2.update(result["재무제표"]["손익계산서"]["당기순손익"]["누계"])
+                    #     if d4 is None: d4 = result["재무제표"]["손익계산서"]["당기순손익"]["당기"]
+                    #     else: d4.update(result["재무제표"]["손익계산서"]["당기순손익"]["당기"])
+                    # if "총포괄손익" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 총포괄손익 start")
+                    #     if d8 is None: d8 = result["재무제표"]["손익계산서"]["총포괄손익"]["누계"]
+                    #     else: d8.update(result["재무제표"]["손익계산서"]["총포괄손익"]["누계"])
+                    #     if d9 is None: d9 = result["재무제표"]["손익계산서"]["총포괄손익"]["당기"]
+                    #     else: d9.update(result["재무제표"]["손익계산서"]["총포괄손익"]["당기"])
+                    # if "지배기업 소유주지분" in result["재무제표"]["손익계산서"].keys():
+                    #     logger.info("재무제표 손익계산서 지배기업 소유주지분 start")
+                    #     if d8 is None: d8 = result["재무제표"]["손익계산서"]["지배기업 소유주지분"]["누계"]
+                    #     else: d8.update(result["재무제표"]["손익계산서"]["지배기업 소유주지분"]["누계"])
+                    #     if d9 is None: d9 = result["재무제표"]["손익계산서"]["지배기업 소유주지분"]["당기"]
+                    #     else: d9.update(result["재무제표"]["손익계산서"]["지배기업 소유주지분"]["당기"])
                 d5 = result["재무제표"]["재무상태표"]["자산총계"] if "자산총계" in result["재무제표"]["재무상태표"].keys() else None
                 d6 = result["재무제표"]["재무상태표"]["부채총계"] if "부채총계" in result["재무제표"]["재무상태표"].keys() else None
                 d7 = result["재무제표"]["재무상태표"]["이익잉여금"] if "이익잉여금" in result["재무제표"]["재무상태표"].keys() else None
@@ -2828,13 +3393,16 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                 else:
                     if "이익잉여금(결손금)" in result["재무제표"]["재무상태표"].keys():
                         d7.update(result["재무제표"]["재무상태표"]["이익잉여금(결손금)"])
-            print(d1) # 매출액 누계
-            print(d2) # 영업이익 누계
-            print(d3) # 매출액 당기
-            print(d4) # 영업이익 당기
-            print(d5) # 자산총계
-            print(d6) # 부채총계
-            print(d7) # 이익잉여금
+            logger.info(d1) # 매출액 누계
+            logger.info(d2) # 영업이익 누계
+            logger.info(d3) # 매출액 당기
+            logger.info(d4) # 영업이익 당기
+            logger.info(d5) # 자산총계
+            logger.info(d6) # 부채총계
+            logger.info(d7) # 이익잉여금
+            logger.info(d8)  # 당기순이익 누계
+            logger.info(d9)  # 당기순이익
+            logger.info(provision_info)
             for key1 in d1.keys():
                 current_key = key1
                 # if key1 == "2019 4/4":
@@ -2874,6 +3442,14 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                                                                                              stock][
                                                                                                              "PL"][
                                                                                                              "Y"].keys() else 0
+                    data[stock]["PL"]["Y"]["당기순이익"] = dict(
+                        sorted({k: float(d8[key1][k].replace(",", "")) for k in
+                                d8[key1]}.items()))
+                    data[stock]["PL"]["Y"]["당기순이익"]["최근"] = provision_info[stock]["PL"]["Y"]["당기순이익"] if "당기순이익" in \
+                                                                                                       provision_info[
+                                                                                                           stock][
+                                                                                                           "PL"][
+                                                                                                           "Y"].keys() else 0
                     # data[stock]["PL"]["Y"]["영업이익"]["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"]
                     for k in sorted(d1[key1]):
                         dicTemp1[k] = float(d1[key1][k].replace(",", ""))
@@ -2881,6 +3457,9 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                     for k in sorted(d2[key1]):
                         dicTemp2[k] = float(d2[key1][k].replace(",", ""))
                     dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"] if "영업이익" in provision_info[stock]["PL"]["Y"].keys() else 0
+                    for k in sorted(d8[key1]):
+                        dicTemp8[k] = float(d8[key1][k].replace(",", ""))
+                    dicTemp8["최근"] = provision_info[stock]["PL"]["Y"]["당기순이익"] if "당기순이익" in provision_info[stock]["PL"]["Y"].keys() else 0
                 else:
                     for k in sorted(d1[key1]):
                         dicTemp0[k] = round(
@@ -2892,24 +3471,34 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                     for k in sorted(d1[key1]):
                         dicTemp1[k] = float(d1[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["누계매출액"][k] = float(d1[key1][k].replace(",", ""))
-                    dicTemp1["최근"] = provision_info[stock]["PL"]["Y"]["매출액"]
                     for k in sorted(d2[key1]):
                         dicTemp2[k] = float(d2[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["누계영업이익"][k] = float(d2[key1][k].replace(",", ""))
-                    dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"]
                     for k in sorted(d3[key1]):
                         dicTemp3[k] = float(d3[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["당기매출액"][k] = float(d3[key1][k].replace(",", ""))
-                    dicTemp3["최근"] = provision_info[stock]["PL"]["Q"]["매출액"]
                     for k in sorted(d4[key1]):
                         dicTemp4[k] = float(d4[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["당기영업이익"][k] = float(d4[key1][k].replace(",", ""))
-                    dicTemp4["최근"] = provision_info[stock]["PL"]["Q"]["영업이익"]
-                    data[stock]["PL"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
-                    data[stock]["PL"]["Q"]["누계매출액추이"] = dict(sorted(dicTemp1.items()))
-                    data[stock]["PL"]["Q"]["누계영업이익추이"] = dict(sorted(dicTemp2.items()))
-                    data[stock]["PL"]["Q"]["당기매출액"] = dict(sorted(dicTemp3.items()))
-                    data[stock]["PL"]["Q"]["당기영업이익"] = dict(sorted(dicTemp4.items()))
+                    for k in sorted(d8[key1]):
+                        dicTemp8[k] = float(d8[key1][k].replace(",", ""))
+                        # data[stock]["PL"]["Q"]["당기매출액"][k] = float(d3[key1][k].replace(",", ""))
+                    for k in sorted(d9[key1]):
+                        dicTemp9[k] = float(d9[key1][k].replace(",", ""))
+                        # data[stock]["PL"]["Q"]["당기영업이익"][k] = float(d4[key1][k].replace(",", ""))
+            # dicTemp1["최근"] = provision_info[stock]["PL"]["Y"]["매출액"]
+            # dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"]
+            dicTemp3["최근"] = provision_info[stock]["PL"]["Q"]["매출액"] if "매출액" in provision_info[stock]["PL"]["Q"].keys() else 0
+            dicTemp4["최근"] = provision_info[stock]["PL"]["Q"]["영업이익"] if "영업이익" in provision_info[stock]["PL"]["Q"].keys() else 0
+            # dicTemp8["최근"] = provision_info[stock]["PL"]["Y"]["당기순이익"]
+            dicTemp9["최근"] = provision_info[stock]["PL"]["Q"]["당기순이익"] if "당기순이익" in provision_info[stock]["PL"]["Q"].keys() else 0
+            data[stock]["PL"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
+            data[stock]["PL"]["Q"]["누계매출액추이"] = dict(sorted(dicTemp1.items()))
+            data[stock]["PL"]["Q"]["누계영업이익추이"] = dict(sorted(dicTemp2.items()))
+            data[stock]["PL"]["Q"]["당기매출액"] = dict(sorted(dicTemp3.items()))
+            data[stock]["PL"]["Q"]["당기영업이익"] = dict(sorted(dicTemp4.items()))
+            data[stock]["PL"]["Q"]["누계당기순이익추이"] = dict(sorted(dicTemp8.items()))
+            data[stock]["PL"]["Q"]["당기순이익"] = dict(sorted(dicTemp9.items()))
             # print("MakeAvg1?")
             # print(data)
             data[stock]["AverageRate"]["Y"]["매출액영업이익률"] = round(sum(
@@ -2919,26 +3508,36 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
             # print("MakeAvg2?")
             data[stock]["AverageRate"]["Y"]["매출액"] = round(sum(
                 data[stock]["PL"]["Y"]["매출액"].values()) / float(
-                len(data[stock]["PL"]["Y"]["매출액"])), 0) if "매출액" in data[stock]["PL"]["Y"].keys() else None
+                len(data[stock]["PL"]["Y"]["매출액"])), 0) if "매출액" in data[stock]["PL"]["Y"].keys() and \
+                                                           len(data[stock]["PL"]["Y"]["매출액"]) != 0 else None
             # print("MakeAvg3?")
             data[stock]["AverageRate"]["Y"]["영업이익"] = round(sum(
                 data[stock]["PL"]["Y"]["영업이익"].values()) / float(
-                len(data[stock]["PL"]["Y"]["영업이익"])), 0) if "영업이익" in data[stock]["PL"]["Y"].keys() else None
+                len(data[stock]["PL"]["Y"]["영업이익"])), 0) if "영업이익" in data[stock]["PL"]["Y"].keys() and \
+                                                           len(data[stock]["PL"]["Y"]["영업이익"]) != 0 else None
+            data[stock]["AverageRate"]["Y"]["당기순이익"] = round(sum(
+                data[stock]["PL"]["Y"]["당기순이익"].values()) / float(
+                len(data[stock]["PL"]["Y"]["당기순이익"])), 0) if "당기순이익" in data[stock]["PL"]["Y"].keys() and \
+                                                           len(data[stock]["PL"]["Y"]["당기순이익"]) != 0 else None
             # print("MakeAvg4?")
             data[stock]["AverageRate"]["Q"]["매출액영업이익률"] = round(sum(
                 data[stock]["PL"]["Q"]["매출액영업이익률"].values()) / float(
-                len(data[stock]["PL"]["Q"]["매출액영업이익률"])), 2) if "매출액영업이익률" in data[stock]["PL"][
-                "Q"].keys() else None
+                len(data[stock]["PL"]["Q"]["매출액영업이익률"])), 2) if "매출액영업이익률" in data[stock]["PL"]["Q"].keys() and \
+                                                           len(data[stock]["PL"]["Q"]["매출액영업이익률"]) != 0 else None
             # print("MakeAvg5?")
             data[stock]["AverageRate"]["Q"]["매출액"] = round(sum(
                 data[stock]["PL"]["Q"]["당기매출액"].values()) / float(
-                len(data[stock]["PL"]["Q"]["당기매출액"])), 0) if "당기매출액" in data[stock]["PL"][
-                "Q"].keys() else None
+                len(data[stock]["PL"]["Q"]["당기매출액"])), 0) if "당기매출액" in data[stock]["PL"]["Q"].keys() and \
+                                                           len(data[stock]["PL"]["Q"]["당기매출액"]) != 0 else None
             # print("MakeAvg6?")
             data[stock]["AverageRate"]["Q"]["영업이익"] = round(sum(
                 data[stock]["PL"]["Q"]["당기영업이익"].values()) / float(
-                len(data[stock]["PL"]["Q"]["당기영업이익"])), 0) if "당기영업이익" in data[stock]["PL"][
-                "Q"].keys() else None
+                len(data[stock]["PL"]["Q"]["당기영업이익"])), 0) if "당기영업이익" in data[stock]["PL"]["Q"].keys() and \
+                                                           len(data[stock]["PL"]["Q"]["당기영업이익"]) != 0 else None
+            data[stock]["AverageRate"]["Q"]["당기순이익"] = round(sum(
+                data[stock]["PL"]["Q"]["당기순이익"].values()) / float(
+                len(data[stock]["PL"]["Q"]["당기순이익"])), 0) if "당기순이익" in data[stock]["PL"]["Q"].keys() and \
+                                                           len(data[stock]["PL"]["Q"]["당기순이익"]) != 0 else None
             # print("MakeAvg7?")
             # 손익계산서 분석 끝
             for key1 in d1.keys():
@@ -2977,17 +3576,20 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                 for k in sorted(current_pos[key][report][acc][category].keys()):
                                     # k = ["YYYY 1/4", "YYYY 2/4", "YYYY 3/4", "YYYY 4/4"]
                                     logger.error("{}\t{}\t{}\t{}\t{}\t{}".format(key, report, acc, category, k, current_pos[key][report][acc][category][k]))
-    # logger.info(data)
+    logger.info(data)
 
     for k in data.keys():
         avg_sales_op_profit_rate = None
         avg_sales = None
         avg_op_profit = None
+        avg_net_income = None
         last_sales_op_profit_rate = None
         last_sales = None
         last_op_profit = None
+        last_net_income = None
         before_sales = None
         before_op_profit = None
+        before_net_income = None
 
         print(k, data[k]["corp_name"], "*"*100)
         for key in data[k]["PL"]["Y"].keys():
@@ -3002,28 +3604,44 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
         # print("here1?")
         if "매출액영업이익률" in data[k]["AverageRate"]["Y"].keys() \
             and "매출액" in data[k]["AverageRate"]["Y"].keys() \
-            and "영업이익" in data[k]["AverageRate"]["Y"].keys():
+            and "영업이익" in data[k]["AverageRate"]["Y"].keys() \
+            and "당기순이익" in data[k]["AverageRate"]["Y"].keys():
             # print("here2?")
             avg_sales_op_profit_rate = data[k]["AverageRate"]["Y"]["매출액영업이익률"]
             avg_sales = data[k]["AverageRate"]["Y"]["매출액"]
             avg_op_profit = data[k]["AverageRate"]["Y"]["영업이익"]
+            avg_net_income = data[k]["AverageRate"]["Y"]["당기순이익"]
 
             if "매출액영업이익률" in data[k]["PL"]["Q"].keys():
                 # print("here3?")
-                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1]
-                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1]
+                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["매출액영업이익률"]) > 0 else None
+                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계매출액추이"]) > 0 else None
                 if "매출액" in data[k]["PL"]["Y"].keys():
-                    data[k]["PL"]["Y"]["매출액"].popitem()
-                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1]
-                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1]
+                    data[k]["PL"]["Y"]["매출액"].popitem() if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
+                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["매출액"]) > 0 else None
+                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계영업이익추이"]) > 0 else None
                 if "영업이익" in data[k]["PL"]["Y"].keys():
-                    data[k]["PL"]["Y"]["영업이익"].popitem()
-                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1]
+                    data[k]["PL"]["Y"]["영업이익"].popitem() if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
+                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["영업이익"]) > 0 else None
+                last_net_income = data[k]["PL"]["Q"]["누계당기순이익추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계당기순이익추이"]) > 0 else None
+                if "당기순이익" in data[k]["PL"]["Y"].keys():
+                    data[k]["PL"]["Y"]["당기순이익"].popitem() if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
+                    before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
         # print("here4?")
         if avg_sales_op_profit_rate and last_sales_op_profit_rate:
             if last_sales_op_profit_rate > 0 and avg_sales_op_profit_rate > 0 and last_sales_op_profit_rate > avg_sales_op_profit_rate:
                 # print("here5?")
-                if avg_sales and last_sales and before_sales and last_sales > avg_sales and last_sales > before_sales:
+                if avg_sales and last_sales and before_sales and \
+                        avg_net_income and last_net_income and before_net_income and \
+                        last_sales > avg_sales and last_sales > before_sales and \
+                        last_net_income > avg_net_income and last_net_income > before_net_income:
                     if last_sales_op_profit_rate > 20:
                         best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
@@ -3032,7 +3650,10 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                    "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                    "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                    "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                   "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                   "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                   "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                    }
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -3050,7 +3671,10 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                    "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                    "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                    "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None}
+                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                   "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                   "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                   "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None}
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
                                 k)).content.decode("utf-8"))
@@ -3067,7 +3691,10 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                      "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                      "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                      "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                     "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                                     "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                     "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                     "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                     "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                      }
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -3086,7 +3713,10 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                      "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                      "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                      "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                     "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                                     "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                     "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                     "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                     "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                      }
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -3105,7 +3735,10 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                    "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                    "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                    "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                   "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                   "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                   "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                    }
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -3124,7 +3757,10 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                  "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                  "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                  "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                 "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                                 "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                 "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                 "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                 "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                  }
                     call = json.loads(requests.get(
                         "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -3142,7 +3778,10 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                                "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                                "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                               "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                               "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                               "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                               "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                               "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                                }
                     call = json.loads(requests.get(
                         "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
@@ -3160,7 +3799,10 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                        "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
                        "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
                        "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                       "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None
+                       "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                       "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                       "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                       "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None
                        }
             call = json.loads(requests.get(
                 "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
