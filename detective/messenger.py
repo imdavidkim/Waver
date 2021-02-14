@@ -54,10 +54,10 @@ def sendImage(token, chatid, img_path):
         bot.sendPhoto(chat_id=chatid, photo=open(img_path, 'rb'))
 
 
-def messeage_to_telegram(txt):
+def messeage_to_telegram(txt, dbg=False):
     import time
     getConfig()
-    DEBUG = False
+    DEBUG = dbg
     print(txt)
     if txt is not None and txt != '':
         if not DEBUG:
@@ -68,6 +68,7 @@ def messeage_to_telegram(txt):
         else:
             msg = yyyymmdd + '\n' + txt
             sendMessage(ggmsg, chat_id_kh, msg)
+
 
 def img_messeage_to_telegram(img_path, dbg=False):
     import time
@@ -83,6 +84,22 @@ def img_messeage_to_telegram(img_path, dbg=False):
         else:
             sendMessage(chart, chat_id_kh, yyyymmdd)
             sendImage(chart, chat_id_kh, img_path)
+
+
+def img_messeage_to_telegram2(img_path, dbg=False):
+    import time
+    getConfig()
+    DEBUG = dbg
+    if img_path is not None and img_path != '':
+        if not DEBUG:
+            sendMessage(chart, chat_id_kh, yyyymmdd)
+            sendImage(chart, chat_id_kh, img_path)
+            time.sleep(3)
+            sendMessage(daddy, chat_id_km, yyyymmdd)
+            sendImage(daddy, chat_id_km, img_path)
+        else:
+            # sendMessage(ggmsg, chat_id_kh, yyyymmdd)
+            sendImage(ggmsg, chat_id_kh, img_path)
 
             
 def free_cap_inc_message_to_telegram(txt):
