@@ -2,17 +2,25 @@ import datetime
 import pandas as pd
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
-
+import requests
 
 def getNaverPrice(url_type, code, r_page=1):
+    header = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36 Edg/84.0.522.49",
+        "Accept-Encoding": "gzip, deflate",
+        "Accept-Language": "ko,en;q=0.9,en-US;q=0.8",
+    }
     base_url = None
     if url_type.upper() == 'INDEX':
         base_url = "https://finance.naver.com/sise/sise_index_day.nhn?code={}".format(code)
     elif url_type.upper() == 'STOCK':
         base_url = "http://finance.naver.com/item/sise_day.nhn?code={}".format(code)
 
-    html = urlopen(base_url)
-    source = BeautifulSoup(html.read(), "html.parser")
+    # html = urlopen(base_url)
+    # source = BeautifulSoup(html.read(), "html.parser")
+    html = requests.get(url=base_url, headers=header)
+    source = BeautifulSoup(html.content, 'html.parser')
 
     if url_type.upper() == 'STOCK':
         maxPage = source.find_all("table", align="center")
@@ -50,8 +58,10 @@ def getNaverPrice(url_type, code, r_page=1):
         for page in range(1, mpNum + 1):
             # print(str(page))
             url = base_url + '&page=' + str(page)
-            html = urlopen(url)
-            source = BeautifulSoup(html.read(), "html.parser")
+            # html = urlopen(url)
+            # source = BeautifulSoup(html.read(), "html.parser")
+            html = requests.get(url=url, headers=header)
+            source = BeautifulSoup(html.content, 'html.parser')
             srlists = source.find_all("tr")
             # print(len(srlists), srlists)
             # for s in srlists:
@@ -126,6 +136,7 @@ def getNaverPrice(url_type, code, r_page=1):
             retArrayData.append(i[1])
         retVal = pd.core.series.Series(retArrayData, retArrayDate)
         return retVal
+
 if __name__ == '__main__':
     stockItem = '013890'
     page = 1
