@@ -2703,13 +2703,13 @@ def new_find_hidden_pearl_with_dartpipe_test(code, bgn_dt=None, end_dt=None):
                             dicTemp7[k] = float(d7[key1][k].replace(",", "")) if d7 is not None else 0
                     if d10 is not None:
                         for k in sorted(d10[key1]):
-                            dicTemp10[k] = float(d10[key1][k].replace(",", "")) if d10 is not None else 0
+                            dicTemp10[k] = float(str(d10[key1][k]).replace(",", "")) if d10 is not None else 0
                     if d11 is not None:
                         for k in sorted(d11[key1]):
-                            dicTemp11[k] = float(d11[key1][k].replace(",", "")) if d11 is not None else 0
+                            dicTemp11[k] = float(str(d11[key1][k]).replace(",", "")) if d11 is not None else 0
                     if d12 is not None:
                         for k in sorted(d12[key1]):
-                            dicTemp12[k] = float(d12[key1][k].replace(",", "")) if d12 is not None else 0
+                            dicTemp12[k] = float(str(d12[key1][k]).replace(",", "")) if d12 is not None else 0
                 data[stock.code]["FS"]["TotalAsset"] = dict(sorted(dicTemp5.items()))
                 data[stock.code]["FS"]["TotalDebt"] = dict(sorted(dicTemp6.items()))
                 data[stock.code]["FS"]["RetainedEarnings"] = dict(sorted(dicTemp7.items()))
