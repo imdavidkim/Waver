@@ -1198,6 +1198,7 @@ def new_find_hidden_pearl():
             json.dump(trash, fp)
 
 
+
 def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     import sys
     import os
@@ -1247,6 +1248,7 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     good = {}
     soso = {}
     lists = None
+    none_list = []
     # 날짜 정보 셋팅
     dateDict = new_get_dateDict()
     # 종목 정보 셋팅
@@ -1258,11 +1260,11 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     stockInfo = detective_db.Stocks.objects.filter(category_name__contains="특수", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(market_text__contains="제조", market_text_detail__contains="장비", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(code="058110", listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code="089970", listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(code=code, listing='Y')
     dart = pipe.Pipe()
     dart.create()
     for stock in stockInfo:
-        # print(stock)
+        current_key = None
         ret, code = dart.get_corp_code(stock.code)
         try:
             if ret:
@@ -1272,7 +1274,7 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                     "list_shares": stock.issued_shares,
                                     "PL": {"Y": {}, "Q": {}},
                                     "FS": {"TotalAsset": {}, "TotalDebt": {}, "RetainedEarnings": {}},
-                                    "CF": {"영업활동현금흐름": {}, "유형자산취득": {}, "무형자산취득": {}},
+                                    "CF": {"영업활동현금흐름": {}, "유형자산취득": {}, "무형자산취득": {}, "FCF": {}},
                                     "AverageRate": {"Y": {}, "Q": {}}}
                 # print(dateDict["yyyy2"], dateDict)
                 if bgn_dt is None:
@@ -1317,6 +1319,8 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                 d10 = None
                 d11 = None
                 d12 = None
+                d13 = None
+                d14 = None
                 dicTemp0 = {}
                 dicTemp1 = {}
                 dicTemp2 = {}
@@ -1330,6 +1334,8 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                 dicTemp10 = {}
                 dicTemp11 = {}
                 dicTemp12 = {}
+                dicTemp13 = {}
+                dicTemp14 = {}
                 # if stock == "006360":
                 #     print()
                 d1keys = ["매출", "수익(매출액)", "I.  매출액", "영업수익", "매출액", "Ⅰ. 매출액"]
@@ -1341,9 +1347,11 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                           "Ⅷ. 당기순이익(손실)",
                           "Ⅷ. 당기순이익", "VIII. 당기순이익", "지배기업 소유주", "VIII. 분기순손익", "VIII. 분기순이익", "I.당기순이익", "I.반기순이익",
                           "I.분기순이익", "반기연결순이익(손실)", "지배기업의 소유주지분", "지배기업소유주지분", "지배기업의소유주지분"]
-                d10keys = ["영업활동현금흐름", "영업활동 현금흐름"]
+                d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입"]
                 d11keys = ["유형자산의 취득"]
                 d12keys = ["무형자산의 취득"]
+                d13keys = ["토지의 취득", "건물의 취득", "구축물의 취득", "기계장치의 취득", "차량운반구의 취득", "공구와기구의취득", "공구와기구의 취득", "비품의 취득", "기타유형자산의 취득", "건설중인자산의 취득", "투자부동산의 취득"]
+                d14keys = ["컴퓨터소프트웨어의 취득"]
                 # if stock == "006360":
                 #     print()
                 if result is not {} and "연결재무제표" in result.keys():
@@ -1456,6 +1464,10 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                         result["연결재무제표"]["현금흐름표"].keys() & {keys for keys in d11keys}}
                         tmp_result12 = {key: result["연결재무제표"]["현금흐름표"][key] for key in
                                         result["연결재무제표"]["현금흐름표"].keys() & {keys for keys in d12keys}}
+                        tmp_result13 = {key: result["연결재무제표"]["현금흐름표"][key] for key in
+                                        result["연결재무제표"]["현금흐름표"].keys() & {keys for keys in d13keys}}
+                        tmp_result14 = {key: result["연결재무제표"]["현금흐름표"][key] for key in
+                                        result["연결재무제표"]["현금흐름표"].keys() & {keys for keys in d14keys}}
                         if tmp_result10:
                             for key in tmp_result10.keys():
                                 if d10 is None:
@@ -1474,6 +1486,22 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                     d12 = tmp_result12[key]
                                 else:
                                     d12.update(tmp_result12[key])
+                        if tmp_result13:
+                            d13 = dictionary_add(tmp_result13)
+                            # for key in tmp_result13.keys():
+                            #     if d13 is None:
+                            #         d13 = tmp_result13[key]
+                            #     else:
+                            #         d13.update(tmp_result13[key])
+                        if tmp_result14:
+                            d14 = dictionary_add(tmp_result14)
+                            # for key in tmp_result14.keys():
+                            #     if d14 is None:
+                            #         d14 = tmp_result14[key]
+                            #     else:
+                            #         d14.update(tmp_result14[key])
+                    if d11 is None: d11 = d13
+                    if d12 is None: d12 = d14
                     d5 = result["연결재무제표"]["재무상태표"]["자산총계"] if "자산총계" in result["연결재무제표"]["재무상태표"].keys() else None
                     d6 = result["연결재무제표"]["재무상태표"]["부채총계"] if "부채총계" in result["연결재무제표"]["재무상태표"].keys() else None
                     d7 = result["연결재무제표"]["재무상태표"]["이익잉여금"] if "이익잉여금" in result["연결재무제표"]["재무상태표"].keys() else None
@@ -1588,11 +1616,15 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     if "현금흐름표" in result["재무제표"].keys():
                         logger.info("재무제표 현금흐름표 start")
                         tmp_result10 = {key: result["재무제표"]["현금흐름표"][key] for key in
-                                        result["재무제표"]["현금흐름표"].keys() & {keys for keys in d10keys}}
+                                       result["재무제표"]["현금흐름표"].keys() & {keys for keys in d10keys}}
                         tmp_result11 = {key: result["재무제표"]["현금흐름표"][key] for key in
                                         result["재무제표"]["현금흐름표"].keys() & {keys for keys in d11keys}}
                         tmp_result12 = {key: result["재무제표"]["현금흐름표"][key] for key in
                                         result["재무제표"]["현금흐름표"].keys() & {keys for keys in d12keys}}
+                        tmp_result13 = {key: result["재무제표"]["현금흐름표"][key] for key in
+                                        result["재무제표"]["현금흐름표"].keys() & {keys for keys in d13keys}}
+                        tmp_result14 = {key: result["재무제표"]["현금흐름표"][key] for key in
+                                        result["재무제표"]["현금흐름표"].keys() & {keys for keys in d14keys}}
                         if tmp_result10:
                             for key in tmp_result10.keys():
                                 if d10 is None:
@@ -1611,6 +1643,22 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                     d12 = tmp_result12[key]
                                 else:
                                     d12.update(tmp_result12[key])
+                        if tmp_result13:
+                            d13 = dictionary_add(tmp_result13)
+                            # for key in tmp_result13.keys():
+                            #     if d13 is None:
+                            #         d13 = tmp_result13[key]
+                            #     else:
+                            #         d13.update(tmp_result13[key])
+                        if tmp_result14:
+                            d14 = dictionary_add(tmp_result14)
+                            # for key in tmp_result14.keys():
+                            #     if d14 is None:
+                            #         d14 = tmp_result14[key]
+                            #     else:
+                            #         d14.update(tmp_result14[key])
+                    if d11 is None: d11 = d13
+                    if d12 is None: d12 = d14
                     d5 = result["재무제표"]["재무상태표"]["자산총계"] if "자산총계" in result["재무제표"]["재무상태표"].keys() else None
                     d6 = result["재무제표"]["재무상태표"]["부채총계"] if "부채총계" in result["재무제표"]["재무상태표"].keys() else None
                     d7 = result["재무제표"]["재무상태표"]["이익잉여금"] if "이익잉여금" in result["재무제표"]["재무상태표"].keys() else None
@@ -1632,7 +1680,14 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                 logger.info(d10)  # 영업활동현금흐름
                 logger.info(d11)  # 유형자산의 취득
                 logger.info(d12)  # 무형자산의 취득
-
+                logger.info(d13)  # 유형자산의 취득(유형자산의 취득으로 표시되지 않는)
+                logger.info(d14)
+                if d10 is None:
+                    none_list.append("[{}][{}]-영업활동현금흐름".format(stock.code, stock.name))
+                if d11 is None:
+                    none_list.append("[{}][{}]-유형자산의 취득".format(stock.code, stock.name))
+                if d12 is None:
+                    none_list.append("[{}][{}]-무형자산의 취득".format(stock.code, stock.name))
                 for key1 in d1.keys():
                     current_key = key1
                     if "Rate" in key1: continue
@@ -1686,7 +1741,15 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                         for k in sorted(d9[key1]):
                             dicTemp9[k] = float(d9[key1][k].replace(",", ""))
                             # data[stock.code]["PL"]["Q"]["당기영업이익"][k] = float(d4[key1][k].replace(",", ""))
-
+                for key2 in d10.keys():
+                    current_key = key2
+                    if "Rate" in key2: continue
+                    # if key2 not in data[stock.code]["CF"]["FCF"].keys():
+                    #     data[stock.code]["CF"]["FCF"][key2] = {}
+                    for key3 in d10[key2].keys():
+                        yhasset = int(d11[key2][key3]) if key2 in d11.keys() and key3 in d11[key2].keys() else 0
+                        mhasset = int(d12[key2][key3]) if key2 in d12.keys() and key3 in d12[key2].keys() else 0
+                        data[stock.code]["CF"]["FCF"][key3] = int(d10[key2][key3]) - (yhasset + mhasset)
                 data[stock.code]["PL"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
                 data[stock.code]["PL"]["Q"]["누계매출액추이"] = dict(sorted(dicTemp1.items()))
                 data[stock.code]["PL"]["Q"]["누계영업이익추이"] = dict(sorted(dicTemp2.items()))
@@ -1704,36 +1767,44 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                 data[stock.code]["AverageRate"]["Y"]["매출액"] = round(sum(
                     data[stock.code]["PL"]["Y"]["매출액"].values()) / float(
                     len(data[stock.code]["PL"]["Y"]["매출액"])), 0) if "매출액" in data[stock.code]["PL"]["Y"].keys() and \
-                                                               len(data[stock.code]["PL"]["Y"]["매출액"]) != 0 else None
+                                                                    len(data[stock.code]["PL"]["Y"][
+                                                                            "매출액"]) != 0 else None
                 # print("MakeAvg3?")
                 data[stock.code]["AverageRate"]["Y"]["영업이익"] = round(sum(
                     data[stock.code]["PL"]["Y"]["영업이익"].values()) / float(
                     len(data[stock.code]["PL"]["Y"]["영업이익"])), 0) if "영업이익" in data[stock.code]["PL"]["Y"].keys() and \
-                                                                len(data[stock.code]["PL"]["Y"]["영업이익"]) != 0 else None
+                                                                     len(data[stock.code]["PL"]["Y"][
+                                                                             "영업이익"]) != 0 else None
                 data[stock.code]["AverageRate"]["Y"]["당기순이익"] = round(sum(
                     data[stock.code]["PL"]["Y"]["당기순이익"].values()) / float(
                     len(data[stock.code]["PL"]["Y"]["당기순이익"])), 0) if "당기순이익" in data[stock.code]["PL"]["Y"].keys() and \
-                                                                 len(data[stock.code]["PL"]["Y"]["당기순이익"]) != 0 else None
+                                                                      len(data[stock.code]["PL"]["Y"][
+                                                                              "당기순이익"]) != 0 else None
                 # print("MakeAvg4?")
                 data[stock.code]["AverageRate"]["Q"]["매출액영업이익률"] = round(sum(
                     data[stock.code]["PL"]["Q"]["매출액영업이익률"].values()) / float(
-                    len(data[stock.code]["PL"]["Q"]["매출액영업이익률"])), 2) if "매출액영업이익률" in data[stock.code]["PL"]["Q"].keys() and \
-                                                                    len(data[stock.code]["PL"]["Q"][
-                                                                            "매출액영업이익률"]) != 0 else None
+                    len(data[stock.code]["PL"]["Q"]["매출액영업이익률"])), 2) if "매출액영업이익률" in data[stock.code]["PL"][
+                    "Q"].keys() and \
+                                                                         len(data[stock.code]["PL"]["Q"][
+                                                                                 "매출액영업이익률"]) != 0 else None
                 # print("MakeAvg5?")
                 data[stock.code]["AverageRate"]["Q"]["매출액"] = round(sum(
                     data[stock.code]["PL"]["Q"]["당기매출액"].values()) / float(
                     len(data[stock.code]["PL"]["Q"]["당기매출액"])), 0) if "당기매출액" in data[stock.code]["PL"]["Q"].keys() and \
-                                                                 len(data[stock.code]["PL"]["Q"]["당기매출액"]) != 0 else None
+                                                                      len(data[stock.code]["PL"]["Q"][
+                                                                              "당기매출액"]) != 0 else None
                 # print("MakeAvg6?")
                 data[stock.code]["AverageRate"]["Q"]["영업이익"] = round(sum(
                     data[stock.code]["PL"]["Q"]["당기영업이익"].values()) / float(
-                    len(data[stock.code]["PL"]["Q"]["당기영업이익"])), 0) if "당기영업이익" in data[stock.code]["PL"]["Q"].keys() and \
-                                                                  len(data[stock.code]["PL"]["Q"]["당기영업이익"]) != 0 else None
+                    len(data[stock.code]["PL"]["Q"]["당기영업이익"])), 0) if "당기영업이익" in data[stock.code]["PL"][
+                    "Q"].keys() and \
+                                                                       len(data[stock.code]["PL"]["Q"][
+                                                                               "당기영업이익"]) != 0 else None
                 data[stock.code]["AverageRate"]["Q"]["당기순이익"] = round(sum(
                     data[stock.code]["PL"]["Q"]["당기순이익"].values()) / float(
                     len(data[stock.code]["PL"]["Q"]["당기순이익"])), 0) if "당기순이익" in data[stock.code]["PL"]["Q"].keys() and \
-                                                                 len(data[stock.code]["PL"]["Q"]["당기순이익"]) != 0 else None
+                                                                      len(data[stock.code]["PL"]["Q"][
+                                                                              "당기순이익"]) != 0 else None
                 # print("MakeAvg7?")
                 # 손익계산서 분석 끝
                 for key1 in d1.keys():
@@ -1747,9 +1818,22 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     if d7 is not None:
                         for k in sorted(d7[key1]):
                             dicTemp7[k] = float(d7[key1][k].replace(",", "")) if d7 is not None else 0
-                    data[stock.code]["FS"]["TotalAsset"] = dict(sorted(dicTemp5.items()))
-                    data[stock.code]["FS"]["TotalDebt"] = dict(sorted(dicTemp6.items()))
-                    data[stock.code]["FS"]["RetainedEarnings"] = dict(sorted(dicTemp7.items()))
+                    if d10 is not None:
+                        for k in sorted(d10[key1]):
+                            dicTemp10[k] = float(str(d10[key1][k]).replace(",", "")) if d10 is not None else 0
+                    if d11 is not None:
+                        for k in sorted(d11[key1]):
+                            dicTemp11[k] = float(str(d11[key1][k]).replace(",", "")) if d11 is not None else 0
+                    if d12 is not None:
+                        for k in sorted(d12[key1]):
+                            dicTemp12[k] = float(str(d12[key1][k]).replace(",", "")) if d12 is not None else 0
+                data[stock.code]["FS"]["TotalAsset"] = dict(sorted(dicTemp5.items()))
+                data[stock.code]["FS"]["TotalDebt"] = dict(sorted(dicTemp6.items()))
+                data[stock.code]["FS"]["RetainedEarnings"] = dict(sorted(dicTemp7.items()))
+                data[stock.code]["CF"]["영업활동현금흐름"] = dict(sorted(dicTemp10.items()))
+                data[stock.code]["CF"]["유형자산취득"] = dict(sorted(dicTemp11.items()))
+                data[stock.code]["CF"]["무형자산취득"] = dict(sorted(dicTemp12.items()))
+                data[stock.code]["CF"]["FCF"] = dict(sorted(data[stock.code]["CF"]["FCF"].items()))
         except Exception as e:
             logger.error(e)
             # logger.error(current_pos)
@@ -1800,6 +1884,9 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
         print("재무상태표-자산총계", data[k]["FS"]["TotalAsset"])
         print("재무상태표-부채총계", data[k]["FS"]["TotalDebt"])
         print("재무상태표-이익잉여금", data[k]["FS"]["RetainedEarnings"])
+        print("현금흐름표-영업활동현금흐름", data[k]["CF"]["영업활동현금흐름"])
+        print("현금흐름표-유형자산취득", data[k]["CF"]["유형자산취득"])
+        print("현금흐름표-무형자산취득", data[k]["CF"]["무형자산취득"])
         # print("here1?")
         if "매출액영업이익률" in data[k]["AverageRate"]["Y"].keys() \
                 and "매출액" in data[k]["AverageRate"]["Y"].keys() \
@@ -2083,8 +2170,8 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
             if "SOSO" not in treasure.keys():
                 treasure["SOSO"] = {}
             treasure["SOSO"][key] = {"사명": soso[key]["corp_name"], "시가총액": soso[key]["시가총액"], "업종": soso[key]["업종"], "최근매출액영업이익률": soso[key]["최근매출액영업이익률"], "EPS": soso[key]["EPS"], "추정EPS": soso[key]["EPS2"], "괴리율": round((soso[key]["EPS2"] - soso[key]["EPS"])/soso[key]["EPS"] * 100, 2), "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"]}
+    logger.info(none_list)
     return treasure
-
 
 def dictionary_add(d):
     tmp_dic = {}
@@ -2647,9 +2734,12 @@ def new_find_hidden_pearl_with_dartpipe_test(code, bgn_dt=None, end_dt=None):
                 for key2 in d10.keys():
                     current_key = key2
                     if "Rate" in key2: continue
-                    yhasset = int(d11[key2]) if key2 in d11.keys() else 0
-                    mhasset = int(d12[key2]) if key2 in d12.keys() else 0
-                    data[stock.code]["CF"]["FCF"][key2] = int(d10[key2]) - (yhasset + mhasset)
+                    # if key2 not in data[stock.code]["CF"]["FCF"].keys():
+                    #     data[stock.code]["CF"]["FCF"][key2] = {}
+                    for key3 in d10[key2].keys():
+                        yhasset = int(d11[key2][key3]) if key2 in d11.keys() and key3 in d11[key2].keys() else 0
+                        mhasset = int(d12[key2][key3]) if key2 in d12.keys() and key3 in d12[key2].keys() else 0
+                        data[stock.code]["CF"]["FCF"][key3] = int(d10[key2][key3]) - (yhasset + mhasset)
                 data[stock.code]["PL"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
                 data[stock.code]["PL"]["Q"]["누계매출액추이"] = dict(sorted(dicTemp1.items()))
                 data[stock.code]["PL"]["Q"]["누계영업이익추이"] = dict(sorted(dicTemp2.items()))
@@ -2725,6 +2815,7 @@ def new_find_hidden_pearl_with_dartpipe_test(code, bgn_dt=None, end_dt=None):
                 data[stock.code]["CF"]["영업활동현금흐름"] = dict(sorted(dicTemp10.items()))
                 data[stock.code]["CF"]["유형자산취득"] = dict(sorted(dicTemp11.items()))
                 data[stock.code]["CF"]["무형자산취득"] = dict(sorted(dicTemp12.items()))
+                data[stock.code]["CF"]["FCF"] = dict(sorted(data[stock.code]["CF"]["FCF"].items()))
         except Exception as e:
             logger.error(e)
             # logger.error(current_pos)
@@ -2765,19 +2856,33 @@ def new_find_hidden_pearl_with_dartpipe_test(code, bgn_dt=None, end_dt=None):
         before_op_profit = None
         before_net_income = None
 
-        print(k, data[k]["corp_name"], "*" * 100)
+        # print(k, data[k]["corp_name"], "*" * 100)
+        # for key in data[k]["PL"]["Y"].keys():
+        #     print("연간", key, data[k]["PL"]["Y"][key])
+        # print("연간", data[k]["AverageRate"]["Y"])
+        # for key in data[k]["PL"]["Q"].keys():
+        #     print("당기", key, data[k]["PL"]["Q"][key])
+        # print("당기", data[k]["AverageRate"]["Q"])
+        # print("재무상태표-자산총계", data[k]["FS"]["TotalAsset"])
+        # print("재무상태표-부채총계", data[k]["FS"]["TotalDebt"])
+        # print("재무상태표-이익잉여금", data[k]["FS"]["RetainedEarnings"])
+        # print("현금흐름표-영업활동현금흐름", data[k]["CF"]["영업활동현금흐름"])
+        # print("현금흐름표-유형자산취득", data[k]["CF"]["유형자산취득"])
+        # print("현금흐름표-무형자산취득", data[k]["CF"]["무형자산취득"])
+        logger.info("{} {} {}".format(k, data[k]["corp_name"], "*" * 100))
         for key in data[k]["PL"]["Y"].keys():
-            print("연간", key, data[k]["PL"]["Y"][key])
-        print("연간", data[k]["AverageRate"]["Y"])
+            logger.info("{} {} {}".format("연간", key, data[k]["PL"]["Y"][key]))
+        logger.info("{} {}".format("연간", data[k]["AverageRate"]["Y"]))
         for key in data[k]["PL"]["Q"].keys():
-            print("당기", key, data[k]["PL"]["Q"][key])
-        print("당기", data[k]["AverageRate"]["Q"])
-        print("재무상태표-자산총계", data[k]["FS"]["TotalAsset"])
-        print("재무상태표-부채총계", data[k]["FS"]["TotalDebt"])
-        print("재무상태표-이익잉여금", data[k]["FS"]["RetainedEarnings"])
-        print("현금흐름표-영업활동현금흐름", data[k]["CF"]["영업활동현금흐름"])
-        print("현금흐름표-유형자산취득", data[k]["CF"]["유형자산취득"])
-        print("현금흐름표-무형자산취득", data[k]["CF"]["무형자산취득"])
+            logger.info("{} {} {}".format("당기", key, data[k]["PL"]["Q"][key]))
+        logger.info("{} {}".format("당기", data[k]["AverageRate"]["Q"]))
+        logger.info("{} {}".format("재무상태표-자산총계", data[k]["FS"]["TotalAsset"]))
+        logger.info("{} {}".format("재무상태표-부채총계", data[k]["FS"]["TotalDebt"]))
+        logger.info("{} {}".format("재무상태표-이익잉여금", data[k]["FS"]["RetainedEarnings"]))
+        logger.info("{} {}".format("CF-OCF", data[k]["CF"]["영업활동현금흐름"]))
+        logger.info("{} {}".format("CF-유형자산취득", data[k]["CF"]["유형자산취득"]))
+        logger.info("{} {}".format("CF-무형자산취득", data[k]["CF"]["무형자산취득"]))
+        logger.info("{} {}".format("CF-FCF", data[k]["CF"]["FCF"]))
         # print("here1?")
         if "매출액영업이익률" in data[k]["AverageRate"]["Y"].keys() \
                 and "매출액" in data[k]["AverageRate"]["Y"].keys() \
@@ -3114,6 +3219,7 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
     good = {}
     soso = {}
     info_lack = {}
+    none_list = []
     # 날짜 정보 셋팅
     dateDict = new_get_dateDict()
     # 종목 정보 셋팅
@@ -3146,7 +3252,7 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                            "list_shares": stock_obj["issued_shares"],
                            "PL": {"Y": {}, "Q": {}},
                            "FS": {"TotalAsset": {}, "TotalDebt": {}, "RetainedEarnings": {}},
-                           "CF": {"영업활동현금흐름": {}, "유형자산취득": {}, "무형자산취득": {}},
+                           "CF": {"영업활동현금흐름": {}, "유형자산취득": {}, "무형자산취득": {}, "FCF": {}},
                            "AverageRate": {"Y": {}, "Q": {}}}
             # print(dateDict["yyyy2"], dateDict)
             lists = None
@@ -3190,6 +3296,8 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
             d10 = None
             d11 = None
             d12 = None
+            d13 = None
+            d14 = None
             dicTemp0 = {}
             dicTemp1 = {}
             dicTemp2 = {}
@@ -3203,6 +3311,8 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
             dicTemp10 = {}
             dicTemp11 = {}
             dicTemp12 = {}
+            dicTemp13 = {}
+            dicTemp14 = {}
             # if stock == "006360":
             #     print()
             d1keys = ["매출", "수익(매출액)", "I.  매출액", "영업수익", "매출액", "Ⅰ. 매출액"]
@@ -3214,9 +3324,12 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                       "Ⅷ. 당기순이익(손실)",
                       "Ⅷ. 당기순이익", "VIII. 당기순이익", "지배기업 소유주", "VIII. 분기순손익", "VIII. 분기순이익", "I.당기순이익", "I.반기순이익",
                       "I.분기순이익", "반기연결순이익(손실)", "지배기업의 소유주지분", "지배기업소유주지분", "지배기업의소유주지분"]
-            d10keys = ["영업활동현금흐름", "영업활동 현금흐름"]
+            d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입"]
             d11keys = ["유형자산의 취득"]
             d12keys = ["무형자산의 취득"]
+            d13keys = ["토지의 취득", "건물의 취득", "구축물의 취득", "기계장치의 취득", "차량운반구의 취득", "공구와기구의취득", "공구와기구의 취득", "비품의 취득",
+                       "기타유형자산의 취득", "건설중인자산의 취득", "투자부동산의 취득"]
+            d14keys = ["컴퓨터소프트웨어의 취득"]
             # if stock == "006360":
             #     print()
             if result is not {} and "연결재무제표" in result.keys():
@@ -3329,6 +3442,10 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                                     result["연결재무제표"]["현금흐름표"].keys() & {keys for keys in d11keys}}
                     tmp_result12 = {key: result["연결재무제표"]["현금흐름표"][key] for key in
                                     result["연결재무제표"]["현금흐름표"].keys() & {keys for keys in d12keys}}
+                    tmp_result13 = {key: result["연결재무제표"]["현금흐름표"][key] for key in
+                                    result["연결재무제표"]["현금흐름표"].keys() & {keys for keys in d13keys}}
+                    tmp_result14 = {key: result["연결재무제표"]["현금흐름표"][key] for key in
+                                    result["연결재무제표"]["현금흐름표"].keys() & {keys for keys in d14keys}}
                     if tmp_result10:
                         for key in tmp_result10.keys():
                             if d10 is None:
@@ -3347,6 +3464,22 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                                 d12 = tmp_result12[key]
                             else:
                                 d12.update(tmp_result12[key])
+                    if tmp_result13:
+                        d13 = dictionary_add(tmp_result13)
+                        # for key in tmp_result13.keys():
+                        #     if d13 is None:
+                        #         d13 = tmp_result13[key]
+                        #     else:
+                        #         d13.update(tmp_result13[key])
+                    if tmp_result14:
+                        d14 = dictionary_add(tmp_result14)
+                        # for key in tmp_result14.keys():
+                        #     if d14 is None:
+                        #         d14 = tmp_result14[key]
+                        #     else:
+                        #         d14.update(tmp_result14[key])
+                if d11 is None: d11 = d13
+                if d12 is None: d12 = d14
                 d5 = result["연결재무제표"]["재무상태표"]["자산총계"] if "자산총계" in result["연결재무제표"]["재무상태표"].keys() else None
                 d6 = result["연결재무제표"]["재무상태표"]["부채총계"] if "부채총계" in result["연결재무제표"]["재무상태표"].keys() else None
                 d7 = result["연결재무제표"]["재무상태표"]["이익잉여금"] if "이익잉여금" in result["연결재무제표"]["재무상태표"].keys() else None
@@ -3466,6 +3599,10 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                                     result["재무제표"]["현금흐름표"].keys() & {keys for keys in d11keys}}
                     tmp_result12 = {key: result["재무제표"]["현금흐름표"][key] for key in
                                     result["재무제표"]["현금흐름표"].keys() & {keys for keys in d12keys}}
+                    tmp_result13 = {key: result["재무제표"]["현금흐름표"][key] for key in
+                                    result["재무제표"]["현금흐름표"].keys() & {keys for keys in d13keys}}
+                    tmp_result14 = {key: result["재무제표"]["현금흐름표"][key] for key in
+                                    result["재무제표"]["현금흐름표"].keys() & {keys for keys in d14keys}}
                     if tmp_result10:
                         for key in tmp_result10.keys():
                             if d10 is None:
@@ -3484,6 +3621,22 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                                 d12 = tmp_result12[key]
                             else:
                                 d12.update(tmp_result12[key])
+                    if tmp_result13:
+                        d13 = dictionary_add(tmp_result13)
+                        # for key in tmp_result13.keys():
+                        #     if d13 is None:
+                        #         d13 = tmp_result13[key]
+                        #     else:
+                        #         d13.update(tmp_result13[key])
+                    if tmp_result14:
+                        d14 = dictionary_add(tmp_result14)
+                        # for key in tmp_result14.keys():
+                        #     if d14 is None:
+                        #         d14 = tmp_result14[key]
+                        #     else:
+                        #         d14.update(tmp_result14[key])
+                if d11 is None: d11 = d13
+                if d12 is None: d12 = d14
                 d5 = result["재무제표"]["재무상태표"]["자산총계"] if "자산총계" in result["재무제표"]["재무상태표"].keys() else None
                 d6 = result["재무제표"]["재무상태표"]["부채총계"] if "부채총계" in result["재무제표"]["재무상태표"].keys() else None
                 d7 = result["재무제표"]["재무상태표"]["이익잉여금"] if "이익잉여금" in result["재무제표"]["재무상태표"].keys() else None
@@ -3505,7 +3658,16 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
             logger.info(d10)  # 영업활동현금흐름
             logger.info(d11)  # 유형자산의 취득
             logger.info(d12)  # 무형자산의 취득
+            logger.info(d13)  # 유형자산의 취득(유형자산의 취득으로 표시되지 않는)
+            logger.info(d14)
             logger.info(provision_info)
+            if d10 is None:
+                none_list.append("[{}][{}]-영업활동현금흐름".format(stock.code, stock.name))
+            if d11 is None:
+                none_list.append("[{}][{}]-유형자산의 취득".format(stock.code, stock.name))
+            if d12 is None:
+                none_list.append("[{}][{}]-무형자산의 취득".format(stock.code, stock.name))
+
             for key1 in d1.keys():
                 current_key = key1
                 # if key1 == "2019 4/4":
@@ -3593,6 +3755,13 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                     for k in sorted(d9[key1]):
                         dicTemp9[k] = float(d9[key1][k].replace(",", ""))
                         # data[stock]["PL"]["Q"]["당기영업이익"][k] = float(d4[key1][k].replace(",", ""))
+                for key2 in d10.keys():
+                    current_key = key2
+                    if "Rate" in key2: continue
+                    for key3 in d10[key2].keys():
+                        yhasset = int(d11[key2][key3]) if key2 in d11.keys() and key3 in d11[key2].keys() else 0
+                        mhasset = int(d12[key2][key3]) if key2 in d12.keys() and key3 in d12[key2].keys() else 0
+                        data[stock]["CF"]["FCF"][key3] = int(d10[key2][key3]) - (yhasset + mhasset)
             # dicTemp1["최근"] = provision_info[stock]["PL"]["Y"]["매출액"]
             # dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"]
             dicTemp3["최근"] = provision_info[stock]["PL"]["Q"]["매출액"] if "매출액" in provision_info[stock]["PL"][
@@ -3664,6 +3833,10 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                 data[stock]["FS"]["TotalAsset"] = dict(sorted(dicTemp5.items()))
                 data[stock]["FS"]["TotalDebt"] = dict(sorted(dicTemp6.items()))
                 data[stock]["FS"]["RetainedEarnings"] = dict(sorted(dicTemp7.items()))
+                data[stock]["CF"]["영업활동현금흐름"] = dict(sorted(dicTemp10.items()))
+                data[stock]["CF"]["유형자산취득"] = dict(sorted(dicTemp11.items()))
+                data[stock]["CF"]["무형자산취득"] = dict(sorted(dicTemp12.items()))
+                data[stock]["CF"]["FCF"] = dict(sorted(data[stock]["CF"]["FCF"].items()))
         except Exception as e:
             logger.error(e)
             # logger.error(current_pos)
@@ -3704,16 +3877,20 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
         before_op_profit = None
         before_net_income = None
 
-        print(k, data[k]["corp_name"], "*" * 100)
+        logger.info("{} {} {}".format(k, data[k]["corp_name"], "*" * 100))
         for key in data[k]["PL"]["Y"].keys():
-            print("연간", key, data[k]["PL"]["Y"][key])
-        print("연간", data[k]["AverageRate"]["Y"])
+            logger.info("{} {} {}".format("연간", key, data[k]["PL"]["Y"][key]))
+        logger.info("{} {}".format("연간", data[k]["AverageRate"]["Y"]))
         for key in data[k]["PL"]["Q"].keys():
-            print("당기", key, data[k]["PL"]["Q"][key])
-        print("당기", data[k]["AverageRate"]["Q"])
-        print("재무상태표-자산총계", data[k]["FS"]["TotalAsset"])
-        print("재무상태표-부채총계", data[k]["FS"]["TotalDebt"])
-        print("재무상태표-이익잉여금", data[k]["FS"]["RetainedEarnings"])
+            logger.info("{} {} {}".format("당기", key, data[k]["PL"]["Q"][key]))
+        logger.info("{} {}".format("당기", data[k]["AverageRate"]["Q"]))
+        logger.info("{} {}".format("재무상태표-자산총계", data[k]["FS"]["TotalAsset"]))
+        logger.info("{} {}".format("재무상태표-부채총계", data[k]["FS"]["TotalDebt"]))
+        logger.info("{} {}".format("재무상태표-이익잉여금", data[k]["FS"]["RetainedEarnings"]))
+        logger.info("{} {}".format("CF-OCF", data[k]["CF"]["영업활동현금흐름"]))
+        logger.info("{} {}".format("CF-유형자산취득", data[k]["CF"]["유형자산취득"]))
+        logger.info("{} {}".format("CF-무형자산취득", data[k]["CF"]["무형자산취득"]))
+        logger.info("{} {}".format("CF-FCF", data[k]["CF"]["FCF"]))
         # print("here1?")
         if "매출액영업이익률" in data[k]["AverageRate"]["Y"].keys() \
                 and "매출액" in data[k]["AverageRate"]["Y"].keys() \
@@ -4128,7 +4305,7 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                            "list_shares": stock_obj["issued_shares"],
                            "PL": {"Y": {}, "Q": {}},
                            "FS": {"TotalAsset": {}, "TotalDebt": {}, "RetainedEarnings": {}},
-                           "CF": {"영업활동현금흐름": {}, "유형자산취득": {}, "무형자산취득": {}},
+                           "CF": {"영업활동현금흐름": {}, "유형자산취득": {}, "무형자산취득": {}, "FCF": {}},
                            "AverageRate": {"Y": {}, "Q": {}}}
             # print(dateDict["yyyy2"], dateDict)
             lists = None
