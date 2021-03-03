@@ -1277,12 +1277,12 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                     "AverageRate": {"Y": {}, "Q": {}}}
                 # print(dateDict["yyyy2"], dateDict)
                 if bgn_dt is None:
-                    lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
+                    lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
                 elif end_dt is None:
-                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, pblntf_ty='A')["list"][:4]
+                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, pblntf_ty='A', req_type=True)["list"][:4]
                 else:
-                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, end_de=end_dt, pblntf_ty='A')["list"][:4]
-                # lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
+                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, end_de=end_dt, pblntf_ty='A', req_type=True)["list"][:4]
+                # lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
                 for l in lists:
                     logger.info(l)
                 req_list, req_list2 = dart.get_req_lists(lists)
@@ -2281,12 +2281,12 @@ def new_find_hidden_pearl_with_dartpipe_test(code, bgn_dt=None, end_dt=None):
                                     "AverageRate": {"Y": {}, "Q": {}}}
                 # print(dateDict["yyyy2"], dateDict)
                 if bgn_dt is None:
-                    lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
+                    lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
                 elif end_dt is None:
-                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, pblntf_ty='A')["list"][:4]
+                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, pblntf_ty='A', req_type=True)["list"][:4]
                 else:
-                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, end_de=end_dt, pblntf_ty='A')["list"][:4]
-                # lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
+                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, end_de=end_dt, pblntf_ty='A', req_type=True)["list"][:4]
+                # lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
                 for l in lists:
                     logger.info(l)
                 req_list, req_list2 = dart.get_req_lists(lists)
@@ -3281,7 +3281,7 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                            "AverageRate": {"Y": {}, "Q": {}}}
             # print(dateDict["yyyy2"], dateDict)
             lists = None
-            lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
+            lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
             for l in lists:
                 logger.info(l)
             # if stock == "064350":
@@ -4356,7 +4356,7 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                            "AverageRate": {"Y": {}, "Q": {}}}
             # print(dateDict["yyyy2"], dateDict)
             lists = None
-            lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A')["list"][:4]
+            lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
             for l in lists:
                 logger.info(l)
             # if stock == "064350":
