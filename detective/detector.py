@@ -1198,7 +1198,6 @@ def new_find_hidden_pearl():
             json.dump(trash, fp)
 
 
-
 def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     import sys
     import os
@@ -1511,6 +1510,12 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     else:
                         if "이익잉여금(결손금)" in result["연결재무제표"]["재무상태표"].keys():
                             d7.update(result["연결재무제표"]["재무상태표"]["이익잉여금(결손금)"])
+                    if d7 is None:
+                        if "결손금" in result["연결재무제표"]["재무상태표"].keys():
+                            d7 = result["연결재무제표"]["재무상태표"]["결손금"]
+                    else:
+                        if "결손금" in result["연결재무제표"]["재무상태표"].keys():
+                            d7.update(result["연결재무제표"]["재무상태표"]["결손금"])
                 else:
                     logger.info("재무제표 start")
                     if "포괄손익계산서" in result["재무제표"].keys():
@@ -1668,20 +1673,26 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     else:
                         if "이익잉여금(결손금)" in result["재무제표"]["재무상태표"].keys():
                             d7.update(result["재무제표"]["재무상태표"]["이익잉여금(결손금)"])
-                logger.info(d1)  # 매출액 누계
-                logger.info(d2)  # 영업이익 누계
-                logger.info(d3)  # 매출액 당기
-                logger.info(d4)  # 영업이익 당기
-                logger.info(d5)  # 자산총계
-                logger.info(d6)  # 부채총계
-                logger.info(d7)  # 이익잉여금
-                logger.info(d8)  # 당기순이익 누계
-                logger.info(d9)  # 당기순이익
-                logger.info(d10)  # 영업활동현금흐름
-                logger.info(d11)  # 유형자산의 취득
-                logger.info(d12)  # 무형자산의 취득
-                logger.info(d13)  # 유형자산의 취득(유형자산의 취득으로 표시되지 않는)
-                logger.info(d14)
+                    if d7 is None:
+                        if "결손금" in result["재무제표"]["재무상태표"].keys():
+                            d7 = result["재무제표"]["재무상태표"]["결손금"]
+                    else:
+                        if "결손금" in result["재무제표"]["재무상태표"].keys():
+                            d7.update(result["재무제표"]["재무상태표"]["결손금"])
+                logger.info("매출액 누계 : {}".format(d1))  # 매출액 누계
+                logger.info("영업이익 누계 : {}".format(d2))  # 영업이익 누계
+                logger.info("매출액 누계 : {}".format(d3))  # 매출액 당기
+                logger.info("영업이익 누계 : {}".format(d4))  # 영업이익 당기
+                logger.info("자산총계 : {}".format(d5))  # 자산총계
+                logger.info("부채총계 : {}".format(d6))  # 부채총계
+                logger.info("이익잉여금 : {}".format(d7))  # 이익잉여금
+                logger.info("당기순이익 누계 : {}".format(d8))  # 당기순이익 누계
+                logger.info("당기순이익 : {}".format(d9))  # 당기순이익
+                logger.info("영업활동현금흐름 : {}".format(d10))  # 영업활동현금흐름
+                logger.info("유형자산의 취득 : {}".format(d11))  # 유형자산의 취득
+                logger.info("무형자산의 취득 : {}".format(d12))  # 무형자산의 취득
+                logger.info("유형자산의 취득(유형자산의 취득으로 표시되지 않는) : {}".format(d13))  # 유형자산의 취득(유형자산의 취득으로 표시되지 않는)
+                logger.info("무형자산의 취득(무형자산의 취득으로 표시되지 않는) : {}".format(d14))  # 무형자산의 취득(무형자산의 취득으로 표시되지 않는)
                 if d10 is None:
                     none_list.append("[{}][{}]-영업활동현금흐름".format(stock.code, stock.name))
                 if d11 is None:
@@ -2173,6 +2184,7 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     logger.info(none_list)
     return treasure
 
+
 def dictionary_add(d):
     tmp_dic = {}
     for key in d.keys():  # key = ["기계장치의 취득"...등등]
@@ -2188,6 +2200,7 @@ def dictionary_add(d):
                     tmp_dic[key1][key2] += int(d[key][key1][key2])
     print(tmp_dic)
     return tmp_dic
+
 
 def new_find_hidden_pearl_with_dartpipe_test(code, bgn_dt=None, end_dt=None):
     import sys
@@ -2334,7 +2347,7 @@ def new_find_hidden_pearl_with_dartpipe_test(code, bgn_dt=None, end_dt=None):
                           "연결당기순이익", "연결분기순이익", "연결반기순이익", "연결당기순이익(손실)", "연결분기순이익(손실)", "연결반기순이익(손실)", "당기순손익",
                           "분기순손익",
                           "반기순손익", "지배기업 소유주지분", "지배기업의 소유주에게 귀속되는 당기순이익(손실)", "당기순손실", "분기순손실", "반기순손실",
-                          "Ⅷ. 당기순이익(손실)",
+                          "Ⅷ. 당기순이익(손실)", "지배기업 소유주 지분",
                           "Ⅷ. 당기순이익", "VIII. 당기순이익", "지배기업 소유주", "VIII. 분기순손익", "VIII. 분기순이익", "I.당기순이익", "I.반기순이익",
                           "I.분기순이익", "반기연결순이익(손실)", "지배기업의 소유주지분", "지배기업소유주지분", "지배기업의소유주지분"]
                 d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입"]
@@ -2501,6 +2514,12 @@ def new_find_hidden_pearl_with_dartpipe_test(code, bgn_dt=None, end_dt=None):
                     else:
                         if "이익잉여금(결손금)" in result["연결재무제표"]["재무상태표"].keys():
                             d7.update(result["연결재무제표"]["재무상태표"]["이익잉여금(결손금)"])
+                    if d7 is None:
+                        if "결손금" in result["연결재무제표"]["재무상태표"].keys():
+                            d7 = result["연결재무제표"]["재무상태표"]["결손금"]
+                    else:
+                        if "결손금" in result["연결재무제표"]["재무상태표"].keys():
+                            d7.update(result["연결재무제표"]["재무상태표"]["결손금"])
                 else:
                     logger.info("재무제표 start")
                     if "포괄손익계산서" in result["재무제표"].keys():
@@ -2658,20 +2677,26 @@ def new_find_hidden_pearl_with_dartpipe_test(code, bgn_dt=None, end_dt=None):
                     else:
                         if "이익잉여금(결손금)" in result["재무제표"]["재무상태표"].keys():
                             d7.update(result["재무제표"]["재무상태표"]["이익잉여금(결손금)"])
-                logger.info(d1)  # 매출액 누계
-                logger.info(d2)  # 영업이익 누계
-                logger.info(d3)  # 매출액 당기
-                logger.info(d4)  # 영업이익 당기
-                logger.info(d5)  # 자산총계
-                logger.info(d6)  # 부채총계
-                logger.info(d7)  # 이익잉여금
-                logger.info(d8)  # 당기순이익 누계
-                logger.info(d9)  # 당기순이익
-                logger.info(d10)  # 영업활동현금흐름
-                logger.info(d11)  # 유형자산의 취득
-                logger.info(d12)  # 무형자산의 취득
-                logger.info(d13)  # 유형자산의 취득(유형자산의 취득으로 표시되지 않는)
-                logger.info(d14)
+                    if d7 is None:
+                        if "결손금" in result["재무제표"]["재무상태표"].keys():
+                            d7 = result["재무제표"]["재무상태표"]["결손금"]
+                    else:
+                        if "결손금" in result["재무제표"]["재무상태표"].keys():
+                            d7.update(result["재무제표"]["재무상태표"]["결손금"])
+                logger.info("매출액 누계 : {}".format(d1))  # 매출액 누계
+                logger.info("영업이익 누계 : {}".format(d2))  # 영업이익 누계
+                logger.info("매출액 누계 : {}".format(d3))  # 매출액 당기
+                logger.info("영업이익 누계 : {}".format(d4))  # 영업이익 당기
+                logger.info("자산총계 : {}".format(d5))  # 자산총계
+                logger.info("부채총계 : {}".format(d6))  # 부채총계
+                logger.info("이익잉여금 : {}".format(d7))  # 이익잉여금
+                logger.info("당기순이익 누계 : {}".format(d8))  # 당기순이익 누계
+                logger.info("당기순이익 : {}".format(d9))  # 당기순이익
+                logger.info("영업활동현금흐름 : {}".format(d10))  # 영업활동현금흐름
+                logger.info("유형자산의 취득 : {}".format(d11))  # 유형자산의 취득
+                logger.info("무형자산의 취득 : {}".format(d12))  # 무형자산의 취득
+                logger.info("유형자산의 취득(유형자산의 취득으로 표시되지 않는) : {}".format(d13))  # 유형자산의 취득(유형자산의 취득으로 표시되지 않는)
+                logger.info("무형자산의 취득(무형자산의 취득으로 표시되지 않는) : {}".format(d14))  # 무형자산의 취득(무형자산의 취득으로 표시되지 않는)
                 if d10 is None:
                     none_list.append("[{}][{}]-영업활동현금흐름".format(stock.code, stock.name))
                 if d11 is None:
@@ -3489,6 +3514,12 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                 else:
                     if "이익잉여금(결손금)" in result["연결재무제표"]["재무상태표"].keys():
                         d7.update(result["연결재무제표"]["재무상태표"]["이익잉여금(결손금)"])
+                if d7 is None:
+                    if "결손금" in result["연결재무제표"]["재무상태표"].keys():
+                        d7 = result["연결재무제표"]["재무상태표"]["결손금"]
+                else:
+                    if "결손금" in result["연결재무제표"]["재무상태표"].keys():
+                        d7.update(result["연결재무제표"]["재무상태표"]["결손금"])
             else:
                 logger.info("재무제표 start")
                 if "포괄손익계산서" in result["재무제표"].keys():
@@ -3646,20 +3677,26 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                 else:
                     if "이익잉여금(결손금)" in result["재무제표"]["재무상태표"].keys():
                         d7.update(result["재무제표"]["재무상태표"]["이익잉여금(결손금)"])
-            logger.info(d1)  # 매출액 누계
-            logger.info(d2)  # 영업이익 누계
-            logger.info(d3)  # 매출액 당기
-            logger.info(d4)  # 영업이익 당기
-            logger.info(d5)  # 자산총계
-            logger.info(d6)  # 부채총계
-            logger.info(d7)  # 이익잉여금
-            logger.info(d8)  # 당기순이익 누계
-            logger.info(d9)  # 당기순이익
-            logger.info(d10)  # 영업활동현금흐름
-            logger.info(d11)  # 유형자산의 취득
-            logger.info(d12)  # 무형자산의 취득
-            logger.info(d13)  # 유형자산의 취득(유형자산의 취득으로 표시되지 않는)
-            logger.info(d14)
+                if d7 is None:
+                    if "결손금" in result["재무제표"]["재무상태표"].keys():
+                        d7 = result["재무제표"]["재무상태표"]["결손금"]
+                else:
+                    if "결손금" in result["재무제표"]["재무상태표"].keys():
+                        d7.update(result["재무제표"]["재무상태표"]["결손금"])
+            logger.info("매출액 누계 : {}".format(d1))  # 매출액 누계
+            logger.info("영업이익 누계 : {}".format(d2))  # 영업이익 누계
+            logger.info("매출액 누계 : {}".format(d3))  # 매출액 당기
+            logger.info("영업이익 누계 : {}".format(d4))  # 영업이익 당기
+            logger.info("자산총계 : {}".format(d5))  # 자산총계
+            logger.info("부채총계 : {}".format(d6))  # 부채총계
+            logger.info("이익잉여금 : {}".format(d7))  # 이익잉여금
+            logger.info("당기순이익 누계 : {}".format(d8))  # 당기순이익 누계
+            logger.info("당기순이익 : {}".format(d9))  # 당기순이익
+            logger.info("영업활동현금흐름 : {}".format(d10))  # 영업활동현금흐름
+            logger.info("유형자산의 취득 : {}".format(d11))  # 유형자산의 취득
+            logger.info("무형자산의 취득 : {}".format(d12))  # 무형자산의 취득
+            logger.info("유형자산의 취득(유형자산의 취득으로 표시되지 않는) : {}".format(d13))  # 유형자산의 취득(유형자산의 취득으로 표시되지 않는)
+            logger.info("무형자산의 취득(무형자산의 취득으로 표시되지 않는) : {}".format(d14))  # 무형자산의 취득(무형자산의 취득으로 표시되지 않는)
             logger.info(provision_info)
             if d10 is None:
                 none_list.append("[{}][{}]-영업활동현금흐름".format(stock.code, stock.name))
@@ -4552,6 +4589,12 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                 else:
                     if "이익잉여금(결손금)" in result["연결재무제표"]["재무상태표"].keys():
                         d7.update(result["연결재무제표"]["재무상태표"]["이익잉여금(결손금)"])
+                if d7 is None:
+                    if "결손금" in result["연결재무제표"]["재무상태표"].keys():
+                        d7 = result["연결재무제표"]["재무상태표"]["결손금"]
+                else:
+                    if "결손금" in result["연결재무제표"]["재무상태표"].keys():
+                        d7.update(result["연결재무제표"]["재무상태표"]["결손금"])
             else:
                 logger.info("재무제표 start")
                 if "포괄손익계산서" in result["재무제표"].keys():
@@ -4709,20 +4752,26 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                 else:
                     if "이익잉여금(결손금)" in result["재무제표"]["재무상태표"].keys():
                         d7.update(result["재무제표"]["재무상태표"]["이익잉여금(결손금)"])
-            logger.info(d1)  # 매출액 누계
-            logger.info(d2)  # 영업이익 누계
-            logger.info(d3)  # 매출액 당기
-            logger.info(d4)  # 영업이익 당기
-            logger.info(d5)  # 자산총계
-            logger.info(d6)  # 부채총계
-            logger.info(d7)  # 이익잉여금
-            logger.info(d8)  # 당기순이익 누계
-            logger.info(d9)  # 당기순이익
-            logger.info(d10)  # 영업활동현금흐름
-            logger.info(d11)  # 유형자산의 취득
-            logger.info(d12)  # 무형자산의 취득
-            logger.info(d13)  # 유형자산의 취득(유형자산의 취득으로 표시되지 않는)
-            logger.info(d14)
+                if d7 is None:
+                    if "결손금" in result["재무제표"]["재무상태표"].keys():
+                        d7 = result["재무제표"]["재무상태표"]["결손금"]
+                else:
+                    if "결손금" in result["재무제표"]["재무상태표"].keys():
+                        d7.update(result["재무제표"]["재무상태표"]["결손금"])
+            logger.info("매출액 누계 : {}".format(d1))  # 매출액 누계
+            logger.info("영업이익 누계 : {}".format(d2))  # 영업이익 누계
+            logger.info("매출액 누계 : {}".format(d3))  # 매출액 당기
+            logger.info("영업이익 누계 : {}".format(d4))  # 영업이익 당기
+            logger.info("자산총계 : {}".format(d5))  # 자산총계
+            logger.info("부채총계 : {}".format(d6))  # 부채총계
+            logger.info("이익잉여금 : {}".format(d7))  # 이익잉여금
+            logger.info("당기순이익 누계 : {}".format(d8))  # 당기순이익 누계
+            logger.info("당기순이익 : {}".format(d9))  # 당기순이익
+            logger.info("영업활동현금흐름 : {}".format(d10))  # 영업활동현금흐름
+            logger.info("유형자산의 취득 : {}".format(d11))  # 유형자산의 취득
+            logger.info("무형자산의 취득 : {}".format(d12))  # 무형자산의 취득
+            logger.info("유형자산의 취득(유형자산의 취득으로 표시되지 않는) : {}".format(d13))  # 유형자산의 취득(유형자산의 취득으로 표시되지 않는)
+            logger.info("무형자산의 취득(무형자산의 취득으로 표시되지 않는) : {}".format(d14))  # 무형자산의 취득(무형자산의 취득으로 표시되지 않는)
             logger.info(provision_info)
             if d10 is None:
                 none_list.append("[{}][{}]-영업활동현금흐름".format(stock.code, stock.name))
