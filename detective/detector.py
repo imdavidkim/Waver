@@ -1811,8 +1811,8 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     # if key2 not in data[stock.code]["CF"]["FCF"].keys():
                     #     data[stock.code]["CF"]["FCF"][key2] = {}
                     for key3 in d10[key2].keys():
-                        yhasset = int(d11[key2][key3]) if key2 in d11.keys() and key3 in d11[key2].keys() else 0
-                        mhasset = int(d12[key2][key3]) if key2 in d12.keys() and key3 in d12[key2].keys() else 0
+                        yhasset = int(d11[key2][key3]) if d11 is not None and key2 in d11.keys() and key3 in d11[key2].keys() else 0
+                        mhasset = int(d12[key2][key3]) if d12 is not None and key2 in d12.keys() and key3 in d12[key2].keys() else 0
                         data[stock.code]["CF"]["FCF"][key3] = int(d10[key2][key3]) - (yhasset + mhasset)
                 data[stock.code]["PL"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
                 data[stock.code]["PL"]["Q"]["누계매출액추이"] = dict(sorted(dicTemp1.items()))
