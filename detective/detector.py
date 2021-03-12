@@ -1256,9 +1256,9 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     # USE_JSON = False
     USE_JSON = True
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="일반 목적", listing='Y')
-    stockInfo = detective_db.Stocks.objects.filter(category_name__contains="특수", listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="특수", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(market_text__contains="제조", market_text_detail__contains="장비", listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code="058110", listing='Y')
+    stockInfo = detective_db.Stocks.objects.filter(code="008830", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(code=code, listing='Y')
     dart = pipe.Pipe()
     dart.create()
@@ -1349,9 +1349,13 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                 d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입", "영업활동으로인한현금흐름", "영업활동으로 인한 순현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "영업활동순현금흐름 합계", "영업활동순현금흐름", "I. 영업활동현금흐름"]
                 d11keys = ["유형자산의 취득", "유형자산 취득", "유형자산의취득"]
                 d12keys = ["무형자산의 취득", "무형자산 취득", "무형자산의취득", "무형자산의 증가"]
-                d13keys = ["토지의 취득", "건물의 취득", "구축물의 취득", "기계장치의 취득", "차량운반구의 취득", "공구와기구의취득", "공구와기구의 취득", "비품의 취득",
-                           "기타유형자산의 취득", "건설중인자산의 취득", "투자부동산의 취득", "집기비품의 취득", "시험기기의 취득"]
-                d14keys = ["컴퓨터소프트웨어의 취득", "산업재산권의 취득", "소프트웨어의 취득", "기타무형자산의 취득"]
+                d13keys = ["토지의 취득", "건물의 취득", "구축물의 취득", "기계장치의 취득", "차량운반구의 취득", "공구와기구의 취득", "비품의 취득",
+                           "기타유형자산의 취득", "건설중인자산의 취득", "투자부동산의 취득", "집기비품의 취득", "시험기기의 취득", "시설공사의 취득",
+                           "토지의취득", "건물의취득", "구축물의취득", "기계장치의취득", "차량운반구의취득", "공구와기구의취득", "비품의취득",
+                           "기타유형자산의취득", "건설중인자산의취득", "투자부동산의취득", "집기비품의취득", "시험기기의취득", "시설공사의취득"
+                           ]
+                d14keys = ["컴퓨터소프트웨어의 취득", "산업재산권의 취득", "소프트웨어의 취득", "기타무형자산의 취득", "소프트웨어의 증가",
+                           "컴퓨터소프트웨어의취득", "산업재산권의취득", "소프트웨어의취득", "기타무형자산의취득", "소프트웨어의증가"]
                 # if stock == "006360":
                 #     print()
                 if result is not {} and "연결재무제표" in result.keys():
