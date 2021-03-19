@@ -238,17 +238,17 @@ def send_hidden_pearl_message(d):
                 key = np.array(list(d[group][stock_code]['FCF'].keys()))
                 value1 = np.array(list(d[group][stock_code]['FCF'].values())) / 100000000
                 value2 = np.array(list(d[group][stock_code]['OCF'].values())) / 100000000
-                # value3 = np.array(list(d[group][stock_code]['EARN'].values())) / 100000000
+                value3 = np.array(list(d[group][stock_code]['EARN'].values())) / 100000000
                 value4 = np.array(list(d[group][stock_code]['PL'].values())) / 100000000
 
-                df = pd.DataFrame(data=dict(nQ=key, FCF=value1, OCF=value2, PL=value4))
-                plt.title("{}({})".format(d[group][stock_code]["사명"], stock_code))
+                df = pd.DataFrame(data=dict(nQ=key, FCF=value1, OCF=value2, EARN=value3, PL=value4))
+                plt.title("{} {}({})".format(d[group][stock_code]["최종보고서"], d[group][stock_code]["사명"], stock_code))
                 plt.style.use('seaborn-dark')
 
                 ax = plt.subplot()
                 data_fcf = ax.plot(key, value1, color="green", linestyle='-', marker='o', label="FCF")
                 data_ocf = ax.plot(key, value2, color="red", linestyle='-', marker='o', label="OCF")
-                # data_earn = ax.plot(key, value3, color="blue", linestyle='-', marker='o', label="EARN")
+                data_earn = ax.plot(key, value3, color="blue", linestyle='-', marker='o', label="EARN")
                 data_pl = ax.plot(key, value4, color="purple", linestyle='-', marker='o', label="PL")
 
                 for k1, v1 in zip(key, value1):
@@ -257,8 +257,9 @@ def send_hidden_pearl_message(d):
                 for k1, v2 in zip(key, value2):
                     ax.text(k1, v2 * 1.04, format(v2, ','), fontsize=10, horizontalalignment='center',
                             verticalalignment="bottom")
-                # for k1, v3 in zip(key, value3):
-                #     ax.text(k1, v3 * 1.04, format(v3, ','), fontsize=10, horizontalalignment='center', verticalalignment="bottom")
+                for k1, v3 in zip(key, value3):
+                    ax.text(k1, v3 * 1.04, format(v3, ','), fontsize=10, horizontalalignment='center',
+                            verticalalignment="bottom")
                 for k1, v4 in zip(key, value4):
                     ax.text(k1, v4 * 1.04, format(v4, ','), fontsize=10, horizontalalignment='center',
                             verticalalignment="bottom")
@@ -1296,10 +1297,10 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     # USE_JSON = False
     USE_JSON = True
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="일반 목적", listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="특수", listing='Y')
+    stockInfo = detective_db.Stocks.objects.filter(category_name__contains="특수", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="생물", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(market_text__contains="제조", market_text_detail__contains="장비", listing='Y')
-    stockInfo = detective_db.Stocks.objects.filter(code="005930", listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(code="005930", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(code=code, listing='Y')
     dart = pipe.Pipe()
     dart.create()
@@ -1987,10 +1988,22 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
         earn_last_5 = None
         pl_last_5 = None
         last_5_keys = list(data[k]["CF"]["영업활동현금흐름"].keys())[-5:]
-        fcf_last_5 = {lk: data[k]["CF"]["FCF"][lk] for lk in last_5_keys}
-        ocf_last_5 = {lk: data[k]["CF"]["영업활동현금흐름"][lk] for lk in last_5_keys}
-        earn_last_5 = {lk: data[k]["FS"]["RetainedEarnings"][lk] for lk in last_5_keys}
-        pl_last_5 = {lk: data[k]["PL"]["Q"]["누계당기순이익추이"][lk] for lk in last_5_keys}
+        for lastkey in last_5_keys:
+            if lastkey not in data[k]["CF"]["FCF"].keys() or lastkey not in data[k]["CF"]["영업활동현금흐름"].keys() \
+               or lastkey not in data[k]["FS"]["RetainedEarnings"].keys() or lastkey not in data[k]["PL"]["Q"]["누계당기순이익추이"].keys():
+                last_5_keys.remove(lastkey)
+        try:
+            fcf_last_5 = {lk: data[k]["CF"]["FCF"][lk] for lk in last_5_keys}
+            ocf_last_5 = {lk: data[k]["CF"]["영업활동현금흐름"][lk] for lk in last_5_keys}
+            earn_last_5 = {lk: data[k]["FS"]["RetainedEarnings"][lk] for lk in last_5_keys}
+            pl_last_5 = {lk: data[k]["PL"]["Q"]["누계당기순이익추이"][lk] for lk in last_5_keys}
+        except Exception as e:
+            print(last_5_keys)
+            print(k)
+            print(fcf_last_5)
+            print(ocf_last_5)
+            print(earn_last_5)
+            print(pl_last_5)
         print(k, data[k]["corp_name"], "*" * 100)
         for key in data[k]["PL"]["Y"].keys():
             print("연간", key, data[k]["PL"]["Y"][key])
@@ -2295,33 +2308,55 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     logger.info("{} {} {} {}".format("*" * 100, "BEST", len(best), "*" * 100))
     for key in best.keys():
         logger.info(best[key])
-        if best[key]["EPS2"] != 0 and best[key]["EPS2"] > best[key]["EPS"] and (best[key]["EPS2"] - best[key]["EPS"])/best[key]["EPS"] * 100 >= 30:
-            if "BEST" not in treasure.keys():
-                treasure["BEST"] = {}
-            treasure["BEST"][key] = {"사명": best[key]["corp_name"], "시가총액": best[key]["시가총액"], "업종": best[key]["업종"], "최근매출액영업이익률": best[key]["최근매출액영업이익률"], "EPS": best[key]["EPS"], "추정EPS": best[key]["EPS2"], "괴리율": round((best[key]["EPS2"] - best[key]["EPS"])/best[key]["EPS"] * 100, 2), "현재가": best[key]["현재가"], "예상주가": best[key]["예상주가"], "FCF": best[key]["FCF"], "OCF": best[key]["OCF"], "PL": best[key]["PL"]}
+        # if best[key]["EPS2"] != 0 and best[key]["EPS2"] > best[key]["EPS"] and (best[key]["EPS2"] - best[key]["EPS"])/best[key]["EPS"] * 100 >= 30:
+        if "BEST" not in treasure.keys():
+            treasure["BEST"] = {}
+        treasure["BEST"][key] = {"사명": best[key]["corp_name"], "시가총액": best[key]["시가총액"], "업종": best[key]["업종"],
+                                 "최근매출액영업이익률": best[key]["최근매출액영업이익률"], "EPS": best[key]["EPS"],
+                                 "추정EPS": best[key]["EPS2"],
+                                 "괴리율": round((best[key]["EPS2"] - best[key]["EPS"]) / best[key]["EPS"] * 100,
+                                              2), "현재가": best[key]["현재가"], "예상주가": best[key]["예상주가"], "EARN": best[key]["EARN"],
+                                 "FCF": best[key]["FCF"], "OCF": best[key]["OCF"], "PL": best[key]["PL"], "최종보고서": best[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "BETTER", len(better), "*" * 100))
     for key in better.keys():
         logger.info(better[key])
         # if better[key]["EPS2"] != 0 and better[key]["EPS2"] > better[key]["EPS"] and (better[key]["EPS2"] - better[key]["EPS"])/better[key]["EPS"] * 100 >= 30:
         if "BETTER" not in treasure.keys():
             treasure["BETTER"] = {}
-        treasure["BETTER"][key] = {"사명": better[key]["corp_name"], "시가총액": better[key]["시가총액"], "업종": better[key]["업종"], "최근매출액영업이익률": better[key]["최근매출액영업이익률"], "EPS": better[key]["EPS"], "추정EPS": better[key]["EPS2"], "괴리율": round((better[key]["EPS2"] - better[key]["EPS"])/better[key]["EPS"] * 100, 2), "현재가": better[key]["현재가"], "예상주가": better[key]["예상주가"], "FCF": better[key]["FCF"], "OCF": better[key]["OCF"], "PL": better[key]["PL"]}
+        treasure["BETTER"][key] = {"사명": better[key]["corp_name"], "시가총액": better[key]["시가총액"],
+                                   "업종": better[key]["업종"], "최근매출액영업이익률": better[key]["최근매출액영업이익률"],
+                                   "EPS": better[key]["EPS"], "추정EPS": better[key]["EPS2"], "괴리율": round(
+                (better[key]["EPS2"] - better[key]["EPS"]) / better[key]["EPS"] * 100, 2),
+                                   "현재가": better[key]["현재가"], "예상주가": better[key]["예상주가"], "EARN": better[key]["EARN"],
+                                   "FCF": better[key]["FCF"], "OCF": better[key]["OCF"], "PL": better[key]["PL"], "최종보고서": better[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "GOOD", len(good), "*" * 100))
     for key in good.keys():
         logger.info(good[key])
         if good[key]["EPS2"] != 0 and good[key]["EPS2"] > good[key]["EPS"] and (good[key]["EPS2"] - good[key]["EPS"])/good[key]["EPS"] * 100 >= 30:
             if "GOOD" not in treasure.keys():
                 treasure["GOOD"] = {}
-            treasure["GOOD"][key] = {"사명": good[key]["corp_name"], "시가총액": good[key]["시가총액"], "업종": good[key]["업종"], "최근매출액영업이익률": good[key]["최근매출액영업이익률"], "EPS": good[key]["EPS"], "추정EPS": good[key]["EPS2"], "괴리율": round((good[key]["EPS2"] - good[key]["EPS"])/good[key]["EPS"] * 100, 2), "현재가": good[key]["현재가"], "예상주가": good[key]["예상주가"], "FCF": good[key]["FCF"], "OCF": good[key]["OCF"], "PL": good[key]["PL"]}
+            treasure["GOOD"][key] = {"사명": good[key]["corp_name"], "시가총액": good[key]["시가총액"], "업종": good[key]["업종"],
+                                     "최근매출액영업이익률": good[key]["최근매출액영업이익률"], "EPS": good[key]["EPS"],
+                                     "추정EPS": good[key]["EPS2"],
+                                     "괴리율": round((good[key]["EPS2"] - good[key]["EPS"]) / good[key]["EPS"] * 100, 2),
+                                     "현재가": good[key]["현재가"], "예상주가": good[key]["예상주가"], "EARN": good[key]["EARN"], "FCF": good[key]["FCF"],
+                                     "OCF": good[key]["OCF"], "PL": good[key]["PL"], "최종보고서": good[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "CHECK", len(soso), "*" * 100))
     for key in soso.keys():
         logger.info(soso[key])
         if soso[key]["EPS2"] != 0 and soso[key]["EPS2"] > soso[key]["EPS"] and (soso[key]["EPS2"] - soso[key]["EPS"])/soso[key]["EPS"] * 100 >= 30:
             if "SOSO" not in treasure.keys():
                 treasure["SOSO"] = {}
-            treasure["SOSO"][key] = {"사명": soso[key]["corp_name"], "시가총액": soso[key]["시가총액"], "업종": soso[key]["업종"], "최근매출액영업이익률": soso[key]["최근매출액영업이익률"], "EPS": soso[key]["EPS"], "추정EPS": soso[key]["EPS2"], "괴리율": round((soso[key]["EPS2"] - soso[key]["EPS"])/soso[key]["EPS"] * 100, 2), "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"], "FCF": soso[key]["FCF"], "OCF": soso[key]["OCF"], "PL": soso[key]["PL"]}
+            treasure["SOSO"][key] = {"사명": soso[key]["corp_name"], "시가총액": soso[key]["시가총액"], "업종": soso[key]["업종"],
+                                     "최근매출액영업이익률": soso[key]["최근매출액영업이익률"], "EPS": soso[key]["EPS"],
+                                     "추정EPS": soso[key]["EPS2"],
+                                     "괴리율": round((soso[key]["EPS2"] - soso[key]["EPS"]) / soso[key]["EPS"] * 100,
+                                                  2), "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"], "EARN": soso[key]["EARN"],
+                                     "FCF": soso[key]["FCF"], "OCF": soso[key]["OCF"], "PL": soso[key]["PL"],
+                                     "최종보고서": soso[key]["last_report"]}
     logger.info(none_list)
     return treasure
+
 
 
 def dictionary_add(d):
