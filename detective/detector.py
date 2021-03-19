@@ -202,11 +202,12 @@ def send_hidden_pearl_message(d):
     try:
         font_name = font_manager.FontProperties(fname=font_path).get_name()
         # font 설정
-        plt.rc('font', family=font_name)
+        
         plt.close('all')
         txt = ""
         for group in d.keys():
             for idx, stock_code in enumerate(d[group].keys()):
+                plt.rc('font', family=font_name)
                 txt = "[{}그룹]".format(group)
                 txt += "\n{}. [{}]{}".format(idx + 1, stock_code, d[group][stock_code]["사명"])
                 txt += "\n  - 시가총액:{}".format(d[group][stock_code]["시가총액"])
