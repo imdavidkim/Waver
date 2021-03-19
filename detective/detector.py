@@ -234,7 +234,7 @@ def send_hidden_pearl_message(d):
                 msgr.img_messeage_to_telegram2(img_path + '\\{}_{}.png'.format(d[group][stock_code]["사명"], stock_code), dbg=True)
                 fig = None
                 plt.close('all')
-                if d[group][stock_code]['FCF'] is None:
+                if d[group][stock_code]['FCF'] is None or d[group][stock_code]['OCF'] is None or d[group][stock_code]['EARN'] is None or d[group][stock_code]['PL'] is None:
                     continue
                 key = np.array(list(d[group][stock_code]['FCF'].keys()))
                 value1 = np.array(list(d[group][stock_code]['FCF'].values())) / 100000000
