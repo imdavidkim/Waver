@@ -170,7 +170,7 @@ def getTargetFile(j, c):
                                                                        j.filetype),
                                   'w') as fp:
                             json.dump(json_msg, fp)
-                elif j.jobtype in ['GlobalFinancialSummary', 'GlobalConsensus']:
+                elif j.jobtype in ['GlobalFinancialSummary', 'GlobalConsensus', 'GlobalFinancialStatement']:
                     try:
                         url = j.url.format(ticker, generateEncCode())
                         url_info = url
@@ -181,9 +181,8 @@ def getTargetFile(j, c):
                             json.dump(json.loads(response), fp)
                         retResult = "[{}][{}][{}]|Done".format(j.jobtype, ticker, sec_name)
                     except Exception as e:
-                        # qry_url = 'http://compglobal.wisereport.co.kr/Common/CompanySearchGlobal?q={}-US&q1={}-US&etf_yn=1&iso_str=US%2CCN%2CHK%2CJP%2CVN%2CID%2CS6&limit=10'.format(ticker, ticker)
-                        qry_url = "http://compglobal.wisereport.co.kr/Lookup/GetGlobalCompany?iso_typ=13&category_typ=W&ntt_cd=WI000&order_mkt=1&order_iso=0&kr_use_yn=1&search_str={}&curpage=1&iso_cd=&perpage=100".format(
-                            ticker)
+                        qry_url = 'http://compglobal.wisereport.co.kr/Common/CompanySearchGlobal?q={}&q1={}&etf_yn=1&iso_str=US%2CCN%2CHK%2CJP%2CVN%2CID%2CS6&limit=10'.format(ticker, ticker)
+                        # qry_url = "http://compglobal.wisereport.co.kr/Lookup/GetGlobalCompany?iso_typ=13&category_typ=W&ntt_cd=WI000&order_mkt=1&order_iso=0&kr_use_yn=1&search_str={}&curpage=1&iso_cd=&perpage=100".format(ticker)
                         url_info = qry_url
                         res = httpRequest(qry_url, None, 'GET')
                         if res.decode('utf-8') == '[]':
@@ -197,7 +196,7 @@ def getTargetFile(j, c):
                             obj = json.loads(res)
                             matched = False
                             for d in obj:
-                                if d['TICKER'] == '{}-US'.format(ticker): matched = True
+                                if d['item_cd'] == '{}-US'.format(ticker): matched = True
                                 break
                             if not matched:
                                 with open(r'{}\financeData_{}_{}_{}.{}'.format(j.workDir, sec_name, ticker, j.jobtype,
@@ -323,7 +322,7 @@ def getTargetFileTest(j, c):
                                                                        j.filetype),
                                   'w') as fp:
                             json.dump(json_msg, fp)
-                elif j.jobtype in ['GlobalFinancialSummary', 'GlobalConsensus']:
+                elif j.jobtype in ['GlobalFinancialSummary', 'GlobalConsensus', 'GlobalFinancialStatement']:
                     try:
                         url = j.url.format(ticker, generateEncCode())
                         url_info = url
