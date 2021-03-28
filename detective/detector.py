@@ -6710,6 +6710,579 @@ def hidden_pearl_in_usmarket_test():
         errmsg = '{}\n{}\n[{}][{}]'.format('hidden_pearl_in_usmarket_test', str(e), i.ticker, i.security)
         print(errmsg)
 
+
+def new_hidden_pearl_in_usmarket():
+    import sys
+    import os
+    import django
+    import logging
+    from statistics import mean
+    import numpy as np
+    from detective.fnguide_collector import fileCheck, saveFile
+    from detective.fnguide_collector import generateEncCode
+    import detective.chromecrawler as cc
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+
+    logfile = 'US_detector'
+    if not os.path.exists('./logs'):
+        os.makedirs('./logs')
+    now = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('[%(asctime)s][%(filename)s:%(lineno)s] >> %(message)s')
+
+    streamHandler = logging.StreamHandler()
+    fileHandler = logging.FileHandler("./logs/{}_{}.log".format(logfile, now))
+
+    streamHandler.setFormatter(formatter)
+    fileHandler.setFormatter(formatter)
+
+    logger.addHandler(streamHandler)
+    logger.addHandler(fileHandler)
+    logger.setLevel(level=logging.INFO)
+
+    pass_reason = ''
+    treasure = {}
+    trash = {}
+    best = {}
+    better = {}
+    good = {}
+    data = {}
+    # 날짜 정보 셋팅
+    dateDict = new_get_dateDict()
+    # 종목 정보 셋팅
+    # DEBUG = True
+    DEBUG = False
+    # USE_JSON = False
+    USE_JSON = True
+    current_data = None
+    term_nm1 = 'YYMM5'
+    term_nm2 = 'VAL5'
+    term_header = {"YYMM6": "VAL6", "YYMM7": "VAL7", "YYMM8": "VAL8", "YYMM9": "VAL9", "YYMM10": "VAL10", "YYMM5": "VAL5"}
+    term_header2 = {"YYMM1": "DATA1", "YYMM2": "DATA2", "YYMM3": "DATA3", "YYMM4": "DATA4", "YYMM5": "DATA5"}
+    # yyyymmdd = str(datetime.now())[:10]
+    # yyyymmdd = '2020-08-04'
+    # workDir = r'{}\{}\{}'.format(path, 'GlobalFinancialSummary', '2020-08-04')
+
+    import detective_app.models as detective_db
+    # stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='RXT', listing='Y')  # Apple
+    stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y').exclude(category_name="Finance")  # Apple
+
+    HIGH_ROS = []
+    HIGH_RESERVE = []
+
+    JsonDir = r'{}\USResultJson'.format(path)
+    if not os.path.exists(JsonDir):
+        os.makedirs(JsonDir)
+    if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)) and USE_JSON:
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), "r") as f:
+            data = f.read()
+            treasure = json.loads(data)
+            # print(treasure)
+    if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)) and USE_JSON:
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), "r") as f:
+            data = f.read()
+            trash = json.loads(data)
+            # print(treasure)
+    try:
+        for ii, stock in enumerate(stockInfo):
+            # if ii > 10: break
+            if stock.ticker in treasure.keys():
+                print("stock.ticker in treasure.keys()")
+                continue
+            else:
+                if stock.ticker in trash.keys():
+                    print("stock.ticker in trash.keys()")
+                    continue
+                else:
+                    pass
+        for idx, i in enumerate(stockInfo):
+            # print(i.__dict__)
+            data = {}
+            # if i.security == "Apple Inc":
+            #     print(i.category_detail)
+            try:
+                current_data = i
+                data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name, 'Industry': i.category_detail, '발행주식수': i.issued_shares}
+                sec_name = i.security.replace(' ', '')\
+                    .replace('&', 'AND')\
+                    .replace(',', '')\
+                    .replace('.', '')\
+                    .replace('!', '')\
+                    .replace('*', '')\
+                    .replace('/', '')
+                dic = get_soup_from_file('GlobalCompanyProfile', yyyymmdd, sec_name, i.ticker, 'json')
+                if dic is None or dic == '':
+                    logger.info("[{}][{}] Not exist profile File".format(i.ticker, i.security))
+                    continue
+                if dic['data'] is not None:
+                    if dic['data']['primaryData'] is not None:
+                        if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData']['lastSalePrice'] != 'N/A':
+                            data['종가'] = float(dic['data']['primaryData']['lastSalePrice'].replace('$', ''))
+                        else: data['종가'] = 0.0
+                    else: data['종가'] = 0.0
+                else:
+                    data['종가'] = 0.0
+                    continue
+                data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
+                data['거래량'] = int(dic['data']['keyStats']['Volume']['value'].replace(',', ''))
+                dic = get_soup_from_file('GlobalFinancialSummary', yyyymmdd, sec_name, i.ticker, 'json')
+                if dic is None or dic == '':
+                    logger.info("[{}][{}] Not exist FinancialSummary File".format(i.ticker, i.security))
+                    continue
+                data['Period'] = dic['Data1'][term_nm1]
+                data['요구수익률'] = 20
+                for d in dic['Data2']:
+                    if DEBUG: print(d)
+                    if d['ITEM_NM'] in ['자산총계', '자본총계', '당기순이익', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름',\
+                                        'CAPEX', 'Free Cash Flow', '매출액']:
+                        data[d['ITEM_NM']] = d[term_nm2] * 1000000 if d[term_nm2] is not None else 0
+                        if d['ITEM_NM'] == '영업활동현금흐름':
+                            data['OCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '투자활동현금흐름':
+                            data['ICF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '재무활동현금흐름':
+                            data['FNCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == 'Free Cash Flow':
+                            data['FCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '매출액':
+                            data['SALES'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '당기순이익':
+                            data['NETINC'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                    if d['ITEM_NM'] in ['매출액증가율', '영업이익률', '영업이익증가율']:
+                        data[d['ITEM_NM']] = d[term_nm2] if d[term_nm2] is not None else 0
+                        if d['ITEM_NM'] == '영업이익률':
+                            data['OPIR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '영업이익증가율':
+                            data['OPIGR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '매출액증가율':
+                            data['SRGR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                dic = get_soup_from_file('GlobalFinancialStatement', yyyymmdd, sec_name, i.ticker, 'json')
+                if dic is None or dic == '':
+                    logger.info("[{}][{}] Not exist FinancialStatement File".format(i.ticker, i.security))
+                    continue
+                for d in dic['BodyData']:
+                    if DEBUG: print(d)
+                    if d['ACCODE']  == 112046051:
+                        data['EARN'] = {dic['HeaderData'][key]: d[term_header2[key]] if d[term_header2[key]] is not None else 0 for key in term_header2.keys()}
+                dic = get_soup_from_file('GlobalConsensus', yyyymmdd, sec_name, i.ticker, 'json')
+                if dic is None or dic == '':
+                    logger.info("[{}][{}] Not exist Consensus File".format(i.ticker, i.security))
+                    continue
+                for d in dic['Data']:
+                    if DEBUG: print(d)
+                    if d['ITEM'] in ['매출액', '영업이익', '당기순이익']:
+                        data["12M_Fwd_{}".format(d['ITEM'])] = d['DATA3'] * 1000000 if d['DATA3'] is not None else 0
+                    elif d['ITEM'] in ['EPS', 'PER', 'ROE<p class="unit"> %</p>']:
+                        data["12M_Fwd_{}".format(d['ITEM'].replace('<p class="unit"> %</p>', ''))] = d['DATA3'] if d['DATA3'] is not None else 0
+                if data['자산총계'] == 0:
+                    data['ROE'] = 0.0
+                else:
+                    data['ROE'] = (data['당기순이익'] / data['자산총계'] * 100) if data['자산총계'] is not None and data['자산총계'] != 0 else 0
+                data["EPS"] = round(data["당기순이익"]/data["발행주식수"], 2) if data["발행주식수"] is not None and data["발행주식수"] != 0 else 0
+                data["PER"] = round(data["종가"] / data["EPS"] * 100, 2) if data["EPS"] is not None and data["EPS"] != 0 else 0
+                # data["NPV"] = data["12M_Fwd_PER"] * data["12M_Fwd_EPS"] if data["12M_Fwd_EPS"] is not None and data["12M_Fwd_EPS"] != 0 else 0
+                data['주주가치'] = data['자산총계'] + (
+                        data['자산총계'] * (data['12M_Fwd_ROE'] - data['요구수익률']) / (data['요구수익률']))
+                data['NPV'] = data['주주가치'] / data['발행주식수'] if data['발행주식수'] is not None and data['발행주식수'] != 0.0 else 0
+                # data['ROS'] = data['당기순이익'] / data['매출액'] * 100 if data['매출액'] is not None and data['매출액'] != 0 else 0
+                # if data['ROS'] > 15: HIGH_ROS.append(data['Name'])
+                if DEBUG: print(data)
+                if data["매출액"] and data["당기순이익"] and data["매출액"] > 0 and data["당기순이익"] > 0 and data["NPV"] > data["종가"] * 1.3\
+                        and mean(data["SALES"].values()) < data["매출액"] and list(data["SALES"].values())[-1] < data["매출액"] \
+                        and mean(data["NETINC"].values()) < data["당기순이익"] and list(data["NETINC"].values())[-1] < data["당기순이익"]:
+                    if data["영업이익률"] > 20: # mean(data["OPIR"].values()) > 20:
+                        best[i.ticker] = data
+                    elif np.sign(data["영업이익률"]) > np.sign(mean(data["OPIR"].values())):
+                        best[i.ticker] = data
+                    else:
+                        better[i.ticker] = data
+                    # treasure[i.ticker] = data
+                else:
+                    if mean(data["OPIR"].values()) > 20 and data["NPV"] > data["종가"]:
+                        if mean(data["OPIR"].values()) < data["영업이익률"]:
+                            better[i.ticker] = data
+                        else:
+                            good[i.ticker] = data
+                    else:
+                        trash[i.ticker] = data
+                        continue
+            except Exception as e:
+                logger.error(e)
+                logger.error("{} {}".format(i.ticker, i.security))
+        # print('=' * 50, '마이너스', '=' * 50)
+        print(align_string('L', 'No.', 5),
+              align_string('R', 'Ticker', 10),
+              align_string('R', 'Security', 20),
+              align_string('R', 'Industry', 30),
+              align_string('R', '영업이익률', 15),
+              align_string('R', 'EPS', 20),
+              align_string('R', '자산총계', 14),
+              align_string('R', '주주가치', 16),
+              align_string('R', 'NPV', 20),
+              align_string('R', '종가', 10),
+              align_string('R', '확인사항', 16),
+              )
+        if not DEBUG: USDataInit()
+        cnt = 0
+        # print(treasure)
+        USTargetStockDataDelete(yyyymmdd)
+        print("="*50, "BEST", "="*50)
+        for d in best.keys():
+            cnt +=1
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', best[d]['Name'], 40 - len(best[d]['Name'])),
+                  align_string('R', best[d]['Industry'], 30),
+                  align_string(',', round(best[d]['영업이익률'], 2), 20),
+                  align_string(',', round(best[d]['EPS'], 2), 20),
+                  align_string(',', round(best[d]['자산총계'], 0), 20),
+                  align_string(',', round(best[d]['주주가치'], 0), 20),
+                  align_string(',', round(best[d]['NPV'], 0), 20),
+                  align_string(',', best[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in best[d].keys() else best[d]['확인사항'], 20),
+                  )
+        print("=" * 50, "BETTER", "=" * 50)
+        for d in better.keys():
+            cnt += 1
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', better[d]['Name'], 40 - len(better[d]['Name'])),
+                  align_string('R', better[d]['Industry'], 30),
+                  align_string(',', round(better[d]['영업이익률'], 2), 20),
+                  align_string(',', round(better[d]['EPS'], 2), 20),
+                  align_string(',', round(better[d]['자산총계'], 0), 20),
+                  align_string(',', round(better[d]['주주가치'], 0), 20),
+                  align_string(',', round(better[d]['NPV'], 0), 20),
+                  align_string(',', better[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in better[d].keys() else better[d]['확인사항'], 20),
+                  )
+        print("=" * 50, "GOOD", "=" * 50)
+        for d in good.keys():
+            cnt += 1
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', good[d]['Name'], 40 - len(good[d]['Name'])),
+                  align_string('R', good[d]['Industry'], 30),
+                  align_string(',', round(good[d]['영업이익률'], 2), 20),
+                  align_string(',', round(good[d]['EPS'], 2), 20),
+                  align_string(',', round(good[d]['자산총계'], 0), 20),
+                  align_string(',', round(good[d]['주주가치'], 0), 20),
+                  align_string(',', round(good[d]['NPV'], 0), 20),
+                  align_string(',', good[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in good[d].keys() else good[d]['확인사항'], 20),
+                  )
+        for d in treasure.keys():
+            USTargetStockDataStore(d, treasure[d])
+        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(treasure, fp)
+        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(trash, fp)
+    except Exception as e:
+        print('error', e, '\n', i)
+        errmsg = '{}\n{}\n[{}][{}]'.format('hidden_pearl_in_usmarket', str(e), i.ticker, i.security)
+        err_messeage_to_telegram(errmsg)
+        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(treasure, fp)
+        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(trash, fp)
+
+
+def new_hidden_pearl_in_usmarket_test(code):
+    import sys
+    import os
+    import django
+    import logging
+    from statistics import mean
+    import numpy as np
+    from detective.fnguide_collector import fileCheck, saveFile
+    from detective.fnguide_collector import generateEncCode
+    import detective.chromecrawler as cc
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+
+    logfile = 'US_detector'
+    if not os.path.exists('./logs'):
+        os.makedirs('./logs')
+    now = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('[%(asctime)s][%(filename)s:%(lineno)s] >> %(message)s')
+
+    streamHandler = logging.StreamHandler()
+    fileHandler = logging.FileHandler("./logs/{}_{}.log".format(logfile, now))
+
+    streamHandler.setFormatter(formatter)
+    fileHandler.setFormatter(formatter)
+
+    logger.addHandler(streamHandler)
+    logger.addHandler(fileHandler)
+    logger.setLevel(level=logging.INFO)
+
+    pass_reason = ''
+    treasure = {}
+    trash = {}
+    best = {}
+    better = {}
+    good = {}
+    data = {}
+    # 날짜 정보 셋팅
+    dateDict = new_get_dateDict()
+    # 종목 정보 셋팅
+    # DEBUG = True
+    DEBUG = True
+    # USE_JSON = False
+    USE_JSON = True
+    current_data = None
+    term_nm1 = 'YYMM5'
+    term_nm2 = 'VAL5'
+    term_header = {"YYMM6": "VAL6", "YYMM7": "VAL7", "YYMM8": "VAL8", "YYMM9": "VAL9", "YYMM10": "VAL10", "YYMM5": "VAL5"}
+    term_header2 = {"YYMM1": "DATA1", "YYMM2": "DATA2", "YYMM3": "DATA3", "YYMM4": "DATA4", "YYMM5": "DATA5"}
+    # yyyymmdd = str(datetime.now())[:10]
+    # yyyymmdd = '2020-08-04'
+    # workDir = r'{}\{}\{}'.format(path, 'GlobalFinancialSummary', '2020-08-04')
+
+    import detective_app.models as detective_db
+    stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker=code, listing='Y')  # Apple
+    # stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y')  # Apple
+
+    HIGH_ROS = []
+    HIGH_RESERVE = []
+
+    JsonDir = r'{}\USResultJson'.format(path)
+    if not os.path.exists(JsonDir):
+        os.makedirs(JsonDir)
+    if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)) and USE_JSON:
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), "r") as f:
+            data = f.read()
+            treasure = json.loads(data)
+            # print(treasure)
+    if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)) and USE_JSON:
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), "r") as f:
+            data = f.read()
+            trash = json.loads(data)
+            # print(treasure)
+    try:
+        for ii, stock in enumerate(stockInfo):
+            # if ii > 10: break
+            if stock.ticker in treasure.keys():
+                print("stock.ticker in treasure.keys()")
+                continue
+            else:
+                if stock.ticker in trash.keys():
+                    print("stock.ticker in trash.keys()")
+                    continue
+                else:
+                    pass
+        for idx, i in enumerate(stockInfo):
+            # print(i.__dict__)
+            data = {}
+            if i.security == "Apple Inc":
+                print(i.category_detail)
+            try:
+                current_data = i
+                data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name, 'Industry': i.category_detail, '발행주식수': i.issued_shares}
+                sec_name = i.security.replace(' ', '')\
+                    .replace('&', 'AND')\
+                    .replace(',', '')\
+                    .replace('.', '')\
+                    .replace('!', '')\
+                    .replace('*', '')\
+                    .replace('/', '')
+                dic = get_soup_from_file('GlobalCompanyProfile', yyyymmdd, sec_name, i.ticker, 'json')
+                if dic is None or dic == '':
+                    logger.info("[{}][{}] Not exist profile File".format(i.ticker, i.security))
+                    continue
+                if dic['data'] is not None:
+                    if dic['data']['primaryData'] is not None:
+                        if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData']['lastSalePrice'] != 'N/A':
+                            data['종가'] = float(dic['data']['primaryData']['lastSalePrice'].replace('$', ''))
+                        else: data['종가'] = 0.0
+                    else: data['종가'] = 0.0
+                else:
+                    data['종가'] = 0.0
+                    continue
+                data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
+                data['거래량'] = int(dic['data']['keyStats']['Volume']['value'].replace(',', ''))
+                dic = get_soup_from_file('GlobalFinancialSummary', yyyymmdd, sec_name, i.ticker, 'json')
+                if dic is None or dic == '':
+                    logger.info("[{}][{}] Not exist FinancialSummary File".format(i.ticker, i.security))
+                    continue
+                data['Period'] = dic['Data1'][term_nm1]
+                data['요구수익률'] = 10
+                for d in dic['Data2']:
+                    if DEBUG: print(d)
+                    if d['ITEM_NM'] in ['자산총계', '자본총계', '당기순이익', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름',\
+                                        'CAPEX', 'Free Cash Flow', '매출액']:
+                        data[d['ITEM_NM']] = d[term_nm2] * 1000000 if d[term_nm2] is not None else 0
+                        if d['ITEM_NM'] == '영업활동현금흐름':
+                            data['OCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '투자활동현금흐름':
+                            data['ICF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '재무활동현금흐름':
+                            data['FNCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == 'Free Cash Flow':
+                            data['FCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '매출액':
+                            data['SALES'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '당기순이익':
+                            data['NETINC'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                    if d['ITEM_NM'] in ['매출액증가율', '영업이익률', '영업이익증가율']:
+                        data[d['ITEM_NM']] = d[term_nm2] if d[term_nm2] is not None else 0
+                        if d['ITEM_NM'] == '영업이익률':
+                            data['OPIR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '영업이익증가율':
+                            data['OPIGR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                        if d['ITEM_NM'] == '매출액증가율':
+                            data['SRGR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                dic = get_soup_from_file('GlobalFinancialStatement', yyyymmdd, sec_name, i.ticker, 'json')
+                if dic is None or dic == '':
+                    logger.info("[{}][{}] Not exist FinancialStatement File".format(i.ticker, i.security))
+                    continue
+                for d in dic['BodyData']:
+                    if DEBUG: print(d)
+                    if d['ACCODE']  == 112046051:
+                        data['EARN'] = {dic['HeaderData'][key]: d[term_header2[key]] if d[term_header2[key]] is not None else 0 for key in term_header2.keys()}
+                dic = get_soup_from_file('GlobalConsensus', yyyymmdd, sec_name, i.ticker, 'json')
+                if dic is None or dic == '':
+                    logger.info("[{}][{}] Not exist Consensus File".format(i.ticker, i.security))
+                    continue
+                for d in dic['Data']:
+                    if DEBUG: print(d)
+                    if d['ITEM'] in ['매출액', '영업이익', '당기순이익']:
+                        data["12M_Fwd_{}".format(d['ITEM'])] = d['DATA3'] * 1000000 if d['DATA3'] is not None else 0
+                    elif d['ITEM'] in ['EPS', 'PER', 'ROE<p class="unit"> %</p>']:
+                        data["12M_Fwd_{}".format(d['ITEM'].replace('<p class="unit"> %</p>', ''))] = d['DATA3'] if d['DATA3'] is not None else 0
+                if data['자산총계'] == 0:
+                    data['ROE'] = 0.0
+                else:
+                    data['ROE'] = (data['당기순이익'] / data['자산총계'] * 100) if data['자산총계'] is not None and data['자산총계'] != 0 else 0
+                data["EPS"] = round(data["당기순이익"]/data["발행주식수"], 2) if data["발행주식수"] is not None and data["발행주식수"] != 0 else 0
+                data["PER"] = round(data["종가"] / data["EPS"] * 100, 2) if data["EPS"] is not None and data["EPS"] != 0 else 0
+                # data["NPV"] = data["12M_Fwd_PER"] * data["12M_Fwd_EPS"] if data["12M_Fwd_EPS"] is not None and data["12M_Fwd_EPS"] != 0 else 0
+                data['주주가치'] = data['자산총계'] + (
+                        data['자산총계'] * (data['12M_Fwd_ROE'] - data['요구수익률']) / (data['요구수익률']))
+                data['NPV'] = data['주주가치'] / data['발행주식수'] if data['발행주식수'] is not None and data['발행주식수'] != 0.0 else 0
+                # data['ROS'] = data['당기순이익'] / data['매출액'] * 100 if data['매출액'] is not None and data['매출액'] != 0 else 0
+                # if data['ROS'] > 15: HIGH_ROS.append(data['Name'])
+                if DEBUG: print(data)
+                if data["매출액"] and data["당기순이익"] and data["매출액"] > 0 and data["당기순이익"] > 0 and data["NPV"] > data["종가"]\
+                        and mean(data["SALES"].values()) < data["매출액"] and list(data["SALES"].values())[-1] < data["매출액"] \
+                        and mean(data["NETINC"].values()) < data["당기순이익"] and list(data["NETINC"].values())[-1] < data["당기순이익"]:
+                    if data["영업이익률"] > 20: # mean(data["OPIR"].values()) > 20:
+                        best[i.ticker] = data
+                    elif np.sign(data["영업이익률"]) > np.sign(mean(data["OPIR"].values())):
+                        best[i.ticker] = data
+                    else:
+                        better[i.ticker] = data
+                else:
+                    if mean(data["OPIR"].values()) > 20 and data["NPV"] > data["종가"]:
+                        if mean(data["OPIR"].values()) < data["영업이익률"]:
+                            better[i.ticker] = data
+                        else:
+                            good[i.ticker] = data
+                    else:
+                        trash[i.ticker] = data
+                        continue
+            except Exception as e:
+                logger.error(e)
+                logger.error("{} {}".format(i.ticker, i.security))
+        # print('=' * 50, '마이너스', '=' * 50)
+        print(align_string('L', 'No.', 5),
+              align_string('R', 'Ticker', 10),
+              align_string('R', 'Security', 20),
+              align_string('R', '영업이익률', 15),
+              align_string('R', 'EPS', 20),
+              align_string('R', '자산총계', 14),
+              align_string('R', '주주가치', 16),
+              align_string('R', 'NPV', 20),
+              align_string('R', '종가', 10),
+              align_string('R', '확인사항', 16),
+              )
+        if not DEBUG: USDataInit()
+        cnt = 0
+        # print(treasure)
+        # USTargetStockDataDelete(yyyymmdd)
+        print("="*50, "BEST", "="*50)
+        for d in best.keys():
+            cnt +=1
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', best[d]['Name'], 40 - len(best[d]['Name'])),
+                  align_string(',', round(best[d]['영업이익률'], 2), 20),
+                  align_string(',', round(best[d]['EPS'], 2), 20),
+                  align_string(',', round(best[d]['자산총계'], 0), 20),
+                  align_string(',', round(best[d]['주주가치'], 0), 20),
+                  align_string(',', round(best[d]['NPV'], 0), 20),
+                  align_string(',', best[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in best[d].keys() else best[d]['확인사항'], 20),
+                  )
+        print("=" * 50, "BETTER", "=" * 50)
+        for d in better.keys():
+            cnt += 1
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', better[d]['Name'], 40 - len(better[d]['Name'])),
+                  align_string(',', round(better[d]['영업이익률'], 2), 20),
+                  align_string(',', round(better[d]['EPS'], 2), 20),
+                  align_string(',', round(better[d]['자산총계'], 0), 20),
+                  align_string(',', round(better[d]['주주가치'], 0), 20),
+                  align_string(',', round(better[d]['NPV'], 0), 20),
+                  align_string(',', better[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in better[d].keys() else better[d]['확인사항'], 20),
+                  )
+        print("=" * 50, "GOOD", "=" * 50)
+        for d in good.keys():
+            cnt += 1
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', good[d]['Name'], 40 - len(good[d]['Name'])),
+                  align_string(',', round(good[d]['영업이익률'], 2), 20),
+                  align_string(',', round(good[d]['EPS'], 2), 20),
+                  align_string(',', round(good[d]['자산총계'], 0), 20),
+                  align_string(',', round(good[d]['주주가치'], 0), 20),
+                  align_string(',', round(good[d]['NPV'], 0), 20),
+                  align_string(',', good[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in good[d].keys() else good[d]['확인사항'], 20),
+                  )
+        for d in treasure.keys():
+            USTargetStockDataStore(d, treasure[d])
+        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(treasure, fp)
+        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(trash, fp)
+    except Exception as e:
+        print('error', e, '\n', i)
+        errmsg = '{}\n{}\n[{}][{}]'.format('hidden_pearl_in_usmarket', str(e), i.ticker, i.security)
+        err_messeage_to_telegram(errmsg)
+        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(treasure, fp)
+        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
+            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
+        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
+            json.dump(trash, fp)
+
 if __name__ == '__main__':
     # get_high_ranked_stock_with_closeprice()
     # find_hidden_pearl()
