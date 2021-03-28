@@ -236,5 +236,19 @@ if __name__ == '__main__':
     # for s in tech_cash_flow_data_an["cashflowStatementHistory"]:
     #     for date in tech_cash_flow_data_an["cashflowStatementHistory"][s][0]:
     #         print(s, date, tech_cash_flow_data_an["cashflowStatementHistory"][s][0][date])
-    make_USDKRW_graph()
+    # make_USDKRW_graph()
     # make_USDKRWKOSPI_graph()
+    yahoo_financials = YahooFinancials('AACG')
+    bs1 = yahoo_financials.get_financial_stmts('quarter', 'balance')
+    bs2 = yahoo_financials.get_financial_stmts('annual', 'balance')
+    cf1 = yahoo_financials.get_financial_stmts('quarter', 'cash')
+    cf2 = yahoo_financials.get_financial_stmts('annual', 'cash')
+    # print(yahoo_financials.get_financial_stmts('quarter', 'balance'))
+    # for k1 in bs1["balanceSheetHistoryQuarterly"]["AACG"]:
+    #     print(k1)
+    # for k2 in bs2["balanceSheetHistory"]["AACG"]:
+    #     print(k2)
+    for k1 in cf1["cashflowStatementHistoryQuarterly"]["AACG"]:
+        print(k1)
+    for k2 in cf2["cashflowStatementHistory"]["AACG"]:
+        print(k2)
