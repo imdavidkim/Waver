@@ -3,7 +3,7 @@
 from detective.fnguide_collector import getFinanceData
 from detective.crawler import getSnP500StockInfo
 from detective.crawler import getNasdaqStockInfo
-from detective.detector import hidden_pearl_in_usmarket
+from detective.detector import new_hidden_pearl_in_usmarket
 from detective.detector import get_nasdaq_high_ranked_stock
 from detective.detector import get_nasdaq_high_ranked_stock_with_closeprice
 from detective.messenger import messeage_to_telegram
@@ -34,6 +34,6 @@ if __name__ == '__main__':
     with NonDaemonicPool(processes=agents) as pool:
         result = pool.map(getFinanceData, run_info)
 
-    hidden_pearl_in_usmarket()
+    new_hidden_pearl_in_usmarket()
     messeage_to_telegram(get_nasdaq_high_ranked_stock())
     get_nasdaq_high_ranked_stock_with_closeprice()
