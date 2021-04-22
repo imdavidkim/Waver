@@ -6770,7 +6770,7 @@ def new_hidden_pearl_in_usmarket():
 
     import detective_app.models as detective_db
     # stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='RXT', listing='Y')  # Apple
-    stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y').exclude(category_name="Finance")  # Apple
+    stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y').exclude(category_name="Finance").exclude(category_name="None")  # Apple
 
     HIGH_ROS = []
     HIGH_RESERVE = []
@@ -6901,13 +6901,14 @@ def new_hidden_pearl_in_usmarket():
                         best[i.ticker] = data
                     else:
                         better[i.ticker] = data
-                    # treasure[i.ticker] = data
+                    treasure[i.ticker] = data
                 else:
                     if mean(data["OPIR"].values()) > 20 and data["NPV"] > data["종가"]:
                         if mean(data["OPIR"].values()) < data["영업이익률"]:
                             better[i.ticker] = data
                         else:
                             good[i.ticker] = data
+                        treasure[i.ticker] = data
                     else:
                         trash[i.ticker] = data
                         continue
