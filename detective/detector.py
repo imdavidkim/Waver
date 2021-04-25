@@ -467,8 +467,8 @@ def get_nasdaq_high_ranked_stock_with_closeprice():
     #         idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
     # return retStr
 
-    
-    def get_nasdaq_stock_graph(d):
+
+def get_nasdaq_stock_graph(d):
     from yahoofinancials import YahooFinancials
     import sys
     import os
