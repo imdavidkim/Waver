@@ -6,6 +6,7 @@ from detective.crawler import getNasdaqStockInfo
 from detective.detector import new_hidden_pearl_in_usmarket
 from detective.detector import get_nasdaq_high_ranked_stock
 from detective.detector import get_nasdaq_high_ranked_stock_with_closeprice
+from detective.detector import get_nasdaq_stock_graph
 from detective.messenger import messeage_to_telegram
 import multiprocessing.pool
 
@@ -26,14 +27,15 @@ class NonDaemonicPool(multiprocessing.pool.Pool):
 
 if __name__ == '__main__':
     # getSnP500StockInfo()
-    getNasdaqStockInfo()
+    # getNasdaqStockInfo()
+    #
+    # run_info = [300, 301, 302, 303]
+    # agents = 3
+    #
+    # with NonDaemonicPool(processes=agents) as pool:
+    #     result = pool.map(getFinanceData, run_info)
 
-    run_info = [300, 301, 302]
-    agents = 3
-
-    with NonDaemonicPool(processes=agents) as pool:
-        result = pool.map(getFinanceData, run_info)
-
-    new_hidden_pearl_in_usmarket()
-    messeage_to_telegram(get_nasdaq_high_ranked_stock())
-    get_nasdaq_high_ranked_stock_with_closeprice()
+    t = new_hidden_pearl_in_usmarket()
+    messeage_to_telegram(get_nasdaq_high_ranked_stock(), True)
+    get_nasdaq_stock_graph(t)
+    # get_nasdaq_high_ranked_stock_with_closeprice()
