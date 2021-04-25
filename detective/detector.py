@@ -467,6 +467,120 @@ def get_nasdaq_high_ranked_stock_with_closeprice():
     #         idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
     # return retStr
 
+    
+    def get_nasdaq_stock_graph(d):
+    from yahoofinancials import YahooFinancials
+    import sys
+    import os
+    import django
+    import matplotlib.pyplot as plt
+    from matplotlib import rc, font_manager, style
+    from detective.messenger import messeage_to_telegram
+    import pandas as pd
+    import numpy as np
+
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    try:
+        font_name = font_manager.FontProperties(fname=font_path).get_name()
+        # font 설정
+
+        plt.close('all')
+        txt = ""
+        todaydate = datetime.strptime(yyyymmdd, "%Y-%m-%d")
+        before180days = datetime.strptime(yyyymmdd, "%Y-%m-%d") - timedelta(days=180)
+        for group in d.keys():
+            for idx, stock_code in enumerate(d[group].keys()):
+                # print(idx, ins_ticker)
+                fig = plt.figure(clear=True)
+                dates = []
+                prcs = []
+                instrument = YahooFinancials(stock_code)
+                prices = instrument.get_historical_price_data(str(before180days)[:10], str(todaydate)[:10], "daily")
+                mkt_cap = instrument.get_market_cap()
+                plt.rc('font', family=font_name)
+                txt = "[{}그룹]".format(group)
+                txt += "\n{}. [{}]{}".format(idx + 1, stock_code, d[group][stock_code]["Name"])
+                txt += "\n  - 시가총액:{}".format(mkt_cap)
+                txt += "\n  - 업종:{}".format(d[group][stock_code]["Industry"])
+                txt += "\n  - 예상매출액영업이익률:{}".format(d[group][stock_code]["영업이익률"])
+                txt += "\n  - EPS:{}".format(d[group][stock_code]["EPS"])
+                txt += "\n  - 예상EPS:{}".format(d[group][stock_code]["12M_Fwd_EPS"])
+                messeage_to_telegram(txt, dbg=True)
+                fig = plt.figure(clear=True)
+                for info in prices[stock_code]['prices']:
+                    dates.append(datetime.strptime(info['formatted_date'], "%Y-%m-%d"))
+                    prcs.append(info['close'])
+                price = pd.core.series.Series(prcs, dates)
+                SP = fig.add_subplot(1, 1, 1)
+                SP.plot(price, label="{}({})".format(d[group][stock_code]["Name"], stock_code))
+                SP.legend(loc='upper center')
+                img_path = r'{}\{}\{}'.format(path, 'USStockPriceTrace', yyyymmdd)
+                print(img_path)
+                if not os.path.exists(img_path):
+                    os.makedirs(img_path)
+                plt.savefig(img_path + '\\{}_{}.png'.format(d[group][stock_code]["Name"], stock_code))
+                plt.xticks(rotation=45)
+                # plt.show()
+                msgr.img_messeage_to_telegram(img_path + '\\{}_{}.png'.format(d[group][stock_code]["Name"], stock_code), True)
+                fig = None
+                plt.close('all')
+                if d[group][stock_code]['FCF'] is None or d[group][stock_code]['OCF'] is None or d[group][stock_code][
+                    'EARN'] is None or d[group][stock_code]['NETINC'] is None:
+                    continue
+                key = np.array(list(d[group][stock_code]['FCF'].keys()))
+                value1 = np.array(list(d[group][stock_code]['FCF'].values())) / 1000000
+                value2 = np.array(list(d[group][stock_code]['OCF'].values())) / 1000000
+                value3 = np.array(list(d[group][stock_code]['EARN'].values())) / 1000000
+                value4 = np.array(list(d[group][stock_code]['NETINC'].values())) / 1000000
+
+                df = pd.DataFrame(data=dict(nQ=key, FCF=np.rint(value1), OCF=np.rint(value2), EARN=np.rint(value3),
+                                            PL=np.rint(value4)))
+                plt.title("{} {}({})".format(d[group][stock_code]["Period"], d[group][stock_code]["Name"], stock_code))
+                plt.style.use('seaborn-dark')
+
+                ax = plt.subplot()
+                data_fcf = ax.plot(key, np.rint(value1), color="green", linestyle='-', marker='o', label="FCF")
+                data_ocf = ax.plot(key, np.rint(value2), color="red", linestyle='-', marker='o', label="OCF")
+                data_earn = ax.plot(key, np.rint(value3), color="blue", linestyle='-', marker='o', label="EARN")
+                data_pl = ax.plot(key, np.rint(value4), color="purple", linestyle='-', marker='o', label="PL")
+
+                for k1, v1 in zip(key, np.rint(value1)):
+                    ax.text(k1, v1 * 1.04, format(v1, ','), fontsize=10, horizontalalignment='center',
+                            verticalalignment="bottom")
+                for k1, v2 in zip(key, np.rint(value2)):
+                    ax.text(k1, v2 * 1.04, format(v2, ','), fontsize=10, horizontalalignment='center',
+                            verticalalignment="bottom")
+                for k1, v3 in zip(key, np.rint(value3)):
+                    ax.text(k1, v3 * 1.04, format(v3, ','), fontsize=10, horizontalalignment='center',
+                            verticalalignment="bottom")
+                for k1, v4 in zip(key, np.rint(value4)):
+                    ax.text(k1, v4 * 1.04, format(v4, ','), fontsize=10, horizontalalignment='center',
+                            verticalalignment="bottom")
+                ax.legend()
+                ax.set_ylim([min(min(value1), min(value2), min(value3), min(value4)),
+                             max(map(lambda x: x[-1], [value1, value2, value3, value4])) * 1.2])
+                ax.yaxis.set_ticks([])
+                ax.grid(False)
+                # plt.show()
+                plt.savefig(img_path + '\\Cashflow_{}_{}.png'.format(d[group][stock_code]["Name"], stock_code))
+                # plt.show()
+                msgr.img_messeage_to_telegram2(
+                    img_path + '\\Cashflow_{}_{}.png'.format(d[group][stock_code]["Name"], stock_code),
+                    dbg=True)
+                fig = None
+                plt.close("all")
+        plt = None
+    except Exception as e:
+        errmsg = '{}\n{}'.format('get_nasdaq_stock_graph', str(e))
+        err_messeage_to_telegram(errmsg)
+        fig = None
+        plt.close('all')
+        plt = None
+        
 
 def align_string(switch, text, digit):
     if switch == 'L':
@@ -6901,14 +7015,12 @@ def new_hidden_pearl_in_usmarket():
                         best[i.ticker] = data
                     else:
                         better[i.ticker] = data
-                    treasure[i.ticker] = data
                 else:
                     if mean(data["OPIR"].values()) > 20 and data["NPV"] > data["종가"]:
                         if mean(data["OPIR"].values()) < data["영업이익률"]:
                             better[i.ticker] = data
                         else:
                             good[i.ticker] = data
-                        treasure[i.ticker] = data
                     else:
                         trash[i.ticker] = data
                         continue
@@ -6947,6 +7059,9 @@ def new_hidden_pearl_in_usmarket():
                   align_string(',', best[d]['종가'], 10),
                   align_string('R', '' if '확인사항' not in best[d].keys() else best[d]['확인사항'], 20),
                   )
+            if "BEST" not in treasure.keys():
+                treasure["BEST"] = {}
+            treasure["BEST"][d] = best[d]
         print("=" * 50, "BETTER", "=" * 50)
         for d in better.keys():
             cnt += 1
@@ -6962,6 +7077,9 @@ def new_hidden_pearl_in_usmarket():
                   align_string(',', better[d]['종가'], 10),
                   align_string('R', '' if '확인사항' not in better[d].keys() else better[d]['확인사항'], 20),
                   )
+            if "BETTER" not in treasure.keys():
+                treasure["BETTER"] = {}
+            treasure["BETTER"][d] = better[d]
         print("=" * 50, "GOOD", "=" * 50)
         for d in good.keys():
             cnt += 1
@@ -6977,8 +7095,12 @@ def new_hidden_pearl_in_usmarket():
                   align_string(',', good[d]['종가'], 10),
                   align_string('R', '' if '확인사항' not in good[d].keys() else good[d]['확인사항'], 20),
                   )
-        for d in treasure.keys():
-            USTargetStockDataStore(d, treasure[d])
+            if "GOOD" not in treasure.keys():
+                treasure["GOOD"] = {}
+            treasure["GOOD"][d] = good[d]
+        for group in treasure.keys():
+            for d in treasure[group].keys():
+                USTargetStockDataStore(d, treasure[group][d])
         if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
             os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
         with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
@@ -6987,6 +7109,7 @@ def new_hidden_pearl_in_usmarket():
             os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
         with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
             json.dump(trash, fp)
+        return treasure
     except Exception as e:
         print('error', e, '\n', i)
         errmsg = '{}\n{}\n[{}][{}]'.format('hidden_pearl_in_usmarket', str(e), i.ticker, i.security)
@@ -6999,6 +7122,7 @@ def new_hidden_pearl_in_usmarket():
             os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
         with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
             json.dump(trash, fp)
+        return None
 
 
 def new_hidden_pearl_in_usmarket_test(code):
