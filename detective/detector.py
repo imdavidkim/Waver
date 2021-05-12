@@ -14,6 +14,7 @@ import json
 import detective.fnguide_collector as fnguide
 import detective.messenger as msgr
 from detective.messenger import err_messeage_to_telegram
+
 DEBUG = True
 
 
@@ -105,6 +106,7 @@ def new_get_dateDict():
     retDict['yyyy2'] = before730date.strftime("%Y%m%d")
     # print(retDict)
     return retDict
+
 
 def get_max_date_on_dailysnapshot(crp_cd):
     import sys
@@ -6876,15 +6878,17 @@ def new_hidden_pearl_in_usmarket():
     current_data = None
     term_nm1 = 'YYMM5'
     term_nm2 = 'VAL5'
-    term_header = {"YYMM6": "VAL6", "YYMM7": "VAL7", "YYMM8": "VAL8", "YYMM9": "VAL9", "YYMM10": "VAL10", "YYMM5": "VAL5"}
+    term_header = {"YYMM6": "VAL6", "YYMM7": "VAL7", "YYMM8": "VAL8", "YYMM9": "VAL9", "YYMM10": "VAL10",
+                   "YYMM5": "VAL5"}
     term_header2 = {"YYMM1": "DATA1", "YYMM2": "DATA2", "YYMM3": "DATA3", "YYMM4": "DATA4", "YYMM5": "DATA5"}
     # yyyymmdd = str(datetime.now())[:10]
     # yyyymmdd = '2020-08-04'
     # workDir = r'{}\{}\{}'.format(path, 'GlobalFinancialSummary', '2020-08-04')
 
     import detective_app.models as detective_db
-    # stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='RXT', listing='Y')  # Apple
-    stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y').exclude(category_name="Finance").exclude(category_name="None")  # Apple
+    # stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='AAPL', listing='Y')  # Apple
+    stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y').exclude(category_name="Finance").exclude(
+        category_name="None")  # Apple
 
     HIGH_ROS = []
     HIGH_RESERVE = []
@@ -6921,13 +6925,14 @@ def new_hidden_pearl_in_usmarket():
             #     print(i.category_detail)
             try:
                 current_data = i
-                data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name, 'Industry': i.category_detail, '발행주식수': i.issued_shares}
-                sec_name = i.security.replace(' ', '')\
-                    .replace('&', 'AND')\
-                    .replace(',', '')\
-                    .replace('.', '')\
-                    .replace('!', '')\
-                    .replace('*', '')\
+                data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name,
+                        'Industry': i.category_detail, '발행주식수': i.issued_shares}
+                sec_name = i.security.replace(' ', '') \
+                    .replace('&', 'AND') \
+                    .replace(',', '') \
+                    .replace('.', '') \
+                    .replace('!', '') \
+                    .replace('*', '') \
                     .replace('/', '')
                 dic = get_soup_from_file('GlobalCompanyProfile', yyyymmdd, sec_name, i.ticker, 'json')
                 if dic is None or dic == '':
@@ -6935,14 +6940,18 @@ def new_hidden_pearl_in_usmarket():
                     continue
                 if dic['data'] is not None:
                     if dic['data']['primaryData'] is not None:
-                        if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData']['lastSalePrice'] != 'N/A':
+                        if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData'][
+                            'lastSalePrice'] != 'N/A':
                             data['종가'] = float(dic['data']['primaryData']['lastSalePrice'].replace('$', ''))
-                        else: data['종가'] = 0.0
-                    else: data['종가'] = 0.0
+                        else:
+                            data['종가'] = 0.0
+                    else:
+                        data['종가'] = 0.0
                 else:
                     data['종가'] = 0.0
                     continue
-                data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
+                data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else \
+                dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
                 data['거래량'] = int(dic['data']['keyStats']['Volume']['value'].replace(',', ''))
                 dic = get_soup_from_file('GlobalFinancialSummary', yyyymmdd, sec_name, i.ticker, 'json')
                 if dic is None or dic == '':
@@ -6952,37 +6961,57 @@ def new_hidden_pearl_in_usmarket():
                 data['요구수익률'] = 20
                 for d in dic['Data2']:
                     if DEBUG: print(d)
-                    if d['ITEM_NM'] in ['자산총계', '자본총계', '당기순이익', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름',\
+                    if d['ITEM_NM'] in ['자산총계', '자본총계', '당기순이익', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', \
                                         'CAPEX', 'Free Cash Flow', '매출액']:
                         data[d['ITEM_NM']] = d[term_nm2] * 1000000 if d[term_nm2] is not None else 0
                         if d['ITEM_NM'] == '영업활동현금흐름':
-                            data['OCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['OCF'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '투자활동현금흐름':
-                            data['ICF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['ICF'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '재무활동현금흐름':
-                            data['FNCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['FNCF'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == 'Free Cash Flow':
-                            data['FCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['FCF'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '매출액':
-                            data['SALES'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['SALES'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '당기순이익':
-                            data['NETINC'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['NETINC'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                     if d['ITEM_NM'] in ['매출액증가율', '영업이익률', '영업이익증가율']:
                         data[d['ITEM_NM']] = d[term_nm2] if d[term_nm2] is not None else 0
                         if d['ITEM_NM'] == '영업이익률':
-                            data['OPIR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['OPIR'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '영업이익증가율':
-                            data['OPIGR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['OPIGR'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '매출액증가율':
-                            data['SRGR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['SRGR'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                 dic = get_soup_from_file('GlobalFinancialStatement', yyyymmdd, sec_name, i.ticker, 'json')
                 if dic is None or dic == '':
                     logger.info("[{}][{}] Not exist FinancialStatement File".format(i.ticker, i.security))
                     continue
                 for d in dic['BodyData']:
                     if DEBUG: print(d)
-                    if d['ACCODE']  == 112046051:
-                        data['EARN'] = {dic['HeaderData'][key]: d[term_header2[key]] if d[term_header2[key]] is not None else 0 for key in term_header2.keys()}
+                    if d['ACCODE'] == 112046051:
+                        data['EARN'] = {
+                            dic['HeaderData'][key]: d[term_header2[key]] if d[term_header2[key]] is not None else 0 for
+                            key in term_header2.keys()}
                 dic = get_soup_from_file('GlobalConsensus', yyyymmdd, sec_name, i.ticker, 'json')
                 if dic is None or dic == '':
                     logger.info("[{}][{}] Not exist Consensus File".format(i.ticker, i.security))
@@ -6992,24 +7021,84 @@ def new_hidden_pearl_in_usmarket():
                     if d['ITEM'] in ['매출액', '영업이익', '당기순이익']:
                         data["12M_Fwd_{}".format(d['ITEM'])] = d['DATA3'] * 1000000 if d['DATA3'] is not None else 0
                     elif d['ITEM'] in ['EPS', 'PER', 'ROE<p class="unit"> %</p>']:
-                        data["12M_Fwd_{}".format(d['ITEM'].replace('<p class="unit"> %</p>', ''))] = d['DATA3'] if d['DATA3'] is not None else 0
+                        data["12M_Fwd_{}".format(d['ITEM'].replace('<p class="unit"> %</p>', ''))] = d['DATA3'] if d[
+                                                                                                                       'DATA3'] is not None else 0
                 if data['자산총계'] == 0:
                     data['ROE'] = 0.0
                 else:
-                    data['ROE'] = (data['당기순이익'] / data['자산총계'] * 100) if data['자산총계'] is not None and data['자산총계'] != 0 else 0
-                data["EPS"] = round(data["당기순이익"]/data["발행주식수"], 2) if data["발행주식수"] is not None and data["발행주식수"] != 0 else 0
-                data["PER"] = round(data["종가"] / data["EPS"] * 100, 2) if data["EPS"] is not None and data["EPS"] != 0 else 0
+                    data['ROE'] = (data['당기순이익'] / data['자산총계'] * 100) if data['자산총계'] is not None and data[
+                        '자산총계'] != 0 else 0
+                data["EPS"] = round(data["당기순이익"] / data["발행주식수"], 2) if data["발행주식수"] is not None and data[
+                    "발행주식수"] != 0 else 0
+                data["PER"] = round(data["종가"] / data["EPS"] * 100, 2) if data["EPS"] is not None and data[
+                    "EPS"] != 0 else 0
                 # data["NPV"] = data["12M_Fwd_PER"] * data["12M_Fwd_EPS"] if data["12M_Fwd_EPS"] is not None and data["12M_Fwd_EPS"] != 0 else 0
                 data['주주가치'] = data['자산총계'] + (
                         data['자산총계'] * (data['12M_Fwd_ROE'] - data['요구수익률']) / (data['요구수익률']))
                 data['NPV'] = data['주주가치'] / data['발행주식수'] if data['발행주식수'] is not None and data['발행주식수'] != 0.0 else 0
                 # data['ROS'] = data['당기순이익'] / data['매출액'] * 100 if data['매출액'] is not None and data['매출액'] != 0 else 0
                 # if data['ROS'] > 15: HIGH_ROS.append(data['Name'])
+                keylist = list(data['FCF'].keys())
+                keylist.extend(list(data['EARN'].keys()))
+                keyfinder = list(set(keylist))
+                # keyfinder = list(data['FCF'].keys()).append(list(data['EARN'].keys()))
+                temp_dic = {}
+                for kf in keyfinder:
+                    if kf not in data['FCF'].keys():
+                        if kf < list(data['FCF'].keys())[0]:
+                            temp_dic[kf] = data["FCF"][list(data['FCF'].keys())[0]]
+                        elif kf > list(data['FCF'].keys())[-1]:
+                            temp_dic[kf] = data["FCF"][list(data['FCF'].keys())[-1]]
+                        else:
+                            pass
+                    else:
+                        temp_dic[kf] = data["FCF"][kf]
+                data["FCF"] = {k:temp_dic[k] for k in sorted(temp_dic)}
+                temp_dic = {}
+                for kf in keyfinder:
+                    if kf not in data['OCF'].keys():
+                        if kf < list(data['OCF'].keys())[0]:
+                            temp_dic[kf] = data["OCF"][list(data['OCF'].keys())[0]]
+                        elif kf > list(data['OCF'].keys())[-1]:
+                            temp_dic[kf] = data["OCF"][list(data['OCF'].keys())[-1]]
+                        else:
+                            pass
+                    else:
+                        temp_dic[kf] = data["OCF"][kf]
+                data["OCF"] = {k:temp_dic[k] for k in sorted(temp_dic)}
+                temp_dic = {}
+                for kf in keyfinder:
+                    if kf not in data['EARN'].keys():
+                        if kf < list(data['EARN'].keys())[0]:
+                            temp_dic[kf] = data["EARN"][list(data['EARN'].keys())[0]]
+                        elif kf > list(data['EARN'].keys())[-1]:
+                            temp_dic[kf] = data["EARN"][list(data['EARN'].keys())[-1]]
+                        else:
+                            pass
+                    else:
+                        temp_dic[kf] = data["EARN"][kf]
+                data["EARN"] = {k:temp_dic[k] for k in sorted(temp_dic)}
+                temp_dic = {}
+                for kf in keyfinder:
+                    if kf not in data['NETINC'].keys():
+                        if kf < list(data['NETINC'].keys())[0]:
+                            temp_dic[kf] = data["NETINC"][list(data['NETINC'].keys())[0]]
+                        elif kf > list(data['NETINC'].keys())[-1]:
+                            temp_dic[kf] = data["NETINC"][list(data['NETINC'].keys())[-1]]
+                        else:
+                            pass
+                    else:
+                        temp_dic[kf] = data["NETINC"][kf]
+                data["NETINC"] = {k:temp_dic[k] for k in sorted(temp_dic)}
+
                 if DEBUG: print(data)
-                if data["매출액"] and data["당기순이익"] and data["매출액"] > 0 and data["당기순이익"] > 0 and data["NPV"] > data["종가"] * 1.3\
-                        and mean(data["SALES"].values()) < data["매출액"] and list(data["SALES"].values())[-1] < data["매출액"] \
-                        and mean(data["NETINC"].values()) < data["당기순이익"] and list(data["NETINC"].values())[-1] < data["당기순이익"]:
-                    if data["영업이익률"] > 20: # mean(data["OPIR"].values()) > 20:
+                if data["매출액"] and data["당기순이익"] and data["매출액"] > 0 and data["당기순이익"] > 0 and data["NPV"] > data[
+                    "종가"] * 1.3 \
+                        and mean(data["SALES"].values()) < data["매출액"] and list(data["SALES"].values())[-1] < data[
+                    "매출액"] \
+                        and mean(data["NETINC"].values()) < data["당기순이익"] and list(data["NETINC"].values())[-1] < data[
+                    "당기순이익"]:
+                    if data["영업이익률"] > 20:  # mean(data["OPIR"].values()) > 20:
                         best[i.ticker] = data
                     elif np.sign(data["영업이익률"]) > np.sign(mean(data["OPIR"].values())):
                         best[i.ticker] = data
@@ -7044,9 +7133,9 @@ def new_hidden_pearl_in_usmarket():
         cnt = 0
         # print(treasure)
         USTargetStockDataDelete(yyyymmdd)
-        print("="*50, "BEST", "="*50)
+        print("=" * 50, "BEST", "=" * 50)
         for d in best.keys():
-            cnt +=1
+            cnt += 1
             print(align_string('L', cnt, 5),
                   align_string('R', d, 10),
                   align_string('R', best[d]['Name'], 40 - len(best[d]['Name'])),
