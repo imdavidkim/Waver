@@ -60,14 +60,51 @@ def messeage_to_telegram(txt, dbg=False):
     DEBUG = dbg
     print(txt)
     if txt is not None and txt != '':
-        if not DEBUG:
-            msg = yyyymmdd + '\n' + txt
-            sendMessage(ggmsg, chat_id_kh, msg)
-            time.sleep(3)
-            sendMessage(daddy, chat_id_km, msg)
+        if len(txt) <= 4096:
+            if not DEBUG:
+                msg = yyyymmdd + '\n' + txt
+                sendMessage(ggmsg, chat_id_kh, msg)
+                time.sleep(3)
+                sendMessage(daddy, chat_id_km, msg)
+            else:
+                msg = yyyymmdd + '\n' + txt
+                sendMessage(ggmsg, chat_id_kh, msg)
         else:
-            msg = yyyymmdd + '\n' + txt
-            sendMessage(ggmsg, chat_id_kh, msg)
+            parts = []
+            while len(txt) > 0:
+                if len(txt) > 4080:  # '(Continuing...)\n'이 16자임을 고려하여 4096-16=4080
+                    part = txt[:4080]
+                    first_lnbr = part.rfind('\n')
+                    if first_lnbr != -1:  # 가능하면 개행문자를 기준으로 자릅니다.
+                        parts.append(part[:first_lnbr])
+                        text = txt[first_lnbr:]
+                    else:
+                        parts.append(part)
+                        txt = txt[4080:]
+                else:
+                    parts.append(txt)
+                    break
+            for idx, part in enumerate(parts):
+                if idx == 0:
+                    if not DEBUG:
+                        msg = yyyymmdd + '\n' + txt
+                        sendMessage(ggmsg, chat_id_kh, part)
+                        time.sleep(3)
+                        sendMessage(daddy, chat_id_km, part)
+                    else:
+                        msg = yyyymmdd + '\n' + txt
+                        sendMessage(ggmsg, chat_id_kh, part)
+                else:  # 두번째 메시지부터 '(Continuing...)\n'을 앞에 붙여줌
+                    if not DEBUG:
+                        msg = yyyymmdd + '\n' + txt
+                        sendMessage(ggmsg, chat_id_kh, txt='(Continuing...)\n' + part)
+                        time.sleep(3)
+                        sendMessage(daddy, chat_id_km, txt='(Continuing...)\n' + part)
+                    else:
+                        msg = yyyymmdd + '\n' + txt
+                        sendMessage(ggmsg, chat_id_kh, txt='(Continuing...)\n' + part)
+                    # bot.send_message(chat_id, text='(Continuing...)\n' + part)
+                    time.sleep(0.5)
 
 
 def img_messeage_to_telegram(img_path, dbg=False):
