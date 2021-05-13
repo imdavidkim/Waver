@@ -155,7 +155,9 @@ def get_high_ranked_stock():
         retStr = ''
         for idx, d in enumerate(dictfetchall(cursor)):
             retStr += '{}. [{}]{}({})\n\t{} => {}[{}%]\n'.format(
-                idx + 1, d['code'], d['name'], d['price_gap'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
+                idx + 1, d['code'], d['name'], d['price_gap'], format(int(d['last_price']), ','),
+                format(int(d['target_price']), ','),
+                str(round(int(d['target_price']) / int(d['last_price']) * 100 - 100, 0)))
         return retStr
     except Exception as e:
         errmsg = '{}\n{}'.format('get_high_ranked_stock', str(e))
@@ -182,7 +184,8 @@ def get_nasdaq_high_ranked_stock():
         retStr = ''
         for idx, d in enumerate(dictfetchall(cursor)):
             retStr += '{}. [{}]{}({})\n\t{} => {}[{}%]\n'.format(
-                idx + 1, d['code'], d['name'], d['price_gap'], format(d['last_price'], ','), format(d['target_price'], ','), str(round((d['target_price'])/(d['last_price'])*100-100, 1)))
+                idx + 1, d['code'], d['name'], d['price_gap'], format(d['last_price'], ','),
+                format(d['target_price'], ','), str(round((d['target_price']) / (d['last_price']) * 100 - 100, 1)))
         return retStr
     except Exception as e:
         errmsg = '{}\n{}'.format('get_nasdaq_high_ranked_stock', str(e))
@@ -247,7 +250,8 @@ def send_hidden_pearl_message(d):
                 value3 = np.array(list(d[group][stock_code]['EARN'].values())) / 100000000
                 value4 = np.array(list(d[group][stock_code]['PL'].values())) / 100000000
 
-                df = pd.DataFrame(data=dict(nQ=key, FCF=np.rint(value1), OCF=np.rint(value2), EARN=np.rint(value3), PL=np.rint(value4)))
+                df = pd.DataFrame(data=dict(nQ=key, FCF=np.rint(value1), OCF=np.rint(value2), EARN=np.rint(value3),
+                                            PL=np.rint(value4)))
                 plt.title("{} {}({})".format(d[group][stock_code]["최종보고서"], d[group][stock_code]["사명"], stock_code))
                 plt.style.use('seaborn-dark')
 
@@ -270,7 +274,8 @@ def send_hidden_pearl_message(d):
                     ax.text(k1, v4 * 1.04, format(v4, ','), fontsize=10, horizontalalignment='center',
                             verticalalignment="bottom")
                 ax.legend()
-                ax.set_ylim([min(min(value1), min(value2), min(value3), min(value4)), max(map(lambda x: x[-1], [value1, value2, value3, value4])) * 1.2])
+                ax.set_ylim([min(min(value1), min(value2), min(value3), min(value4)),
+                             max(map(lambda x: x[-1], [value1, value2, value3, value4])) * 1.2])
                 ax.yaxis.set_ticks([])
                 ax.grid(False)
                 # plt.show()
@@ -288,6 +293,7 @@ def send_hidden_pearl_message(d):
         fig = None
         plt.close('all')
         plt = None
+
 
 def get_high_ranked_stock_with_closeprice():
     # from yahoofinancials import YahooFinancials
@@ -375,7 +381,6 @@ def get_high_ranked_stock_with_closeprice():
     #     retStr += '%d. {}\t{} => {}[{}%%]\n'.format(
     #         idx + 1, d['name'], format(int(d['last_price']), ','), format(int(d['target_price']), ','), str(round(int(d['target_price'])/int(d['last_price'])*100-100, 0)))
     # return retStr
-
 
 
 def get_nasdaq_high_ranked_stock_with_closeprice():
@@ -506,7 +511,7 @@ def get_nasdaq_stock_graph(d):
                 plt.rc('font', family=font_name)
                 txt = "[{}그룹]".format(group)
                 txt += "\n{}. [{}]{}".format(idx + 1, stock_code, d[group][stock_code]["Name"])
-                txt += "\n  - 시가총액:{}".format(mkt_cap)
+                txt += "\n  - 시가총액:{}mn".format(f'{round(mkt_cap / 1000000,0):,}')
                 txt += "\n  - 업종:{}".format(d[group][stock_code]["Industry"])
                 txt += "\n  - 예상매출액영업이익률:{}".format(d[group][stock_code]["영업이익률"])
                 txt += "\n  - EPS:{}".format(d[group][stock_code]["EPS"])
@@ -527,17 +532,18 @@ def get_nasdaq_stock_graph(d):
                 plt.savefig(img_path + '\\{}_{}.png'.format(d[group][stock_code]["Name"], stock_code))
                 plt.xticks(rotation=45)
                 # plt.show()
-                msgr.img_messeage_to_telegram(img_path + '\\{}_{}.png'.format(d[group][stock_code]["Name"], stock_code), True)
+                msgr.img_messeage_to_telegram(img_path + '\\{}_{}.png'.format(d[group][stock_code]["Name"], stock_code),
+                                              True)
                 fig = None
                 plt.close('all')
                 if d[group][stock_code]['FCF'] is None or d[group][stock_code]['OCF'] is None or d[group][stock_code][
                     'EARN'] is None or d[group][stock_code]['NETINC'] is None:
                     continue
                 key = np.array(list(d[group][stock_code]['FCF'].keys()))
-                value1 = np.array(list(d[group][stock_code]['FCF'].values())) / 1000000
-                value2 = np.array(list(d[group][stock_code]['OCF'].values())) / 1000000
-                value3 = np.array(list(d[group][stock_code]['EARN'].values())) / 1000000
-                value4 = np.array(list(d[group][stock_code]['NETINC'].values())) / 1000000
+                value1 = np.array(list(d[group][stock_code]['FCF'].values()))
+                value2 = np.array(list(d[group][stock_code]['OCF'].values()))
+                value3 = np.array(list(d[group][stock_code]['EARN'].values()))
+                value4 = np.array(list(d[group][stock_code]['NETINC'].values()))
 
                 df = pd.DataFrame(data=dict(nQ=key, FCF=np.rint(value1), OCF=np.rint(value2), EARN=np.rint(value3),
                                             PL=np.rint(value4)))
@@ -582,7 +588,7 @@ def get_nasdaq_stock_graph(d):
         fig = None
         plt.close('all')
         plt = None
-        
+
 
 def align_string(switch, text, digit):
     if switch == 'L':
@@ -675,7 +681,7 @@ def get_snapshot_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix_or_pro
                                                          disc_year=dateDict['yyyy']
                                                          ).exclude(rmk='None').exclude(rmk='완전잠식').values()
     if len(result) == 0:
-        yyyy = str(int(dateDict['yyyy'])-1)
+        yyyy = str(int(dateDict['yyyy']) - 1)
         result = detective_db.FnGuideSnapShot.objects.filter(rpt_nm=rpt_nm,
                                                              rpt_tp=rpt_tp,
                                                              accnt_nm=accnt_nm,
@@ -731,7 +737,7 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
                                                                 disc_year=dateDict['yyyy']
                                                                 ).exclude(rmk='None').exclude(rmk='완전잠식').values()
     if len(result) == 0:
-        yyyy = str(int(dateDict['yyyy'])-1)
+        yyyy = str(int(dateDict['yyyy']) - 1)
         result = detective_db.FnGuideFinancialReport.objects.filter(rpt_nm=rpt_nm,
                                                                     rpt_tp=rpt_tp,
                                                                     accnt_nm=accnt_nm,
@@ -751,7 +757,8 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
                                                                         crp_cd=crp_cd,
                                                                         disc_year=yyyy,
                                                                         disc_month='12'
-                                                                        ).exclude(rmk='None').exclude(rmk='완전잠식').values()
+                                                                        ).exclude(rmk='None').exclude(
+                rmk='완전잠식').values()
             if len(result) == 0:
                 fix_or_prov_or_estm = 'F'
                 result = detective_db.FnGuideFinancialReport.objects.filter(rpt_nm=rpt_nm,
@@ -762,7 +769,8 @@ def get_financialreport_objects(rpt_nm, rpt_tp, accnt_nm, disc_categorizing, fix
                                                                             crp_cd=crp_cd,
                                                                             disc_year=yyyy,
                                                                             disc_month='12'
-                                                                            ).exclude(rmk='None').exclude(rmk='완전잠식').values()
+                                                                            ).exclude(rmk='None').exclude(
+                    rmk='완전잠식').values()
     return result
 
 
@@ -863,9 +871,9 @@ def new_find_hidden_pearl():
             data = {}
             info_lack = False
             # print(dir(stock))
-            print(align_string('L', ii+1, 10),
+            print(align_string('L', ii + 1, 10),
                   align_string('R', stock.code, 10),
-                  align_string('R', stock.name, 20-len(stock.name)),
+                  align_string('R', stock.name, 20 - len(stock.name)),
                   align_string(',', stock.issued_shares, 20),
                   align_string(',', stock.capital, 20),
                   align_string('R', stock.par_value, 10),
@@ -909,7 +917,8 @@ def new_find_hidden_pearl():
             sttl_month = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt3').text.replace(' ', '')  # 업종분류
             data['결산월'] = sttl_month.replace('\n', '')
             # print(data['업종구분'], data['업종구분상세'], stock.market_text)
-            if (data['업종구분'] != '' and stock.market_text is None) or (data['업종구분상세'] != '' and stock.market_text_detail is None):
+            if (data['업종구분'] != '' and stock.market_text is None) or (
+                    data['업종구분상세'] != '' and stock.market_text_detail is None):
                 fnguide.StockMarketTextUpdate(stock.code, data['업종구분'], data['업종구분상세'], data['결산월'])
             # # 업종구분까지 업데이트 한 후 Valuation 정보가 부족한 종목은 Pass
             # if info_lack:
@@ -924,9 +933,10 @@ def new_find_hidden_pearl():
                 # print(len(fnguide.get_table_contents(yearly_highlight, 'table tbody tr th')))
                 # print(fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
                 # if DEBUG: print(yearly_highlight)
-                columns, items, values = fnguide.setting(fnguide.get_table_contents(yearly_highlight, 'table thead tr th')[1:],
-                                                         fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
-                                                         fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
+                columns, items, values = fnguide.setting(
+                    fnguide.get_table_contents(yearly_highlight, 'table thead tr th')[1:],
+                    fnguide.get_table_contents(yearly_highlight, 'table tbody tr th'),
+                    fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
                 # if DEBUG: print(columns, items, values)
                 for idx, i in enumerate(items):
                     if i in ['지배주주순이익', '지배주주지분', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)']:
@@ -942,7 +952,7 @@ def new_find_hidden_pearl():
                                         data[i] = 0
                                     if values[idx][idx2 - 1] != '' and fnguide.is_float(
                                             values[idx][idx2 - 1].replace(',', '')):
-                                        data['X' + i] = float(values[idx][idx2-1].replace(',', ''))
+                                        data['X' + i] = float(values[idx][idx2 - 1].replace(',', ''))
                                     else:
                                         data['X' + i] = 0
                                     break
@@ -953,7 +963,7 @@ def new_find_hidden_pearl():
                                         data[i] = 0
                                     if values[idx][idx2 - 1] != '' and fnguide.is_float(
                                             values[idx][idx2 - 1].replace(',', '')):
-                                        data['X' + i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
+                                        data['X' + i] = float(values[idx][idx2 - 1].replace(',', '')) * 100000000
                                     else:
                                         data['X' + i] = 0
                                     break
@@ -977,7 +987,7 @@ def new_find_hidden_pearl():
                                     if i[-3:] == '(%)':
                                         data['X' + i] = float(values[idx][idx2 - 1].replace(',', ''))
                                     else:
-                                        data['X' + i] = float(values[idx][idx2-1].replace(',', '')) * 100000000
+                                        data['X' + i] = float(values[idx][idx2 - 1].replace(',', '')) * 100000000
                                 else:
                                     continue
                     elif i in ['ROE(%)']:
@@ -992,11 +1002,11 @@ def new_find_hidden_pearl():
                                     data['확인사항'] = values[idx][idx2].replace(',', '')
                                 break
                             elif yyyymm[:4] == dateDict['yyyy'] and values[idx][idx2] == '':
-                                data['Period'] = columns[idx2-1]
-                                if fnguide.is_float(values[idx][idx2-1].replace(',', '')):
+                                data['Period'] = columns[idx2 - 1]
+                                if fnguide.is_float(values[idx][idx2 - 1].replace(',', '')):
                                     pass
                                 else:
-                                    data['확인사항'] = values[idx][idx2-1].replace(',', '')
+                                    data['확인사항'] = values[idx][idx2 - 1].replace(',', '')
                                 break
                             else:
                                 continue
@@ -1037,7 +1047,8 @@ def new_find_hidden_pearl():
                                                 data[i] = 0
                                             if values[idx][idx2 - 1] != '' and fnguide.is_float(
                                                     values[idx][idx2 - 1].replace(',', '')):
-                                                data['X' + i] = float(values[idx][idx2 - 1].replace(',', '')) * 100000000
+                                                data['X' + i] = float(
+                                                    values[idx][idx2 - 1].replace(',', '')) * 100000000
                                             else:
                                                 data['X' + i] = 0
                                             break
@@ -1048,7 +1059,8 @@ def new_find_hidden_pearl():
                                             if i[-3:] == '(%)':
                                                 data['X' + i] = float(values[idx][idx2 - 1].replace(',', ''))
                                             else:
-                                                data['X' + i] = float(values[idx][idx2 - 1].replace(',', '')) * 100000000
+                                                data['X' + i] = float(
+                                                    values[idx][idx2 - 1].replace(',', '')) * 100000000
                                         else:
                                             continue
                             elif i in ['ROE(%)']:
@@ -1101,10 +1113,13 @@ def new_find_hidden_pearl():
                                     pct = round(float(tmp2[1]) / (data['종가'] + float(tmp2[1])) * 100, 2)
                                 data[col.strip()] = "{}{}%".format(tmp2[0], pct)
                         else:
-                            data[col] = float(values[idx].replace(',', '')) if (values[idx] is not None and values[idx] != '') else 0.0
+                            data[col] = float(values[idx].replace(',', '')) if (
+                                        values[idx] is not None and values[idx] != '') else 0.0
                         # break
-                    if col in ['발행주식수-보통주'] and values[idx] != '' and data['발행주식수'] != float(values[idx].replace(',', '')):
-                        print("[{}][{}]발행주식수가 다릅니다. {} <> {}".format(stock.code, stock.name, stock.issued_shares, float(values[idx].replace(',', ''))))
+                    if col in ['발행주식수-보통주'] and values[idx] != '' and data['발행주식수'] != float(
+                            values[idx].replace(',', '')):
+                        print("[{}][{}]발행주식수가 다릅니다. {} <> {}".format(stock.code, stock.name, stock.issued_shares,
+                                                                     float(values[idx].replace(',', ''))))
                         data['발행주식수'] = float(values[idx].replace(',', ''))
                 # 20190419 요구수익률을 다른곳에서 가져오면서 주석처리
                 # daily = fnguide.select_by_attr(soup, 'div', 'id', 'svdMainGrid10D')  # Snapshot 업종비교
@@ -1224,7 +1239,7 @@ def new_find_hidden_pearl():
                 #     # data['ROE'] = (data['지배주주순이익'] - data['금융수익-금융수익'] - data['기타수익-기타수익'] - data['중단영업이익']) / data['지배주주지분'] * 100
                 #     data['ROE'] = (data['지배주주순이익'] - data['중단영업이익']) / data['지배주주지분'] * 100
                 data['주주가치'] = data['지배주주지분'] + (
-                            data['지배주주지분'] * (data['ROE'] - data['요구수익률']) / (data['요구수익률']))
+                        data['지배주주지분'] * (data['ROE'] - data['요구수익률']) / (data['요구수익률']))
                 data['NPV'] = data['주주가치'] / data['발행주식수']
                 data['NPV2'] = (data['주주가치'] * (data['지배주주지분'] / data['자산총계'])) / data['발행주식수']
                 data['ROS'] = data['지배주주순이익'] / data['매출액'] * 100
@@ -1232,7 +1247,7 @@ def new_find_hidden_pearl():
                 if 'X유보율(%)' in data.keys() and data['X유보율(%)'] > 1000: HIGH_RESERVE.append(data['회사명'])
                 if DEBUG: print(data)
                 treasure[stock.code] = data
-        print('='*50, '마이너스', '='*50)
+        print('=' * 50, '마이너스', '=' * 50)
         print(align_string('L', 'No.', 5),
               align_string('R', 'Code', 10),
               align_string('R', 'Name', 20),
@@ -1285,11 +1300,11 @@ def new_find_hidden_pearl():
             #      treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
             #      treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
             if treasure[d]['ROE'] < 15 or \
-               treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
-               treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설', '코스피금융업'] or \
-               treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
-               treasure[d]['NPV'] < 0 or \
-               treasure[d]['NPV']/treasure[d]['종가']*100 < 105:
+                    treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
+                    treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설', '코스피금융업'] or \
+                    treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
+                    treasure[d]['NPV'] < 0 or \
+                    treasure[d]['NPV'] / treasure[d]['종가'] * 100 < 105:
                 cnt += 1
                 print(align_string('L', cnt, 5),
                       align_string('R', d, 10),
@@ -1307,18 +1322,34 @@ def new_find_hidden_pearl():
                       align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                       )
                 if treasure[d]['ROE'] < 15 or treasure[d]['ROE'] < treasure[d]['요구수익률']:
-                    pass_reason = "[{}][{}]['ROE'] < 15 또는 ['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d, treasure[d]['회사명'], treasure[d]['ROE'], treasure[d]['요구수익률'])
+                    pass_reason = "[{}][{}]['ROE'] < 15 또는 ['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d,
+                                                                                                                treasure[
+                                                                                                                    d][
+                                                                                                                    '회사명'],
+                                                                                                                treasure[
+                                                                                                                    d][
+                                                                                                                    'ROE'],
+                                                                                                                treasure[
+                                                                                                                    d][
+                                                                                                                    '요구수익률'])
                 elif treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설', '코스피금융업']:
-                    pass_reason = "[{}][{}][업종구분이 제조, 건설 또는 금융] => 업종구분 : {}".format(d, treasure[d]['회사명'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''))
+                    pass_reason = "[{}][{}][업종구분이 제조, 건설 또는 금융] => 업종구분 : {}".format(d, treasure[d]['회사명'],
+                                                                                     treasure[d]['업종구분'].replace(
+                                                                                         u'\xa0', '').replace('\n', ''))
                 elif treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51:
-                    pass_reason = "[{}][{}][지배주주 자산지분 비율이 51% 미만] => 지배주주지분 / 자산총계 : {:.2f}".format(d, treasure[d]['회사명'], treasure[d]['지배주주지분'] / treasure[d]['자산총계'])
+                    pass_reason = "[{}][{}][지배주주 자산지분 비율이 51% 미만] => 지배주주지분 / 자산총계 : {:.2f}".format(d,
+                                                                                                    treasure[d]['회사명'],
+                                                                                                    treasure[d][
+                                                                                                        '지배주주지분'] /
+                                                                                                    treasure[d]['자산총계'])
                 else:
                     pass_reason = "[{}][{}]전기지배주주순이익 : {}\n지배주주지분 : {}\n자산총계 : {}\nROE : {:.2f} < 15\n업종구분 : {}\nNPV : {:.2f}\n종가 : {}".format(
                         d, treasure[d]['회사명'], treasure[d]['X지배주주순이익'], treasure[d]['지배주주지분'], treasure[d]['자산총계'],
-                        treasure[d]['ROE'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''), treasure[d]['NPV'],
+                        treasure[d]['ROE'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''),
+                        treasure[d]['NPV'],
                         treasure[d]['종가'])
 
-                if treasure[d]['ROE'] >= 30 or treasure[d]['NPV']/treasure[d]['종가']*100 > 200:
+                if treasure[d]['ROE'] >= 30 or treasure[d]['NPV'] / treasure[d]['종가'] * 100 > 200:
                     logger.info("[NEED TO CHECK]" + pass_reason)
                 else:
                     logger.error(pass_reason)
@@ -1363,6 +1394,7 @@ def new_find_hidden_pearl():
             os.remove(r'{}\trash.{}.json'.format(JsonDir, yyyymmdd))
         with open(r'{}\trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
             json.dump(trash, fp)
+
 
 def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     import sys
@@ -1445,16 +1477,20 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                     "AverageRate": {"Y": {}, "Q": {}}}
                 # print(dateDict["yyyy2"], dateDict)
                 if bgn_dt is None:
-                    lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
+                    lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)[
+                                "list"][:4]
                 elif end_dt is None:
                     lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, pblntf_ty='A', req_type=True)["list"][:4]
                 else:
-                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, end_de=end_dt, pblntf_ty='A', req_type=True)["list"][:4]
+                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, end_de=end_dt, pblntf_ty='A', req_type=True)[
+                                "list"][:4]
                 # lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
                 for l in lists:
-                    if data[stock.code]["last_report"] is None: data[stock.code]["last_report"] = l["report_nm"]
+                    if data[stock.code]["last_report"] is None:
+                        data[stock.code]["last_report"] = l["report_nm"]
                     else:
-                        if data[stock.code]["last_report"] < l["report_nm"]: data[stock.code]["last_report"] = l["report_nm"]
+                        if data[stock.code]["last_report"] < l["report_nm"]: data[stock.code]["last_report"] = l[
+                            "report_nm"]
                     logger.info(l)
                 req_list, req_list2 = dart.get_req_lists(lists)
                 result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list, "ALL")
@@ -1509,7 +1545,8 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                 # if stock == "006360":
                 #     print()
                 d1keys = ["매출", "수익(매출액)", "I.  매출액", "영업수익", "매출액", "Ⅰ. 매출액", "매출 및 지분법 손익", "매출 및 지분법손익"]
-                d2keys = ["영업이익(손실)", "영업이익 (손실)", "영업이익", "영업손익", "V. 영업손익", "Ⅴ. 영업이익", "Ⅴ. 영업이익(손실)", "V. 영업이익", "영업손실"]
+                d2keys = ["영업이익(손실)", "영업이익 (손실)", "영업이익", "영업손익", "V. 영업손익", "Ⅴ. 영업이익", "Ⅴ. 영업이익(손실)", "V. 영업이익",
+                          "영업손실"]
                 d8keys = ["당기순이익(손실)", "당기순이익 (손실)", "당기순이익", "분기순이익", "반기순이익", "당기순이익(손실)", "분기순이익(손실)", "반기순이익(손실)",
                           "연결당기순이익", "연결분기순이익", "연결반기순이익", "연결당기순이익(손실)", "연결분기순이익(손실)", "연결반기순이익(손실)", "당기순손익",
                           "분기순손익",
@@ -1517,7 +1554,8 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                           "Ⅷ. 당기순이익(손실)", "지배기업 소유주 지분",
                           "Ⅷ. 당기순이익", "VIII. 당기순이익", "지배기업 소유주", "VIII. 분기순손익", "VIII. 분기순이익", "I.당기순이익", "I.반기순이익",
                           "I.분기순이익", "반기연결순이익(손실)", "지배기업의 소유주지분", "지배기업소유주지분", "지배기업의소유주지분"]
-                d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입", "영업활동으로인한현금흐름", "영업활동으로 인한 순현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "영업활동순현금흐름 합계", "영업활동순현금흐름", "I. 영업활동현금흐름"]
+                d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입", "영업활동으로인한현금흐름", "영업활동으로 인한 순현금흐름",
+                           "Ⅰ. 영업활동으로 인한 현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "영업활동순현금흐름 합계", "영업활동순현금흐름", "I. 영업활동현금흐름"]
                 d11keys = ["유형자산의 취득", "유형자산 취득", "유형자산의취득"]
                 d12keys = ["무형자산의 취득", "무형자산 취득", "무형자산의취득", "무형자산의 증가"]
                 d13keys = ["토지의 취득", "건물의 취득", "구축물의 취득", "기계장치의 취득", "차량운반구의 취득", "공구와기구의 취득", "비품의 취득",
@@ -1821,7 +1859,7 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     if "현금흐름표" in result["재무제표"].keys():
                         logger.info("재무제표 현금흐름표 start")
                         tmp_result10 = {key: result["재무제표"]["현금흐름표"][key] for key in
-                                       result["재무제표"]["현금흐름표"].keys() & {keys for keys in d10keys}}
+                                        result["재무제표"]["현금흐름표"].keys() & {keys for keys in d10keys}}
                         tmp_result11 = {key: result["재무제표"]["현금흐름표"][key] for key in
                                         result["재무제표"]["현금흐름표"].keys() & {keys for keys in d11keys}}
                         tmp_result12 = {key: result["재무제표"]["현금흐름표"][key] for key in
@@ -1928,13 +1966,15 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     if "Rate" in key1: continue
                     if "4/4" in key1:
                         data[stock.code]["PL"]["Y"]["매출액영업이익률"] = dict(sorted({
-                                                                             k: round(float(
-                                                                                 d2[key1][k].replace(",", "")) / float(
-                                                                                 d1[key1][k].replace(",", "")) * 100,
-                                                                                      2) if float(
-                                                                                 d1[key1][k].replace(",",
-                                                                                                     "")) != 0.0 else 0
-                                                                             for k in d1[key1]}.items()))
+                                                                                  k: round(float(
+                                                                                      d2[key1][k].replace(",",
+                                                                                                          "")) / float(
+                                                                                      d1[key1][k].replace(",",
+                                                                                                          "")) * 100,
+                                                                                           2) if float(
+                                                                                      d1[key1][k].replace(",",
+                                                                                                          "")) != 0.0 else 0
+                                                                                  for k in d1[key1]}.items()))
 
                         data[stock.code]["PL"]["Y"]["매출액"] = dict(
                             sorted({k: float(d1[key1][k].replace(",", "")) for k in
@@ -1982,8 +2022,10 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     # if key2 not in data[stock.code]["CF"]["FCF"].keys():
                     #     data[stock.code]["CF"]["FCF"][key2] = {}
                     for key3 in d10[key2].keys():
-                        yhasset = int(d11[key2][key3]) if d11 is not None and key2 in d11.keys() and key3 in d11[key2].keys() else 0
-                        mhasset = int(d12[key2][key3]) if d12 is not None and key2 in d12.keys() and key3 in d12[key2].keys() else 0
+                        yhasset = int(d11[key2][key3]) if d11 is not None and key2 in d11.keys() and key3 in d11[
+                            key2].keys() else 0
+                        mhasset = int(d12[key2][key3]) if d12 is not None and key2 in d12.keys() and key3 in d12[
+                            key2].keys() else 0
                         data[stock.code]["CF"]["FCF"][key3] = int(d10[key2][key3]) - (yhasset + mhasset)
                 data[stock.code]["PL"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
                 data[stock.code]["PL"]["Q"]["누계매출액추이"] = dict(sorted(dicTemp1.items()))
@@ -2115,7 +2157,8 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
         last_5_keys = list(data[k]["CF"]["영업활동현금흐름"].keys())[-5:]
         for lastkey in last_5_keys:
             if lastkey not in data[k]["CF"]["FCF"].keys() or lastkey not in data[k]["CF"]["영업활동현금흐름"].keys() \
-               or lastkey not in data[k]["FS"]["RetainedEarnings"].keys() or lastkey not in data[k]["PL"]["Q"]["누계당기순이익추이"].keys():
+                    or lastkey not in data[k]["FS"]["RetainedEarnings"].keys() or lastkey not in data[k]["PL"]["Q"][
+                "누계당기순이익추이"].keys():
                 last_5_keys.remove(lastkey)
         try:
             fcf_last_5 = {lk: data[k]["CF"]["FCF"][lk] for lk in last_5_keys}
@@ -2156,19 +2199,26 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
 
             if "매출액영업이익률" in data[k]["PL"]["Q"].keys():
                 # print("here3?")
-                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1] if len(data[k]["PL"]["Q"]["매출액영업이익률"]) > 0 else None
-                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계매출액추이"]) > 0 else None
+                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["매출액영업이익률"]) > 0 else None
+                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계매출액추이"]) > 0 else None
                 if "매출액" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["매출액"].popitem() if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
-                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1] if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
-                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계영업이익추이"]) > 0 else None
+                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["매출액"]) > 0 else None
+                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계영업이익추이"]) > 0 else None
                 if "영업이익" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["영업이익"].popitem() if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
-                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1] if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
-                last_net_income = data[k]["PL"]["Q"]["누계당기순이익추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계당기순이익추이"]) > 0 else None
+                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["영업이익"]) > 0 else None
+                last_net_income = data[k]["PL"]["Q"]["누계당기순이익추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계당기순이익추이"]) > 0 else None
                 if "당기순이익" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["당기순이익"].popitem() if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
-                    before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
+                    before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
         # print("here4?")
         if avg_sales_op_profit_rate and last_sales_op_profit_rate:
             if last_sales_op_profit_rate > 0 and avg_sales_op_profit_rate > 0 and last_sales_op_profit_rate > avg_sales_op_profit_rate:
@@ -2178,7 +2228,8 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                         last_sales > avg_sales and last_sales > before_sales and \
                         last_net_income > avg_net_income and last_net_income > before_net_income:
                     if last_sales_op_profit_rate > 20:
-                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                   "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                    "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                    "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -2204,12 +2255,16 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                         best[k]["PBR"] = call["pbr"]
                         best[k]["현재가"] = f'{call["now"]:,}'
                         best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
-                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and best[k]["PER"] else 0
+                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          best[k][
+                                                                                                              "PER"] else 0
                     elif np.sign(last_sales_op_profit_rate) > np.sign(avg_sales_op_profit_rate):
-                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                   "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                    "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                    "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -2234,12 +2289,16 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                         best[k]["PBR"] = call["pbr"]
                         best[k]["현재가"] = f'{call["now"]:,}'
                         best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
-                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and best[k]["PER"] else 0
+                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          best[k][
+                                                                                                              "PER"] else 0
                     else:
-                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                     "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                      "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                      "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                      "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -2269,10 +2328,12 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                                                                                   data[k][
                                                                                                       "list_shares"] else 0
                         better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
+                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if \
+                        better[k]["EPS2"] and better[k]["PER"] else 0
                 else:
                     if last_sales_op_profit_rate > 15:
-                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                     "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                      "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                      "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                      "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -2302,10 +2363,12 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                                                                                   data[k][
                                                                                                       "list_shares"] else 0
                         better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
+                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if \
+                        better[k]["EPS2"] and better[k]["PER"] else 0
                     else:
                         # print("here7?")
-                        good[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        good[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                   "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                    "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                    "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -2331,13 +2394,17 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                         good[k]["PBR"] = call["pbr"]
                         good[k]["현재가"] = f'{call["now"]:,}'
                         good[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         good[k]["PER2"] = round(call["now"] / good[k]["EPS2"], 0) if good[k]["EPS2"] != 0 else 0
-                        good[k]["예상주가"] = format(int(round(good[k]["EPS2"] * good[k]["PER"], 0)), ",") if good[k]["EPS2"] and good[k]["PER"] else 0
+                        good[k]["예상주가"] = format(int(round(good[k]["EPS2"] * good[k]["PER"], 0)), ",") if good[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          good[k][
+                                                                                                              "PER"] else 0
             else:
                 if last_sales_op_profit_rate > 15:
-                    better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                    better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                 "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                  "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                  "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                  "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -2363,12 +2430,16 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     better[k]["PBR"] = call["pbr"]
                     better[k]["현재가"] = f'{call["now"]:,}'
                     better[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                              data[k][
+                                                                                                  "list_shares"] else 0
                     better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                    better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
+                    better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k][
+                                                                                                                "EPS2"] and \
+                                                                                                            better[k][
+                                                                                                                "PER"] else 0
                 else:
-                    soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                    soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                               "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -2394,12 +2465,16 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     soso[k]["PBR"] = call["pbr"]
                     soso[k]["현재가"] = f'{call["now"]:,}'
                     soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                            data[k][
+                                                                                                "list_shares"] else 0
                     soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
-                    soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k]["PER"] else 0
+                    soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k][
+                                                                                                          "EPS2"] and \
+                                                                                                      soso[k][
+                                                                                                          "PER"] else 0
         else:
-            soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+            soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"],
+                       "업종": data[k]["category"],
                        "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                        "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                        "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -2425,10 +2500,11 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
             soso[k]["PBR"] = call["pbr"]
             soso[k]["현재가"] = f'{call["now"]:,}'
             soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                    data[k][
+                                                                                        "list_shares"] else 0
             soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
-            soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k]["PER"] else 0
+            soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and \
+                                                                                              soso[k]["PER"] else 0
             # info_lack[k] = {"corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"]}
     logger.info("{} {} {} {}".format("*" * 100, "BEST", len(best), "*" * 100))
     for key in best.keys():
@@ -2440,8 +2516,10 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                  "최근매출액영업이익률": best[key]["최근매출액영업이익률"], "EPS": best[key]["EPS"],
                                  "추정EPS": best[key]["EPS2"],
                                  "괴리율": round((best[key]["EPS2"] - best[key]["EPS"]) / best[key]["EPS"] * 100,
-                                              2), "현재가": best[key]["현재가"], "예상주가": best[key]["예상주가"], "EARN": best[key]["EARN"],
-                                 "FCF": best[key]["FCF"], "OCF": best[key]["OCF"], "PL": best[key]["PL"], "최종보고서": best[key]["last_report"]}
+                                              2), "현재가": best[key]["현재가"], "예상주가": best[key]["예상주가"],
+                                 "EARN": best[key]["EARN"],
+                                 "FCF": best[key]["FCF"], "OCF": best[key]["OCF"], "PL": best[key]["PL"],
+                                 "최종보고서": best[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "BETTER", len(better), "*" * 100))
     for key in better.keys():
         logger.info(better[key])
@@ -2453,35 +2531,39 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                    "EPS": better[key]["EPS"], "추정EPS": better[key]["EPS2"], "괴리율": round(
                 (better[key]["EPS2"] - better[key]["EPS"]) / better[key]["EPS"] * 100, 2),
                                    "현재가": better[key]["현재가"], "예상주가": better[key]["예상주가"], "EARN": better[key]["EARN"],
-                                   "FCF": better[key]["FCF"], "OCF": better[key]["OCF"], "PL": better[key]["PL"], "최종보고서": better[key]["last_report"]}
+                                   "FCF": better[key]["FCF"], "OCF": better[key]["OCF"], "PL": better[key]["PL"],
+                                   "최종보고서": better[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "GOOD", len(good), "*" * 100))
     for key in good.keys():
         logger.info(good[key])
-        if good[key]["EPS2"] != 0 and good[key]["EPS2"] > good[key]["EPS"] and (good[key]["EPS2"] - good[key]["EPS"])/good[key]["EPS"] * 100 >= 30:
+        if good[key]["EPS2"] != 0 and good[key]["EPS2"] > good[key]["EPS"] and (good[key]["EPS2"] - good[key]["EPS"]) / \
+                good[key]["EPS"] * 100 >= 30:
             if "GOOD" not in treasure.keys():
                 treasure["GOOD"] = {}
             treasure["GOOD"][key] = {"사명": good[key]["corp_name"], "시가총액": good[key]["시가총액"], "업종": good[key]["업종"],
                                      "최근매출액영업이익률": good[key]["최근매출액영업이익률"], "EPS": good[key]["EPS"],
                                      "추정EPS": good[key]["EPS2"],
                                      "괴리율": round((good[key]["EPS2"] - good[key]["EPS"]) / good[key]["EPS"] * 100, 2),
-                                     "현재가": good[key]["현재가"], "예상주가": good[key]["예상주가"], "EARN": good[key]["EARN"], "FCF": good[key]["FCF"],
+                                     "현재가": good[key]["현재가"], "예상주가": good[key]["예상주가"], "EARN": good[key]["EARN"],
+                                     "FCF": good[key]["FCF"],
                                      "OCF": good[key]["OCF"], "PL": good[key]["PL"], "최종보고서": good[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "CHECK", len(soso), "*" * 100))
     for key in soso.keys():
         logger.info(soso[key])
-        if soso[key]["EPS2"] != 0 and soso[key]["EPS2"] > soso[key]["EPS"] and (soso[key]["EPS2"] - soso[key]["EPS"])/soso[key]["EPS"] * 100 >= 30:
+        if soso[key]["EPS2"] != 0 and soso[key]["EPS2"] > soso[key]["EPS"] and (soso[key]["EPS2"] - soso[key]["EPS"]) / \
+                soso[key]["EPS"] * 100 >= 30:
             if "SOSO" not in treasure.keys():
                 treasure["SOSO"] = {}
             treasure["SOSO"][key] = {"사명": soso[key]["corp_name"], "시가총액": soso[key]["시가총액"], "업종": soso[key]["업종"],
                                      "최근매출액영업이익률": soso[key]["최근매출액영업이익률"], "EPS": soso[key]["EPS"],
                                      "추정EPS": soso[key]["EPS2"],
                                      "괴리율": round((soso[key]["EPS2"] - soso[key]["EPS"]) / soso[key]["EPS"] * 100,
-                                                  2), "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"], "EARN": soso[key]["EARN"],
+                                                  2), "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"],
+                                     "EARN": soso[key]["EARN"],
                                      "FCF": soso[key]["FCF"], "OCF": soso[key]["OCF"], "PL": soso[key]["PL"],
                                      "최종보고서": soso[key]["last_report"]}
     logger.info(none_list)
     return treasure
-
 
 
 def dictionary_add(d):
@@ -2499,7 +2581,6 @@ def dictionary_add(d):
                     tmp_dic[key1][key2] += int(d[key][key1][key2])
     print(tmp_dic)
     return tmp_dic
-
 
 
 def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
@@ -2586,16 +2667,20 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                                     "AverageRate": {"Y": {}, "Q": {}}}
                 # print(dateDict["yyyy2"], dateDict)
                 if bgn_dt is None:
-                    lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
+                    lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)[
+                                "list"][:4]
                 elif end_dt is None:
                     lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, pblntf_ty='A', req_type=True)["list"][:4]
                 else:
-                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, end_de=end_dt, pblntf_ty='A', req_type=True)["list"][:4]
+                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, end_de=end_dt, pblntf_ty='A', req_type=True)[
+                                "list"][:4]
                 # lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
                 for l in lists:
-                    if data[stock.code]["last_report"] is None: data[stock.code]["last_report"] = l["report_nm"]
+                    if data[stock.code]["last_report"] is None:
+                        data[stock.code]["last_report"] = l["report_nm"]
                     else:
-                        if data[stock.code]["last_report"] < l["report_nm"]: data[stock.code]["last_report"] = l["report_nm"]
+                        if data[stock.code]["last_report"] < l["report_nm"]: data[stock.code]["last_report"] = l[
+                            "report_nm"]
                     logger.info(l)
                 req_list, req_list2 = dart.get_req_lists(lists)
                 result = dart.get_fnlttSinglAcnt_from_req_list(code, req_list, "ALL")
@@ -2650,7 +2735,8 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                 # if stock == "006360":
                 #     print()
                 d1keys = ["매출", "수익(매출액)", "I.  매출액", "영업수익", "매출액", "Ⅰ. 매출액", "매출 및 지분법 손익", "매출 및 지분법손익"]
-                d2keys = ["영업이익(손실)", "영업이익 (손실)", "영업이익", "영업손익", "V. 영업손익", "Ⅴ. 영업이익", "Ⅴ. 영업이익(손실)", "V. 영업이익", "영업손실"]
+                d2keys = ["영업이익(손실)", "영업이익 (손실)", "영업이익", "영업손익", "V. 영업손익", "Ⅴ. 영업이익", "Ⅴ. 영업이익(손실)", "V. 영업이익",
+                          "영업손실"]
                 d8keys = ["당기순이익(손실)", "당기순이익 (손실)", "당기순이익", "분기순이익", "반기순이익", "당기순이익(손실)", "분기순이익(손실)", "반기순이익(손실)",
                           "연결당기순이익", "연결분기순이익", "연결반기순이익", "연결당기순이익(손실)", "연결분기순이익(손실)", "연결반기순이익(손실)", "당기순손익",
                           "분기순손익",
@@ -2658,7 +2744,8 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                           "Ⅷ. 당기순이익(손실)", "지배기업 소유주 지분",
                           "Ⅷ. 당기순이익", "VIII. 당기순이익", "지배기업 소유주", "VIII. 분기순손익", "VIII. 분기순이익", "I.당기순이익", "I.반기순이익",
                           "I.분기순이익", "반기연결순이익(손실)", "지배기업의 소유주지분", "지배기업소유주지분", "지배기업의소유주지분"]
-                d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입", "영업활동으로인한현금흐름", "영업활동으로 인한 순현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "영업활동순현금흐름 합계", "영업활동순현금흐름", "I. 영업활동현금흐름"]
+                d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입", "영업활동으로인한현금흐름", "영업활동으로 인한 순현금흐름",
+                           "Ⅰ. 영업활동으로 인한 현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "영업활동순현금흐름 합계", "영업활동순현금흐름", "I. 영업활동현금흐름"]
                 d11keys = ["유형자산의 취득", "유형자산 취득", "유형자산의취득"]
                 d12keys = ["무형자산의 취득", "무형자산 취득", "무형자산의취득", "무형자산의 증가"]
                 d13keys = ["토지의 취득", "건물의 취득", "구축물의 취득", "기계장치의 취득", "차량운반구의 취득", "공구와기구의 취득", "비품의 취득",
@@ -2962,7 +3049,7 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                     if "현금흐름표" in result["재무제표"].keys():
                         logger.info("재무제표 현금흐름표 start")
                         tmp_result10 = {key: result["재무제표"]["현금흐름표"][key] for key in
-                                       result["재무제표"]["현금흐름표"].keys() & {keys for keys in d10keys}}
+                                        result["재무제표"]["현금흐름표"].keys() & {keys for keys in d10keys}}
                         tmp_result11 = {key: result["재무제표"]["현금흐름표"][key] for key in
                                         result["재무제표"]["현금흐름표"].keys() & {keys for keys in d11keys}}
                         tmp_result12 = {key: result["재무제표"]["현금흐름표"][key] for key in
@@ -3069,13 +3156,15 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                     if "Rate" in key1: continue
                     if "4/4" in key1:
                         data[stock.code]["PL"]["Y"]["매출액영업이익률"] = dict(sorted({
-                                                                             k: round(float(
-                                                                                 d2[key1][k].replace(",", "")) / float(
-                                                                                 d1[key1][k].replace(",", "")) * 100,
-                                                                                      2) if float(
-                                                                                 d1[key1][k].replace(",",
-                                                                                                     "")) != 0.0 else 0
-                                                                             for k in d1[key1]}.items()))
+                                                                                  k: round(float(
+                                                                                      d2[key1][k].replace(",",
+                                                                                                          "")) / float(
+                                                                                      d1[key1][k].replace(",",
+                                                                                                          "")) * 100,
+                                                                                           2) if float(
+                                                                                      d1[key1][k].replace(",",
+                                                                                                          "")) != 0.0 else 0
+                                                                                  for k in d1[key1]}.items()))
 
                         data[stock.code]["PL"]["Y"]["매출액"] = dict(
                             sorted({k: float(d1[key1][k].replace(",", "")) for k in
@@ -3123,8 +3212,10 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                     # if key2 not in data[stock.code]["CF"]["FCF"].keys():
                     #     data[stock.code]["CF"]["FCF"][key2] = {}
                     for key3 in d10[key2].keys():
-                        yhasset = int(d11[key2][key3]) if d11 is not None and key2 in d11.keys() and key3 in d11[key2].keys() else 0
-                        mhasset = int(d12[key2][key3]) if d12 is not None and key2 in d12.keys() and key3 in d12[key2].keys() else 0
+                        yhasset = int(d11[key2][key3]) if d11 is not None and key2 in d11.keys() and key3 in d11[
+                            key2].keys() else 0
+                        mhasset = int(d12[key2][key3]) if d12 is not None and key2 in d12.keys() and key3 in d12[
+                            key2].keys() else 0
                         data[stock.code]["CF"]["FCF"][key3] = int(d10[key2][key3]) - (yhasset + mhasset)
                 data[stock.code]["PL"]["Q"]["매출액영업이익률"] = dict(sorted(dicTemp0.items()))
                 data[stock.code]["PL"]["Q"]["누계매출액추이"] = dict(sorted(dicTemp1.items()))
@@ -3256,7 +3347,8 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
         last_5_keys = list(data[k]["CF"]["영업활동현금흐름"].keys())[-5:]
         for lastkey in last_5_keys:
             if lastkey not in data[k]["CF"]["FCF"].keys() or lastkey not in data[k]["CF"]["영업활동현금흐름"].keys() \
-               or lastkey not in data[k]["FS"]["RetainedEarnings"].keys() or lastkey not in data[k]["PL"]["Q"]["누계당기순이익추이"].keys():
+                    or lastkey not in data[k]["FS"]["RetainedEarnings"].keys() or lastkey not in data[k]["PL"]["Q"][
+                "누계당기순이익추이"].keys():
                 last_5_keys.remove(lastkey)
         try:
             fcf_last_5 = {lk: data[k]["CF"]["FCF"][lk] for lk in last_5_keys}
@@ -3297,19 +3389,26 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
 
             if "매출액영업이익률" in data[k]["PL"]["Q"].keys():
                 # print("here3?")
-                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1] if len(data[k]["PL"]["Q"]["매출액영업이익률"]) > 0 else None
-                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계매출액추이"]) > 0 else None
+                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["매출액영업이익률"]) > 0 else None
+                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계매출액추이"]) > 0 else None
                 if "매출액" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["매출액"].popitem() if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
-                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1] if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
-                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계영업이익추이"]) > 0 else None
+                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["매출액"]) > 0 else None
+                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계영업이익추이"]) > 0 else None
                 if "영업이익" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["영업이익"].popitem() if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
-                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1] if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
-                last_net_income = data[k]["PL"]["Q"]["누계당기순이익추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계당기순이익추이"]) > 0 else None
+                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["영업이익"]) > 0 else None
+                last_net_income = data[k]["PL"]["Q"]["누계당기순이익추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계당기순이익추이"]) > 0 else None
                 if "당기순이익" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["당기순이익"].popitem() if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
-                    before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
+                    before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
         # print("here4?")
         if avg_sales_op_profit_rate and last_sales_op_profit_rate:
             if last_sales_op_profit_rate > 0 and avg_sales_op_profit_rate > 0 and last_sales_op_profit_rate > avg_sales_op_profit_rate:
@@ -3319,7 +3418,8 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                         last_sales > avg_sales and last_sales > before_sales and \
                         last_net_income > avg_net_income and last_net_income > before_net_income:
                     if last_sales_op_profit_rate > 20:
-                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                   "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                    "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                    "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -3345,12 +3445,16 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                         best[k]["PBR"] = call["pbr"]
                         best[k]["현재가"] = f'{call["now"]:,}'
                         best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
-                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and best[k]["PER"] else 0
+                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          best[k][
+                                                                                                              "PER"] else 0
                     elif np.sign(last_sales_op_profit_rate) > np.sign(avg_sales_op_profit_rate):
-                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                   "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                    "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                    "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -3375,12 +3479,16 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                         best[k]["PBR"] = call["pbr"]
                         best[k]["현재가"] = f'{call["now"]:,}'
                         best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
-                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and best[k]["PER"] else 0
+                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          best[k][
+                                                                                                              "PER"] else 0
                     else:
-                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                     "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                      "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                      "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                      "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -3410,10 +3518,12 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                                                                                                   data[k][
                                                                                                       "list_shares"] else 0
                         better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
+                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if \
+                        better[k]["EPS2"] and better[k]["PER"] else 0
                 else:
                     if last_sales_op_profit_rate > 15:
-                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                     "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                      "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                      "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                      "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -3443,10 +3553,12 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                                                                                                   data[k][
                                                                                                       "list_shares"] else 0
                         better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
+                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if \
+                        better[k]["EPS2"] and better[k]["PER"] else 0
                     else:
                         # print("here7?")
-                        good[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        good[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                   "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                    "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                    "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -3472,13 +3584,17 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                         good[k]["PBR"] = call["pbr"]
                         good[k]["현재가"] = f'{call["now"]:,}'
                         good[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         good[k]["PER2"] = round(call["now"] / good[k]["EPS2"], 0) if good[k]["EPS2"] != 0 else 0
-                        good[k]["예상주가"] = format(int(round(good[k]["EPS2"] * good[k]["PER"], 0)), ",") if good[k]["EPS2"] and good[k]["PER"] else 0
+                        good[k]["예상주가"] = format(int(round(good[k]["EPS2"] * good[k]["PER"], 0)), ",") if good[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          good[k][
+                                                                                                              "PER"] else 0
             else:
                 if last_sales_op_profit_rate > 15:
-                    better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                    better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                                 "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                  "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                  "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                  "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -3504,12 +3620,16 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                     better[k]["PBR"] = call["pbr"]
                     better[k]["현재가"] = f'{call["now"]:,}'
                     better[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                              data[k][
+                                                                                                  "list_shares"] else 0
                     better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                    better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
+                    better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k][
+                                                                                                                "EPS2"] and \
+                                                                                                            better[k][
+                                                                                                                "PER"] else 0
                 else:
-                    soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                    soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"],
+                               "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -3535,12 +3655,16 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                     soso[k]["PBR"] = call["pbr"]
                     soso[k]["현재가"] = f'{call["now"]:,}'
                     soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                            data[k][
+                                                                                                "list_shares"] else 0
                     soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
-                    soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k]["PER"] else 0
+                    soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k][
+                                                                                                          "EPS2"] and \
+                                                                                                      soso[k][
+                                                                                                          "PER"] else 0
         else:
-            soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+            soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"],
+                       "업종": data[k]["category"],
                        "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                        "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                        "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -3566,10 +3690,11 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
             soso[k]["PBR"] = call["pbr"]
             soso[k]["현재가"] = f'{call["now"]:,}'
             soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                    data[k][
+                                                                                        "list_shares"] else 0
             soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
-            soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k]["PER"] else 0
+            soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and \
+                                                                                              soso[k]["PER"] else 0
             # info_lack[k] = {"corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"]}
     logger.info("{} {} {} {}".format("*" * 100, "BEST", len(best), "*" * 100))
     for key in best.keys():
@@ -3581,8 +3706,10 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                                  "최근매출액영업이익률": best[key]["최근매출액영업이익률"], "EPS": best[key]["EPS"],
                                  "추정EPS": best[key]["EPS2"],
                                  "괴리율": round((best[key]["EPS2"] - best[key]["EPS"]) / best[key]["EPS"] * 100,
-                                              2), "현재가": best[key]["현재가"], "예상주가": best[key]["예상주가"], "EARN": best[key]["EARN"],
-                                 "FCF": best[key]["FCF"], "OCF": best[key]["OCF"], "PL": best[key]["PL"], "최종보고서": best[key]["last_report"]}
+                                              2), "현재가": best[key]["현재가"], "예상주가": best[key]["예상주가"],
+                                 "EARN": best[key]["EARN"],
+                                 "FCF": best[key]["FCF"], "OCF": best[key]["OCF"], "PL": best[key]["PL"],
+                                 "최종보고서": best[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "BETTER", len(better), "*" * 100))
     for key in better.keys():
         logger.info(better[key])
@@ -3594,30 +3721,35 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                                    "EPS": better[key]["EPS"], "추정EPS": better[key]["EPS2"], "괴리율": round(
                 (better[key]["EPS2"] - better[key]["EPS"]) / better[key]["EPS"] * 100, 2),
                                    "현재가": better[key]["현재가"], "예상주가": better[key]["예상주가"], "EARN": better[key]["EARN"],
-                                   "FCF": better[key]["FCF"], "OCF": better[key]["OCF"], "PL": better[key]["PL"], "최종보고서": better[key]["last_report"]}
+                                   "FCF": better[key]["FCF"], "OCF": better[key]["OCF"], "PL": better[key]["PL"],
+                                   "최종보고서": better[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "GOOD", len(good), "*" * 100))
     for key in good.keys():
         logger.info(good[key])
-        if good[key]["EPS2"] != 0 and good[key]["EPS2"] > good[key]["EPS"] and (good[key]["EPS2"] - good[key]["EPS"])/good[key]["EPS"] * 100 >= 30:
+        if good[key]["EPS2"] != 0 and good[key]["EPS2"] > good[key]["EPS"] and (good[key]["EPS2"] - good[key]["EPS"]) / \
+                good[key]["EPS"] * 100 >= 30:
             if "GOOD" not in treasure.keys():
                 treasure["GOOD"] = {}
             treasure["GOOD"][key] = {"사명": good[key]["corp_name"], "시가총액": good[key]["시가총액"], "업종": good[key]["업종"],
                                      "최근매출액영업이익률": good[key]["최근매출액영업이익률"], "EPS": good[key]["EPS"],
                                      "추정EPS": good[key]["EPS2"],
                                      "괴리율": round((good[key]["EPS2"] - good[key]["EPS"]) / good[key]["EPS"] * 100, 2),
-                                     "현재가": good[key]["현재가"], "예상주가": good[key]["예상주가"], "EARN": good[key]["EARN"], "FCF": good[key]["FCF"],
+                                     "현재가": good[key]["현재가"], "예상주가": good[key]["예상주가"], "EARN": good[key]["EARN"],
+                                     "FCF": good[key]["FCF"],
                                      "OCF": good[key]["OCF"], "PL": good[key]["PL"], "최종보고서": good[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "CHECK", len(soso), "*" * 100))
     for key in soso.keys():
         logger.info(soso[key])
-        if soso[key]["EPS2"] != 0 and soso[key]["EPS2"] > soso[key]["EPS"] and (soso[key]["EPS2"] - soso[key]["EPS"])/soso[key]["EPS"] * 100 >= 30:
+        if soso[key]["EPS2"] != 0 and soso[key]["EPS2"] > soso[key]["EPS"] and (soso[key]["EPS2"] - soso[key]["EPS"]) / \
+                soso[key]["EPS"] * 100 >= 30:
             if "SOSO" not in treasure.keys():
                 treasure["SOSO"] = {}
             treasure["SOSO"][key] = {"사명": soso[key]["corp_name"], "시가총액": soso[key]["시가총액"], "업종": soso[key]["업종"],
                                      "최근매출액영업이익률": soso[key]["최근매출액영업이익률"], "EPS": soso[key]["EPS"],
                                      "추정EPS": soso[key]["EPS2"],
                                      "괴리율": round((soso[key]["EPS2"] - soso[key]["EPS"]) / soso[key]["EPS"] * 100,
-                                                  2), "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"], "EARN": soso[key]["EARN"],
+                                                  2), "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"],
+                                     "EARN": soso[key]["EARN"],
                                      "FCF": soso[key]["FCF"], "OCF": soso[key]["OCF"], "PL": soso[key]["PL"],
                                      "최종보고서": soso[key]["last_report"]}
     # logger.info(none_list)
@@ -3778,7 +3910,8 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                       "Ⅷ. 당기순이익(손실)", "지배기업 소유주 지분",
                       "Ⅷ. 당기순이익", "VIII. 당기순이익", "지배기업 소유주", "VIII. 분기순손익", "VIII. 분기순이익", "I.당기순이익", "I.반기순이익",
                       "I.분기순이익", "반기연결순이익(손실)", "지배기업의 소유주지분", "지배기업소유주지분", "지배기업의소유주지분"]
-            d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입", "영업활동으로인한현금흐름", "영업활동으로 인한 순현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "영업활동순현금흐름 합계", "영업활동순현금흐름", "I. 영업활동현금흐름"]
+            d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입", "영업활동으로인한현금흐름", "영업활동으로 인한 순현금흐름",
+                       "Ⅰ. 영업활동으로 인한 현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "영업활동순현금흐름 합계", "영업활동순현금흐름", "I. 영업활동현금흐름"]
             d11keys = ["유형자산의 취득", "유형자산 취득", "유형자산의취득"]
             d12keys = ["무형자산의 취득", "무형자산 취득", "무형자산의취득", "무형자산의 증가"]
             d13keys = ["토지의 취득", "건물의 취득", "구축물의 취득", "기계장치의 취득", "차량운반구의 취득", "공구와기구의취득", "공구와기구의 취득", "비품의 취득",
@@ -4427,19 +4560,26 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
 
             if "매출액영업이익률" in data[k]["PL"]["Q"].keys():
                 # print("here3?")
-                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1] if len(data[k]["PL"]["Q"]["매출액영업이익률"]) > 0 else None
-                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계매출액추이"]) > 0 else None
+                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["매출액영업이익률"]) > 0 else None
+                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계매출액추이"]) > 0 else None
                 if "매출액" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["매출액"].popitem() if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
-                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1] if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
-                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계영업이익추이"]) > 0 else None
+                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["매출액"]) > 0 else None
+                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계영업이익추이"]) > 0 else None
                 if "영업이익" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["영업이익"].popitem() if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
-                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1] if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
-                last_net_income = data[k]["PL"]["Q"]["누계당기순이익추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계당기순이익추이"]) > 0 else None
+                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["영업이익"]) > 0 else None
+                last_net_income = data[k]["PL"]["Q"]["누계당기순이익추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계당기순이익추이"]) > 0 else None
                 if "당기순이익" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["당기순이익"].popitem() if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
-                    before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
+                    before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
         # print("here4?")
         if avg_sales_op_profit_rate and last_sales_op_profit_rate:
             if last_sales_op_profit_rate > 0 and avg_sales_op_profit_rate > 0 and last_sales_op_profit_rate > avg_sales_op_profit_rate:
@@ -4473,11 +4613,13 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                         best[k]["PBR"] = call["pbr"]
                         best[k]["현재가"] = f'{call["now"]:,}'
                         best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
-                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and \
-                                                                                           best[k]["PER"] else 0
+                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          best[k][
+                                                                                                              "PER"] else 0
                     elif np.sign(last_sales_op_profit_rate) > np.sign(avg_sales_op_profit_rate):
                         best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
                                    "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
@@ -4502,11 +4644,13 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                         best[k]["PBR"] = call["pbr"]
                         best[k]["현재가"] = f'{call["now"]:,}'
                         best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
-                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and \
-                                                                                           best[k]["PER"] else 0
+                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          best[k][
+                                                                                                              "PER"] else 0
                     else:
                         better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
                                      "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
@@ -4537,10 +4681,11 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                                                                                                   data[k][
                                                                                                       "list_shares"] else 0
                         better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k][
-                                                                                                     "EPS2"] and \
-                                                                                                 better[k][
-                                                                                                     "PER"] else 0
+                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if \
+                        better[k][
+                            "EPS2"] and \
+                        better[k][
+                            "PER"] else 0
                 else:
                     if last_sales_op_profit_rate > 15:
                         better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
@@ -4572,10 +4717,11 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                                                                                                   data[k][
                                                                                                       "list_shares"] else 0
                         better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k][
-                                                                                                     "EPS2"] and \
-                                                                                                 better[k][
-                                                                                                     "PER"] else 0
+                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if \
+                        better[k][
+                            "EPS2"] and \
+                        better[k][
+                            "PER"] else 0
                     else:
                         # print("here7?")
                         good[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
@@ -4602,11 +4748,13 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                         good[k]["PBR"] = call["pbr"]
                         good[k]["현재가"] = f'{call["now"]:,}'
                         good[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         good[k]["PER2"] = round(call["now"] / good[k]["EPS2"], 0) if good[k]["EPS2"] != 0 else 0
-                        good[k]["예상주가"] = format(int(round(good[k]["EPS2"] * good[k]["PER"], 0)), ",") if good[k]["EPS2"] and \
-                                                                                           good[k]["PER"] else 0
+                        good[k]["예상주가"] = format(int(round(good[k]["EPS2"] * good[k]["PER"], 0)), ",") if good[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          good[k][
+                                                                                                              "PER"] else 0
             else:
                 if last_sales_op_profit_rate > 15:
                     better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
@@ -4632,11 +4780,13 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                     better[k]["PBR"] = call["pbr"]
                     better[k]["현재가"] = f'{call["now"]:,}'
                     better[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                              data[k][
+                                                                                                  "list_shares"] else 0
                     better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                    better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and \
-                                                                                             better[k]["PER"] else 0
+                    better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k][
+                                                                                                                "EPS2"] and \
+                                                                                                            better[k][
+                                                                                                                "PER"] else 0
                 else:
                     soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
                                "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
@@ -4660,11 +4810,13 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
                     soso[k]["PBR"] = call["pbr"]
                     soso[k]["현재가"] = f'{call["now"]:,}'
                     soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                            data[k][
+                                                                                                "list_shares"] else 0
                     soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
-                    soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k][
-                        "PER"] else 0
+                    soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k][
+                                                                                                          "EPS2"] and \
+                                                                                                      soso[k][
+                                                                                                          "PER"] else 0
         else:
             soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
                        "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
@@ -4688,11 +4840,12 @@ def new_find_hidden_pearl_with_dartpipe_provision(search, bgn_dt, end_dt=None):
             soso[k]["PBR"] = call["pbr"]
             soso[k]["현재가"] = f'{call["now"]:,}'
             soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                    data[k][
+                                                                                        "list_shares"] else 0
             soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
-            soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k][
-                "PER"] else 0
+            soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and \
+                                                                                              soso[k][
+                                                                                                  "PER"] else 0
             # info_lack[k] = {"corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"]}
     logger.info("{} {} {} {}".format("*" * 100, "BEST", len(best), "*" * 100))
     for key in best.keys():
@@ -4845,7 +4998,7 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
 
             for key in result.keys():  # key = ["연결재무제표", "재무제표"]
                 for report in result[key].keys():  # report = ["재무상태표", "손익계산서"]
-                    if report not in ["손익계산서", "포괄손익계산서"]: # ["재무상태표", "현금흐름표", "자본변동표"]:
+                    if report not in ["손익계산서", "포괄손익계산서"]:  # ["재무상태표", "현금흐름표", "자본변동표"]:
                         for acc in result[key][report].keys():
                             # acc = ["유동자산", "비유동자산", "자산총계", "유동부채", "비유동부채", "부채총계", "자본금", "이익잉여금", "자본총계"]
                             for category in sorted(result[key][report][acc].keys()):
@@ -4901,7 +5054,8 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                       "Ⅷ. 당기순이익(손실)", "지배기업 소유주 지분",
                       "Ⅷ. 당기순이익", "VIII. 당기순이익", "지배기업 소유주", "VIII. 분기순손익", "VIII. 분기순이익", "I.당기순이익", "I.반기순이익",
                       "I.분기순이익", "반기연결순이익(손실)", "지배기업의 소유주지분", "지배기업소유주지분", "지배기업의소유주지분"]
-            d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입", "영업활동으로인한현금흐름", "영업활동으로 인한 순현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "영업활동순현금흐름 합계", "영업활동순현금흐름", "I. 영업활동현금흐름"]
+            d10keys = ["영업활동현금흐름", "영업활동 현금흐름", "영업활동으로 인한 현금흐름", "영업활동 순현금흐름유입", "영업활동으로인한현금흐름", "영업활동으로 인한 순현금흐름",
+                       "Ⅰ. 영업활동으로 인한 현금흐름", "Ⅰ. 영업활동으로 인한 현금흐름", "영업활동순현금흐름 합계", "영업활동순현금흐름", "I. 영업활동현금흐름"]
             d11keys = ["유형자산의 취득", "유형자산 취득", "유형자산의취득"]
             d12keys = ["무형자산의 취득", "무형자산 취득", "무형자산의취득", "무형자산의 증가"]
             d13keys = ["토지의 취득", "건물의 취득", "구축물의 취득", "기계장치의 취득", "차량운반구의 취득", "공구와기구의취득", "공구와기구의 취득", "비품의 취득",
@@ -5396,8 +5550,10 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                     current_key = key2
                     if "Rate" in key2: continue
                     for key3 in d10[key2].keys():
-                        yhasset = int(d11[key2][key3]) if d11 and key2 in d11.keys() and d11 and key3 in d11[key2].keys() else 0
-                        mhasset = int(d12[key2][key3]) if d12 and key2 in d12.keys() and d12 and key3 in d12[key2].keys() else 0
+                        yhasset = int(d11[key2][key3]) if d11 and key2 in d11.keys() and d11 and key3 in d11[
+                            key2].keys() else 0
+                        mhasset = int(d12[key2][key3]) if d12 and key2 in d12.keys() and d12 and key3 in d12[
+                            key2].keys() else 0
                         data[stock]["CF"]["FCF"][key3] = int(d10[key2][key3]) - (yhasset + mhasset)
             # dicTemp1["최근"] = provision_info[stock]["PL"]["Y"]["매출액"]
             # dicTemp2["최근"] = provision_info[stock]["PL"]["Y"]["영업이익"]
@@ -5550,19 +5706,26 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
 
             if "매출액영업이익률" in data[k]["PL"]["Q"].keys():
                 # print("here3?")
-                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1] if len(data[k]["PL"]["Q"]["매출액영업이익률"]) > 0 else None
-                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계매출액추이"]) > 0 else None
+                last_sales_op_profit_rate = data[k]["PL"]["Q"]["매출액영업이익률"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["매출액영업이익률"]) > 0 else None
+                last_sales = data[k]["PL"]["Q"]["누계매출액추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계매출액추이"]) > 0 else None
                 if "매출액" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["매출액"].popitem() if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
-                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1] if len(data[k]["PL"]["Y"]["매출액"]) > 0 else None
-                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계영업이익추이"]) > 0 else None
+                    before_sales = data[k]["PL"]["Y"]["매출액"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["매출액"]) > 0 else None
+                last_op_profit = data[k]["PL"]["Q"]["누계영업이익추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계영업이익추이"]) > 0 else None
                 if "영업이익" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["영업이익"].popitem() if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
-                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1] if len(data[k]["PL"]["Y"]["영업이익"]) > 0 else None
-                last_net_income = data[k]["PL"]["Q"]["누계당기순이익추이"].popitem()[1] if len(data[k]["PL"]["Q"]["누계당기순이익추이"]) > 0 else None
+                    before_op_profit = data[k]["PL"]["Y"]["영업이익"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["영업이익"]) > 0 else None
+                last_net_income = data[k]["PL"]["Q"]["누계당기순이익추이"].popitem()[1] if len(
+                    data[k]["PL"]["Q"]["누계당기순이익추이"]) > 0 else None
                 if "당기순이익" in data[k]["PL"]["Y"].keys():
                     data[k]["PL"]["Y"]["당기순이익"].popitem() if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
-                    before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
+                    before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(
+                        data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
         # print("here4?")
         if avg_sales_op_profit_rate and last_sales_op_profit_rate:
             if last_sales_op_profit_rate > 0 and avg_sales_op_profit_rate > 0 and last_sales_op_profit_rate > avg_sales_op_profit_rate:
@@ -5596,11 +5759,13 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                         best[k]["PBR"] = call["pbr"]
                         best[k]["현재가"] = f'{call["now"]:,}'
                         best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
-                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and \
-                                                                                           best[k]["PER"] else 0
+                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          best[k][
+                                                                                                              "PER"] else 0
                     elif np.sign(last_sales_op_profit_rate) > np.sign(avg_sales_op_profit_rate):
                         best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
                                    "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
@@ -5625,11 +5790,13 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                         best[k]["PBR"] = call["pbr"]
                         best[k]["현재가"] = f'{call["now"]:,}'
                         best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
-                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and \
-                                                                                           best[k]["PER"] else 0
+                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          best[k][
+                                                                                                              "PER"] else 0
                     else:
                         better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
                                      "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
@@ -5660,10 +5827,11 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                                                                                   data[k][
                                                                                                       "list_shares"] else 0
                         better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k][
-                                                                                                     "EPS2"] and \
-                                                                                                 better[k][
-                                                                                                     "PER"] else 0
+                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if \
+                        better[k][
+                            "EPS2"] and \
+                        better[k][
+                            "PER"] else 0
                 else:
                     if last_sales_op_profit_rate > 15:
                         better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
@@ -5695,10 +5863,11 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                                                                                                   data[k][
                                                                                                       "list_shares"] else 0
                         better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k][
-                                                                                                     "EPS2"] and \
-                                                                                                 better[k][
-                                                                                                     "PER"] else 0
+                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if \
+                        better[k][
+                            "EPS2"] and \
+                        better[k][
+                            "PER"] else 0
                     else:
                         # print("here7?")
                         good[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
@@ -5725,11 +5894,13 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                         good[k]["PBR"] = call["pbr"]
                         good[k]["현재가"] = f'{call["now"]:,}'
                         good[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                data[k][
+                                                                                                    "list_shares"] else 0
                         good[k]["PER2"] = round(call["now"] / good[k]["EPS2"], 0) if good[k]["EPS2"] != 0 else 0
-                        good[k]["예상주가"] = format(int(round(good[k]["EPS2"] * good[k]["PER"], 0)), ",") if good[k]["EPS2"] and \
-                                                                                           good[k]["PER"] else 0
+                        good[k]["예상주가"] = format(int(round(good[k]["EPS2"] * good[k]["PER"], 0)), ",") if good[k][
+                                                                                                              "EPS2"] and \
+                                                                                                          good[k][
+                                                                                                              "PER"] else 0
             else:
                 if last_sales_op_profit_rate > 15:
                     better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
@@ -5755,11 +5926,13 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                     better[k]["PBR"] = call["pbr"]
                     better[k]["현재가"] = f'{call["now"]:,}'
                     better[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                              data[k][
+                                                                                                  "list_shares"] else 0
                     better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                    better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and \
-                                                                                             better[k]["PER"] else 0
+                    better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k][
+                                                                                                                "EPS2"] and \
+                                                                                                            better[k][
+                                                                                                                "PER"] else 0
                 else:
                     soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
                                "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
@@ -5783,11 +5956,13 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
                     soso[k]["PBR"] = call["pbr"]
                     soso[k]["현재가"] = f'{call["now"]:,}'
                     soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                            data[k][
+                                                                                                "list_shares"] else 0
                     soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
-                    soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k][
-                        "PER"] else 0
+                    soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k][
+                                                                                                          "EPS2"] and \
+                                                                                                      soso[k][
+                                                                                                          "PER"] else 0
         else:
             soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "업종": data[k]["category"],
                        "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
@@ -5811,11 +5986,12 @@ def new_find_hidden_pearl_with_dartpipe_provision_test(code, search, bgn_dt, end
             soso[k]["PBR"] = call["pbr"]
             soso[k]["현재가"] = f'{call["now"]:,}'
             soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                    data[k][
+                                                                                        "list_shares"] else 0
             soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
-            soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k][
-                "PER"] else 0
+            soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and \
+                                                                                              soso[k][
+                                                                                                  "PER"] else 0
             # info_lack[k] = {"corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"]}
     logger.info("{} {} {} {}".format("*" * 100, "BEST", len(best), "*" * 100))
     for key in best.keys():
@@ -5963,7 +6139,7 @@ def TargetStockDataStore(crp_cd, data):
                                                                       'target_price2': data['NPV2'],
                                                                       'required_yield': data['요구수익률'],
                                                                       'return_on_equity': data['ROE'],
-                                                                      'ratio': data['NPV']/data['종가']*100,
+                                                                      'ratio': data['NPV'] / data['종가'] * 100,
                                                                       'plus_npv': 'Y',
                                                                       'holders_share': data['지배주주지분'],
                                                                       'holders_value': data['주주가치'],
@@ -5999,26 +6175,26 @@ def USTargetStockDataStore(crp_cd, data):
         info = detective_db.USTargetStocks.objects.update_or_create(code=crp_cd,
                                                                     valuation_date=yyyymmdd,
                                                                     defaults={
-                                                                      'name': data['Name'],
-                                                                      'curr': 'USD',
-                                                                      'last_price': data['종가'],
-                                                                      'price_gap': data['전일대비'],
-                                                                      'target_price': data['NPV'],
-                                                                      'target_price2': None,
-                                                                      'required_yield': data['요구수익률'],
-                                                                      'return_on_equity': data['ROE'],
-                                                                      'ratio': data['NPV']/data['종가']*100,
-                                                                      'plus_npv': 'Y',
-                                                                      'holders_share': data['자산총계'],
-                                                                      'holders_value': data['주주가치'],
-                                                                      'holders_profit': data['당기순이익'],
-                                                                      'issued_shares': data['발행주식수'],
-                                                                      # 'valuation_date': yyyymmdd,
-                                                                      'return_on_sales': data['ROS'],
-                                                                      'liquidity_rate': None,
-                                                                      'foreign_holding': None,
-                                                                      'trade_amount': data['거래량'],
-                                                                      # 'impairment_profit': data['중단영업이익'],
+                                                                        'name': data['Name'],
+                                                                        'curr': 'USD',
+                                                                        'last_price': data['종가'],
+                                                                        'price_gap': data['전일대비'],
+                                                                        'target_price': data['NPV'],
+                                                                        'target_price2': None,
+                                                                        'required_yield': data['요구수익률'],
+                                                                        'return_on_equity': data['ROE'],
+                                                                        'ratio': data['NPV'] / data['종가'] * 100,
+                                                                        'plus_npv': 'Y',
+                                                                        'holders_share': data['자산총계'],
+                                                                        'holders_value': data['주주가치'],
+                                                                        'holders_profit': data['당기순이익'],
+                                                                        'issued_shares': data['발행주식수'],
+                                                                        # 'valuation_date': yyyymmdd,
+                                                                        'return_on_sales': None,
+                                                                        'liquidity_rate': None,
+                                                                        'foreign_holding': None,
+                                                                        'trade_amount': data['거래량'],
+                                                                        # 'impairment_profit': data['중단영업이익'],
                                                                     }
                                                                     )
 
@@ -6178,7 +6354,8 @@ def test():
                     # print(items)
                     # print(values)
                     for idx, i in enumerate(items):
-                        if i in ['당기순이익', '자본총계', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)', '영업이익(발표기준)']:
+                        if i in ['당기순이익', '자본총계', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)',
+                                 '영업이익(발표기준)']:
                             for idx2, yyyymm in enumerate(columns):
                                 # print(idx2, yyyymm)
                                 # print(yyyymm[:4], dateDict['yyyy'], i, values[idx][idx2])
@@ -6264,7 +6441,7 @@ def test():
                             data[col.strip()] = "{}{}%".format(tmp2[0], pct)
                     else:
                         data[col] = float(values[idx].replace(',', '')) if (
-                                    values[idx] is not None and values[idx] != '') else 0.0
+                                values[idx] is not None and values[idx] != '') else 0.0
                     # break
                 # if col in ['발행주식수-보통주']: print(values[idx] == '')
                 if col in ['발행주식수-보통주'] and values[idx] != '' and data['발행주식수'] != float(values[idx].replace(',', '')):
@@ -6350,7 +6527,8 @@ def test():
     for d in treasure.keys():
         if treasure[d]['ROE'] < 15 or \
                 treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
-                treasure[d]['업종구분'].replace('\n', '').replace('KSE', '').replace('KOSDAQ', '').replace(' ', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
+                treasure[d]['업종구분'].replace('\n', '').replace('KSE', '').replace('KOSDAQ', '').replace(' ', '') in [
+            '코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
                 treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
                 treasure[d]['NPV'] < 0 or \
                 treasure[d]['NPV'] / treasure[d]['종가'] * 100 < 105:
@@ -6494,13 +6672,14 @@ def hidden_pearl_in_usmarket():
         for idx, i in enumerate(stockInfo):
             # print(i.__dict__)
             data = {}
-            data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name, 'Industry': i.category_detail, '발행주식수': i.issued_shares}
-            sec_name = i.security.replace(' ', '')\
-                .replace('&', 'AND')\
-                .replace(',', '')\
-                .replace('.', '')\
-                .replace('!', '')\
-                .replace('*', '')\
+            data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name,
+                    'Industry': i.category_detail, '발행주식수': i.issued_shares}
+            sec_name = i.security.replace(' ', '') \
+                .replace('&', 'AND') \
+                .replace(',', '') \
+                .replace('.', '') \
+                .replace('!', '') \
+                .replace('*', '') \
                 .replace('/', '')
             dic = get_soup_from_file('GlobalCompanyProfile', yyyymmdd, sec_name, i.ticker, 'json')
             if dic is None or dic == '':
@@ -6508,14 +6687,18 @@ def hidden_pearl_in_usmarket():
                 continue
             if dic['data'] is not None:
                 if dic['data']['primaryData'] is not None:
-                    if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData']['lastSalePrice'] != 'N/A':
+                    if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData'][
+                        'lastSalePrice'] != 'N/A':
                         data['종가'] = float(dic['data']['primaryData']['lastSalePrice'].replace('$', ''))
-                    else: data['종가'] = 0.0
-                else: data['종가'] = 0.0
+                    else:
+                        data['종가'] = 0.0
+                else:
+                    data['종가'] = 0.0
             else:
                 data['종가'] = 0.0
                 continue
-            data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
+            data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else dic['data']['primaryData'][
+                'percentageChange'].replace('+', '△ ').replace('-', '▽ ')
             data['거래량'] = int(dic['data']['keyStats']['Volume']['value'].replace(',', ''))
             dic = get_soup_from_file('GlobalFinancialSummary', yyyymmdd, sec_name, i.ticker, 'json')
             if dic is None or dic == '':
@@ -6525,7 +6708,8 @@ def hidden_pearl_in_usmarket():
             data['요구수익률'] = 10
             for d in dic['Data2']:
                 if DEBUG: print(d)
-                if d['ITEM_NM'] in ['자산총계', '자본총계', '매출총이익', '판매비와관리비', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', 'CAPEX', 'Free Cash Flow']:
+                if d['ITEM_NM'] in ['자산총계', '자본총계', '매출총이익', '판매비와관리비', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', 'CAPEX',
+                                    'Free Cash Flow']:
                     data[d['ITEM_NM']] = d[term_nm2] * 1000000 if d[term_nm2] is not None else 0
             dic = get_soup_from_file('GlobalConsensus', yyyymmdd, sec_name, i.ticker, 'json')
             if dic is None or dic == '':
@@ -6538,7 +6722,8 @@ def hidden_pearl_in_usmarket():
             if data['자산총계'] == 0:
                 data['ROE'] = 0.0
             else:
-                data['ROE'] = (data['당기순이익'] / data['자산총계'] * 100) if data['자산총계'] is not None and data['자산총계'] != 0 else 0
+                data['ROE'] = (data['당기순이익'] / data['자산총계'] * 100) if data['자산총계'] is not None and data[
+                    '자산총계'] != 0 else 0
 
             data['주주가치'] = data['자산총계'] + (
                     data['자산총계'] * (data['ROE'] - data['요구수익률']) / (data['요구수익률']))
@@ -6597,7 +6782,8 @@ def hidden_pearl_in_usmarket():
                         d, treasure[d]['Name'], treasure[d]['자산총계'], treasure[d]['ROE'], treasure[d]['Industry'],
                         treasure[d]['NPV'], treasure[d]['종가'])
 
-                if treasure[d]['ROE'] >= 30 or (treasure[d]['종가'] != 0.0 and treasure[d]['NPV'] / treasure[d]['종가'] * 100 > 200):
+                if treasure[d]['ROE'] >= 30 or (
+                        treasure[d]['종가'] != 0.0 and treasure[d]['NPV'] / treasure[d]['종가'] * 100 > 200):
                     logger.info("[NEED TO CHECK]" + pass_reason)
                 else:
                     logger.error(pass_reason)
@@ -6701,13 +6887,14 @@ def hidden_pearl_in_usmarket_test():
         for idx, i in enumerate(stockInfo):
             # print(i.__dict__)
             data = {}
-            data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name, 'Industry': i.category_detail, '발행주식수': i.issued_shares}
-            sec_name = i.security.replace(' ', '')\
-                .replace('&', 'AND')\
-                .replace(',', '')\
-                .replace('.', '')\
-                .replace('!', '')\
-                .replace('*', '')\
+            data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name,
+                    'Industry': i.category_detail, '발행주식수': i.issued_shares}
+            sec_name = i.security.replace(' ', '') \
+                .replace('&', 'AND') \
+                .replace(',', '') \
+                .replace('.', '') \
+                .replace('!', '') \
+                .replace('*', '') \
                 .replace('/', '')
             dic = get_soup_from_file('GlobalCompanyProfile', yyyymmdd, sec_name, i.ticker, 'json')
             if dic is None or dic == '':
@@ -6715,14 +6902,18 @@ def hidden_pearl_in_usmarket_test():
                 continue
             if dic['data'] is not None:
                 if dic['data']['primaryData'] is not None:
-                    if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData']['lastSalePrice'] != 'N/A':
+                    if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData'][
+                        'lastSalePrice'] != 'N/A':
                         data['종가'] = float(dic['data']['primaryData']['lastSalePrice'].replace('$', ''))
-                    else: data['종가'] = 0.0
-                else: data['종가'] = 0.0
+                    else:
+                        data['종가'] = 0.0
+                else:
+                    data['종가'] = 0.0
             else:
                 data['종가'] = 0.0
                 continue
-            data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
+            data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else dic['data']['primaryData'][
+                'percentageChange'].replace('+', '△ ').replace('-', '▽ ')
             data['거래량'] = int(dic['data']['keyStats']['Volume']['value'].replace(',', ''))
             dic = get_soup_from_file('GlobalFinancialSummary', yyyymmdd, sec_name, i.ticker, 'json')
             if dic is None or dic == '':
@@ -6732,7 +6923,8 @@ def hidden_pearl_in_usmarket_test():
             data['요구수익률'] = 10
             for d in dic['Data2']:
                 if DEBUG: print(d)
-                if d['ITEM_NM'] in ['자산총계', '자본총계', '매출총이익', '판매비와관리비', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', 'CAPEX', 'Free Cash Flow']:
+                if d['ITEM_NM'] in ['자산총계', '자본총계', '매출총이익', '판매비와관리비', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', 'CAPEX',
+                                    'Free Cash Flow']:
                     data[d['ITEM_NM']] = d[term_nm2] * 1000000 if d[term_nm2] is not None else 0
             dic = get_soup_from_file('GlobalConsensus', yyyymmdd, sec_name, i.ticker, 'json')
             if dic is None or dic == '':
@@ -6749,7 +6941,7 @@ def hidden_pearl_in_usmarket_test():
 
             data['주주가치'] = data['자산총계'] + (
                     data['자산총계'] * (data['ROE'] - data['요구수익률']) / (data['요구수익률']))
-            data['NPV'] = data['주주가치'] / data['발행주식수'] if data['발행주식수'] is not None and data['발행주식수'] != 0  else 0
+            data['NPV'] = data['주주가치'] / data['발행주식수'] if data['발행주식수'] is not None and data['발행주식수'] != 0 else 0
             data['ROS'] = data['당기순이익'] / data['매출액'] * 100 if data['매출액'] is not None and data['매출액'] != 0 else 0
             if data['ROS'] > 15: HIGH_ROS.append(data['Name'])
             if DEBUG: print(data)
@@ -6886,9 +7078,9 @@ def new_hidden_pearl_in_usmarket():
     # workDir = r'{}\{}\{}'.format(path, 'GlobalFinancialSummary', '2020-08-04')
 
     import detective_app.models as detective_db
-    # stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='AAPL', listing='Y')  # Apple
-    stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y').exclude(category_name="Finance").exclude(
-        category_name="None")  # Apple
+    stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='AMCX', listing='Y')  # Apple
+    # stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y').exclude(category_name="Finance").exclude(
+    #     category_name="None")  # Apple
 
     HIGH_ROS = []
     HIGH_RESERVE = []
@@ -7040,7 +7232,7 @@ def new_hidden_pearl_in_usmarket():
                 # if data['ROS'] > 15: HIGH_ROS.append(data['Name'])
                 keylist = list(data['FCF'].keys())
                 keylist.extend(list(data['EARN'].keys()))
-                keyfinder = list(set(keylist))
+                keyfinder = sorted(list(set(keylist)))
                 # keyfinder = list(data['FCF'].keys()).append(list(data['EARN'].keys()))
                 temp_dic = {}
                 for kf in keyfinder:
@@ -7265,7 +7457,8 @@ def new_hidden_pearl_in_usmarket_test(code):
     current_data = None
     term_nm1 = 'YYMM5'
     term_nm2 = 'VAL5'
-    term_header = {"YYMM6": "VAL6", "YYMM7": "VAL7", "YYMM8": "VAL8", "YYMM9": "VAL9", "YYMM10": "VAL10", "YYMM5": "VAL5"}
+    term_header = {"YYMM6": "VAL6", "YYMM7": "VAL7", "YYMM8": "VAL8", "YYMM9": "VAL9", "YYMM10": "VAL10",
+                   "YYMM5": "VAL5"}
     term_header2 = {"YYMM1": "DATA1", "YYMM2": "DATA2", "YYMM3": "DATA3", "YYMM4": "DATA4", "YYMM5": "DATA5"}
     # yyyymmdd = str(datetime.now())[:10]
     # yyyymmdd = '2020-08-04'
@@ -7310,13 +7503,14 @@ def new_hidden_pearl_in_usmarket_test(code):
                 print(i.category_detail)
             try:
                 current_data = i
-                data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name, 'Industry': i.category_detail, '발행주식수': i.issued_shares}
-                sec_name = i.security.replace(' ', '')\
-                    .replace('&', 'AND')\
-                    .replace(',', '')\
-                    .replace('.', '')\
-                    .replace('!', '')\
-                    .replace('*', '')\
+                data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name,
+                        'Industry': i.category_detail, '발행주식수': i.issued_shares}
+                sec_name = i.security.replace(' ', '') \
+                    .replace('&', 'AND') \
+                    .replace(',', '') \
+                    .replace('.', '') \
+                    .replace('!', '') \
+                    .replace('*', '') \
                     .replace('/', '')
                 dic = get_soup_from_file('GlobalCompanyProfile', yyyymmdd, sec_name, i.ticker, 'json')
                 if dic is None or dic == '':
@@ -7324,14 +7518,18 @@ def new_hidden_pearl_in_usmarket_test(code):
                     continue
                 if dic['data'] is not None:
                     if dic['data']['primaryData'] is not None:
-                        if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData']['lastSalePrice'] != 'N/A':
+                        if dic['data']['primaryData']['lastSalePrice'] is not None and dic['data']['primaryData'][
+                            'lastSalePrice'] != 'N/A':
                             data['종가'] = float(dic['data']['primaryData']['lastSalePrice'].replace('$', ''))
-                        else: data['종가'] = 0.0
-                    else: data['종가'] = 0.0
+                        else:
+                            data['종가'] = 0.0
+                    else:
+                        data['종가'] = 0.0
                 else:
                     data['종가'] = 0.0
                     continue
-                data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
+                data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else \
+                dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
                 data['거래량'] = int(dic['data']['keyStats']['Volume']['value'].replace(',', ''))
                 dic = get_soup_from_file('GlobalFinancialSummary', yyyymmdd, sec_name, i.ticker, 'json')
                 if dic is None or dic == '':
@@ -7341,37 +7539,57 @@ def new_hidden_pearl_in_usmarket_test(code):
                 data['요구수익률'] = 10
                 for d in dic['Data2']:
                     if DEBUG: print(d)
-                    if d['ITEM_NM'] in ['자산총계', '자본총계', '당기순이익', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름',\
+                    if d['ITEM_NM'] in ['자산총계', '자본총계', '당기순이익', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', \
                                         'CAPEX', 'Free Cash Flow', '매출액']:
                         data[d['ITEM_NM']] = d[term_nm2] * 1000000 if d[term_nm2] is not None else 0
                         if d['ITEM_NM'] == '영업활동현금흐름':
-                            data['OCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['OCF'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '투자활동현금흐름':
-                            data['ICF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['ICF'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '재무활동현금흐름':
-                            data['FNCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['FNCF'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == 'Free Cash Flow':
-                            data['FCF'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['FCF'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '매출액':
-                            data['SALES'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['SALES'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '당기순이익':
-                            data['NETINC'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['NETINC'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                     if d['ITEM_NM'] in ['매출액증가율', '영업이익률', '영업이익증가율']:
                         data[d['ITEM_NM']] = d[term_nm2] if d[term_nm2] is not None else 0
                         if d['ITEM_NM'] == '영업이익률':
-                            data['OPIR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['OPIR'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '영업이익증가율':
-                            data['OPIGR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['OPIGR'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                         if d['ITEM_NM'] == '매출액증가율':
-                            data['SRGR'] = {dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key in term_header.keys()}
+                            data['SRGR'] = {
+                                dic['Data1'][key]: d[term_header[key]] if d[term_header[key]] is not None else 0 for key
+                                in term_header.keys()}
                 dic = get_soup_from_file('GlobalFinancialStatement', yyyymmdd, sec_name, i.ticker, 'json')
                 if dic is None or dic == '':
                     logger.info("[{}][{}] Not exist FinancialStatement File".format(i.ticker, i.security))
                     continue
                 for d in dic['BodyData']:
                     if DEBUG: print(d)
-                    if d['ACCODE']  == 112046051:
-                        data['EARN'] = {dic['HeaderData'][key]: d[term_header2[key]] if d[term_header2[key]] is not None else 0 for key in term_header2.keys()}
+                    if d['ACCODE'] == 112046051:
+                        data['EARN'] = {
+                            dic['HeaderData'][key]: d[term_header2[key]] if d[term_header2[key]] is not None else 0 for
+                            key in term_header2.keys()}
                 dic = get_soup_from_file('GlobalConsensus', yyyymmdd, sec_name, i.ticker, 'json')
                 if dic is None or dic == '':
                     logger.info("[{}][{}] Not exist Consensus File".format(i.ticker, i.security))
@@ -7381,13 +7599,17 @@ def new_hidden_pearl_in_usmarket_test(code):
                     if d['ITEM'] in ['매출액', '영업이익', '당기순이익']:
                         data["12M_Fwd_{}".format(d['ITEM'])] = d['DATA3'] * 1000000 if d['DATA3'] is not None else 0
                     elif d['ITEM'] in ['EPS', 'PER', 'ROE<p class="unit"> %</p>']:
-                        data["12M_Fwd_{}".format(d['ITEM'].replace('<p class="unit"> %</p>', ''))] = d['DATA3'] if d['DATA3'] is not None else 0
+                        data["12M_Fwd_{}".format(d['ITEM'].replace('<p class="unit"> %</p>', ''))] = d['DATA3'] if d[
+                                                                                                                       'DATA3'] is not None else 0
                 if data['자산총계'] == 0:
                     data['ROE'] = 0.0
                 else:
-                    data['ROE'] = (data['당기순이익'] / data['자산총계'] * 100) if data['자산총계'] is not None and data['자산총계'] != 0 else 0
-                data["EPS"] = round(data["당기순이익"]/data["발행주식수"], 2) if data["발행주식수"] is not None and data["발행주식수"] != 0 else 0
-                data["PER"] = round(data["종가"] / data["EPS"] * 100, 2) if data["EPS"] is not None and data["EPS"] != 0 else 0
+                    data['ROE'] = (data['당기순이익'] / data['자산총계'] * 100) if data['자산총계'] is not None and data[
+                        '자산총계'] != 0 else 0
+                data["EPS"] = round(data["당기순이익"] / data["발행주식수"], 2) if data["발행주식수"] is not None and data[
+                    "발행주식수"] != 0 else 0
+                data["PER"] = round(data["종가"] / data["EPS"] * 100, 2) if data["EPS"] is not None and data[
+                    "EPS"] != 0 else 0
                 # data["NPV"] = data["12M_Fwd_PER"] * data["12M_Fwd_EPS"] if data["12M_Fwd_EPS"] is not None and data["12M_Fwd_EPS"] != 0 else 0
                 data['주주가치'] = data['자산총계'] + (
                         data['자산총계'] * (data['12M_Fwd_ROE'] - data['요구수익률']) / (data['요구수익률']))
@@ -7395,10 +7617,12 @@ def new_hidden_pearl_in_usmarket_test(code):
                 # data['ROS'] = data['당기순이익'] / data['매출액'] * 100 if data['매출액'] is not None and data['매출액'] != 0 else 0
                 # if data['ROS'] > 15: HIGH_ROS.append(data['Name'])
                 if DEBUG: print(data)
-                if data["매출액"] and data["당기순이익"] and data["매출액"] > 0 and data["당기순이익"] > 0 and data["NPV"] > data["종가"]\
-                        and mean(data["SALES"].values()) < data["매출액"] and list(data["SALES"].values())[-1] < data["매출액"] \
-                        and mean(data["NETINC"].values()) < data["당기순이익"] and list(data["NETINC"].values())[-1] < data["당기순이익"]:
-                    if data["영업이익률"] > 20: # mean(data["OPIR"].values()) > 20:
+                if data["매출액"] and data["당기순이익"] and data["매출액"] > 0 and data["당기순이익"] > 0 and data["NPV"] > data["종가"] \
+                        and mean(data["SALES"].values()) < data["매출액"] and list(data["SALES"].values())[-1] < data[
+                    "매출액"] \
+                        and mean(data["NETINC"].values()) < data["당기순이익"] and list(data["NETINC"].values())[-1] < data[
+                    "당기순이익"]:
+                    if data["영업이익률"] > 20:  # mean(data["OPIR"].values()) > 20:
                         best[i.ticker] = data
                     elif np.sign(data["영업이익률"]) > np.sign(mean(data["OPIR"].values())):
                         best[i.ticker] = data
@@ -7432,9 +7656,9 @@ def new_hidden_pearl_in_usmarket_test(code):
         cnt = 0
         # print(treasure)
         # USTargetStockDataDelete(yyyymmdd)
-        print("="*50, "BEST", "="*50)
+        print("=" * 50, "BEST", "=" * 50)
         for d in best.keys():
-            cnt +=1
+            cnt += 1
             print(align_string('L', cnt, 5),
                   align_string('R', d, 10),
                   align_string('R', best[d]['Name'], 40 - len(best[d]['Name'])),
@@ -7497,6 +7721,7 @@ def new_hidden_pearl_in_usmarket_test(code):
         with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
             json.dump(trash, fp)
 
+
 if __name__ == '__main__':
     # get_high_ranked_stock_with_closeprice()
     # find_hidden_pearl()
@@ -7522,6 +7747,7 @@ if __name__ == '__main__':
     # get_nasdaq_high_ranked_stock_with_closeprice()
     # test()
     t = new_find_hidden_pearl_with_dartpipe()
+    t = new_find_hidden_pearl_with_dartpipe_single("")
     # new_find_hidden_pearl_with_dartpipe_test()
     # t = new_find_hidden_pearl_with_dartpipe_provision(search=False, bgn_dt="20210108")
     # t = new_find_hidden_pearl_with_dartpipe_provision_test(code="145020", search=False, bgn_dt="20210108")
