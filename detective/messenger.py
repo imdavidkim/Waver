@@ -77,7 +77,7 @@ def messeage_to_telegram(txt, dbg=False):
                     first_lnbr = part.rfind('\n')
                     if first_lnbr != -1:  # 가능하면 개행문자를 기준으로 자릅니다.
                         parts.append(part[:first_lnbr])
-                        text = txt[first_lnbr:]
+                        txt = txt[first_lnbr:]
                     else:
                         parts.append(part)
                         txt = txt[4080:]
@@ -98,7 +98,7 @@ def messeage_to_telegram(txt, dbg=False):
                     if not DEBUG:
                         msg = yyyymmdd + '\n' + txt
                         sendMessage(ggmsg, chat_id_kh, txt='(Continuing...)\n' + part)
-                        time.sleep(3)
+                        time.sleep(0.5)
                         sendMessage(daddy, chat_id_km, txt='(Continuing...)\n' + part)
                     else:
                         msg = yyyymmdd + '\n' + txt
