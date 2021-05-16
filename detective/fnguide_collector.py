@@ -678,7 +678,7 @@ def getFinanceData(cmd=None):
         300: 'https://api.nasdaq.com/api/company/{}/company-profile|https://api.nasdaq.com/api/quote/{}/info?assetclass=stocks',
         301: 'http://compglobal.wisereport.co.kr/miraeassetdaewoo/company/get_snap_financial_summary?ticker={}-US&freq_typ=A&en={}',
         302: 'http://compglobal.wisereport.co.kr/Company/GetConsensusData1?cmp_cd={}-US&curr=USD&en={}',
-        303: 'http://compglobal.wisereport.co.kr/company/getFinStatement?cmp_cd={}-US&term=A&typ=IS&curr=LOC&en={}',
+        303: 'http://compglobal.wisereport.co.kr/company/getFinStatement?cmp_cd={}-US&term=Q&typ=BS&curr=LOC&en={}',
     }
 
     fileInfo = {
