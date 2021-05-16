@@ -7078,9 +7078,9 @@ def new_hidden_pearl_in_usmarket():
     # workDir = r'{}\{}\{}'.format(path, 'GlobalFinancialSummary', '2020-08-04')
 
     import detective_app.models as detective_db
-    stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='AMCX', listing='Y')  # Apple
-    # stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y').exclude(category_name="Finance").exclude(
-    #     category_name="None")  # Apple
+    # stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker='AIH', listing='Y')  # Apple
+    stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y').exclude(category_name="Finance").exclude(
+        category_name="None")  # Apple
 
     HIGH_ROS = []
     HIGH_RESERVE = []
@@ -7460,47 +7460,13 @@ def new_hidden_pearl_in_usmarket_test(code):
     term_header = {"YYMM6": "VAL6", "YYMM7": "VAL7", "YYMM8": "VAL8", "YYMM9": "VAL9", "YYMM10": "VAL10",
                    "YYMM5": "VAL5"}
     term_header2 = {"YYMM1": "DATA1", "YYMM2": "DATA2", "YYMM3": "DATA3", "YYMM4": "DATA4", "YYMM5": "DATA5"}
-    # yyyymmdd = str(datetime.now())[:10]
-    # yyyymmdd = '2020-08-04'
-    # workDir = r'{}\{}\{}'.format(path, 'GlobalFinancialSummary', '2020-08-04')
 
     import detective_app.models as detective_db
     stockInfo = detective_db.USNasdaqStocks.objects.filter(ticker=code, listing='Y')  # Apple
-    # stockInfo = detective_db.USNasdaqStocks.objects.filter(listing='Y')  # Apple
 
-    HIGH_ROS = []
-    HIGH_RESERVE = []
-
-    JsonDir = r'{}\USResultJson'.format(path)
-    if not os.path.exists(JsonDir):
-        os.makedirs(JsonDir)
-    if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)) and USE_JSON:
-        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), "r") as f:
-            data = f.read()
-            treasure = json.loads(data)
-            # print(treasure)
-    if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)) and USE_JSON:
-        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), "r") as f:
-            data = f.read()
-            trash = json.loads(data)
-            # print(treasure)
     try:
-        for ii, stock in enumerate(stockInfo):
-            # if ii > 10: break
-            if stock.ticker in treasure.keys():
-                print("stock.ticker in treasure.keys()")
-                continue
-            else:
-                if stock.ticker in trash.keys():
-                    print("stock.ticker in trash.keys()")
-                    continue
-                else:
-                    pass
         for idx, i in enumerate(stockInfo):
-            # print(i.__dict__)
             data = {}
-            if i.security == "Apple Inc":
-                print(i.category_detail)
             try:
                 current_data = i
                 data = {'Name': i.security, 'Exchange': i.category_code, 'Sector': i.category_name,
@@ -7529,14 +7495,14 @@ def new_hidden_pearl_in_usmarket_test(code):
                     data['종가'] = 0.0
                     continue
                 data['전일대비'] = "-" if dic['data']['primaryData']['percentageChange'] == "" else \
-                dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
+                    dic['data']['primaryData']['percentageChange'].replace('+', '△ ').replace('-', '▽ ')
                 data['거래량'] = int(dic['data']['keyStats']['Volume']['value'].replace(',', ''))
                 dic = get_soup_from_file('GlobalFinancialSummary', yyyymmdd, sec_name, i.ticker, 'json')
                 if dic is None or dic == '':
                     logger.info("[{}][{}] Not exist FinancialSummary File".format(i.ticker, i.security))
                     continue
                 data['Period'] = dic['Data1'][term_nm1]
-                data['요구수익률'] = 10
+                data['요구수익률'] = 20
                 for d in dic['Data2']:
                     if DEBUG: print(d)
                     if d['ITEM_NM'] in ['자산총계', '자본총계', '당기순이익', '영업활동현금흐름', '투자활동현금흐름', '재무활동현금흐름', \
@@ -7614,10 +7580,61 @@ def new_hidden_pearl_in_usmarket_test(code):
                 data['주주가치'] = data['자산총계'] + (
                         data['자산총계'] * (data['12M_Fwd_ROE'] - data['요구수익률']) / (data['요구수익률']))
                 data['NPV'] = data['주주가치'] / data['발행주식수'] if data['발행주식수'] is not None and data['발행주식수'] != 0.0 else 0
-                # data['ROS'] = data['당기순이익'] / data['매출액'] * 100 if data['매출액'] is not None and data['매출액'] != 0 else 0
-                # if data['ROS'] > 15: HIGH_ROS.append(data['Name'])
+                keylist = list(data['FCF'].keys())
+                keylist.extend(list(data['EARN'].keys()))
+                keyfinder = sorted(list(set(keylist)))
+                temp_dic = {}
+                for kf in keyfinder:
+                    if kf not in data['FCF'].keys():
+                        if kf < list(data['FCF'].keys())[0]:
+                            temp_dic[kf] = data["FCF"][list(data['FCF'].keys())[0]]
+                        elif kf > list(data['FCF'].keys())[-1]:
+                            temp_dic[kf] = data["FCF"][list(data['FCF'].keys())[-1]]
+                        else:
+                            pass
+                    else:
+                        temp_dic[kf] = data["FCF"][kf]
+                data["FCF"] = {k: temp_dic[k] for k in sorted(temp_dic)}
+                temp_dic = {}
+                for kf in keyfinder:
+                    if kf not in data['OCF'].keys():
+                        if kf < list(data['OCF'].keys())[0]:
+                            temp_dic[kf] = data["OCF"][list(data['OCF'].keys())[0]]
+                        elif kf > list(data['OCF'].keys())[-1]:
+                            temp_dic[kf] = data["OCF"][list(data['OCF'].keys())[-1]]
+                        else:
+                            pass
+                    else:
+                        temp_dic[kf] = data["OCF"][kf]
+                data["OCF"] = {k: temp_dic[k] for k in sorted(temp_dic)}
+                temp_dic = {}
+                for kf in keyfinder:
+                    if kf not in data['EARN'].keys():
+                        if kf < list(data['EARN'].keys())[0]:
+                            temp_dic[kf] = data["EARN"][list(data['EARN'].keys())[0]]
+                        elif kf > list(data['EARN'].keys())[-1]:
+                            temp_dic[kf] = data["EARN"][list(data['EARN'].keys())[-1]]
+                        else:
+                            pass
+                    else:
+                        temp_dic[kf] = data["EARN"][kf]
+                data["EARN"] = {k: temp_dic[k] for k in sorted(temp_dic)}
+                temp_dic = {}
+                for kf in keyfinder:
+                    if kf not in data['NETINC'].keys():
+                        if kf < list(data['NETINC'].keys())[0]:
+                            temp_dic[kf] = data["NETINC"][list(data['NETINC'].keys())[0]]
+                        elif kf > list(data['NETINC'].keys())[-1]:
+                            temp_dic[kf] = data["NETINC"][list(data['NETINC'].keys())[-1]]
+                        else:
+                            pass
+                    else:
+                        temp_dic[kf] = data["NETINC"][kf]
+                data["NETINC"] = {k: temp_dic[k] for k in sorted(temp_dic)}
+
                 if DEBUG: print(data)
-                if data["매출액"] and data["당기순이익"] and data["매출액"] > 0 and data["당기순이익"] > 0 and data["NPV"] > data["종가"] \
+                if data["매출액"] and data["당기순이익"] and data["매출액"] > 0 and data["당기순이익"] > 0 and data["NPV"] > data[
+                    "종가"] * 1.3 \
                         and mean(data["SALES"].values()) < data["매출액"] and list(data["SALES"].values())[-1] < data[
                     "매출액"] \
                         and mean(data["NETINC"].values()) < data["당기순이익"] and list(data["NETINC"].values())[-1] < data[
@@ -7652,10 +7669,7 @@ def new_hidden_pearl_in_usmarket_test(code):
               align_string('R', '종가', 10),
               align_string('R', '확인사항', 16),
               )
-        if not DEBUG: USDataInit()
         cnt = 0
-        # print(treasure)
-        # USTargetStockDataDelete(yyyymmdd)
         print("=" * 50, "BEST", "=" * 50)
         for d in best.keys():
             cnt += 1
@@ -7670,6 +7684,9 @@ def new_hidden_pearl_in_usmarket_test(code):
                   align_string(',', best[d]['종가'], 10),
                   align_string('R', '' if '확인사항' not in best[d].keys() else best[d]['확인사항'], 20),
                   )
+            if "BEST" not in treasure.keys():
+                treasure["BEST"] = {}
+            treasure["BEST"][d] = best[d]
         print("=" * 50, "BETTER", "=" * 50)
         for d in better.keys():
             cnt += 1
@@ -7684,6 +7701,9 @@ def new_hidden_pearl_in_usmarket_test(code):
                   align_string(',', better[d]['종가'], 10),
                   align_string('R', '' if '확인사항' not in better[d].keys() else better[d]['확인사항'], 20),
                   )
+            if "BETTER" not in treasure.keys():
+                treasure["BETTER"] = {}
+            treasure["BETTER"][d] = better[d]
         print("=" * 50, "GOOD", "=" * 50)
         for d in good.keys():
             cnt += 1
@@ -7698,28 +7718,32 @@ def new_hidden_pearl_in_usmarket_test(code):
                   align_string(',', good[d]['종가'], 10),
                   align_string('R', '' if '확인사항' not in good[d].keys() else good[d]['확인사항'], 20),
                   )
-        for d in treasure.keys():
-            USTargetStockDataStore(d, treasure[d])
-        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
-            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
-        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
-            json.dump(treasure, fp)
-        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
-            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
-        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
-            json.dump(trash, fp)
+            if "GOOD" not in treasure.keys():
+                treasure["GOOD"] = {}
+            treasure["GOOD"][d] = good[d]
+        print("=" * 50, "TRASH", "=" * 50)
+        for d in trash.keys():
+            cnt += 1
+            print(align_string('L', cnt, 5),
+                  align_string('R', d, 10),
+                  align_string('R', trash[d]['Name'], 40 - len(trash[d]['Name'])),
+                  align_string(',', round(trash[d]['영업이익률'], 2), 20),
+                  align_string(',', round(trash[d]['EPS'], 2), 20),
+                  align_string(',', round(trash[d]['자산총계'], 0), 20),
+                  align_string(',', round(trash[d]['주주가치'], 0), 20),
+                  align_string(',', round(trash[d]['NPV'], 0), 20),
+                  align_string(',', trash[d]['종가'], 10),
+                  align_string('R', '' if '확인사항' not in trash[d].keys() else trash[d]['확인사항'], 20),
+                  )
+            if "TRASH" not in treasure.keys():
+                treasure["TRASH"] = {}
+            treasure["TRASH"][d] = trash[d]
+        return treasure
     except Exception as e:
         print('error', e, '\n', i)
         errmsg = '{}\n{}\n[{}][{}]'.format('hidden_pearl_in_usmarket', str(e), i.ticker, i.security)
         err_messeage_to_telegram(errmsg)
-        if os.path.exists(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd)):
-            os.remove(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd))
-        with open(r'{}\us_result.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
-            json.dump(treasure, fp)
-        if os.path.exists(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd)):
-            os.remove(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd))
-        with open(r'{}\us_trash.{}.json'.format(JsonDir, yyyymmdd), 'w') as fp:
-            json.dump(trash, fp)
+        return None
 
 
 if __name__ == '__main__':
@@ -7753,3 +7777,5 @@ if __name__ == '__main__':
     # t = new_find_hidden_pearl_with_dartpipe_provision_test(code="145020", search=False, bgn_dt="20210108")
     # print(t)
     send_hidden_pearl_message(t)
+    # t = new_hidden_pearl_in_usmarket_test('AIH')
+    # get_nasdaq_stock_graph(t)
