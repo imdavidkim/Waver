@@ -1380,6 +1380,7 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     import numpy as np
     import requests
     import logging
+    from django.db.models import Q
 
     logfile = 'detector'
     if not os.path.exists('./logs'):
@@ -1425,11 +1426,13 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="반도체", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="정밀", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="철강", listing='Y')
-    stockInfo = detective_db.Stocks.objects.filter(category_name__contains="생물", listing='Y')
+    # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="생물", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(category_name__contains="운송", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(market_text__contains="제조", market_text_detail__contains="장비", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(code="005930", listing='Y')
     # stockInfo = detective_db.Stocks.objects.filter(code=code, listing='Y')
+    stockInfo = detective_db.Stocks.objects.filter(Q(category_name__contains="도매") | Q(category_name__contains="소매"))
+    print(len(stockInfo))
     dart = pipe.Pipe()
     dart.create()
     for stock in stockInfo:
@@ -2115,7 +2118,7 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
         ocf_last_5 = None
         earn_last_5 = None
         pl_last_5 = None
-        last_5_keys = list(data[k]["CF"]["영업활동현금흐름"].keys())[-5:]
+        last_5_keys = list(data[k]["CF"]["영업활동현금흐름"].keys())[-6:]
         for lastkey in last_5_keys:
             if lastkey not in data[k]["CF"]["FCF"].keys() or lastkey not in data[k]["CF"]["영업활동현금흐름"].keys() \
                or lastkey not in data[k]["FS"]["RetainedEarnings"].keys() or lastkey not in data[k]["PL"]["Q"]["누계당기순이익추이"].keys():
@@ -2173,106 +2176,178 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                     data[k]["PL"]["Y"]["당기순이익"].popitem() if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
                     before_net_income = data[k]["PL"]["Y"]["당기순이익"].popitem()[1] if len(data[k]["PL"]["Y"]["당기순이익"]) > 0 else None
         # print("here4?")
-        if avg_sales_op_profit_rate and last_sales_op_profit_rate:
-            if last_sales_op_profit_rate > 0 and avg_sales_op_profit_rate > 0 and last_sales_op_profit_rate > avg_sales_op_profit_rate:
-                # print("here5?")
-                if avg_sales and last_sales and before_sales and \
-                        avg_net_income and last_net_income and before_net_income and \
-                        last_sales > avg_sales and last_sales > before_sales and \
-                        last_net_income > avg_net_income and last_net_income > before_net_income:
-                    if last_sales_op_profit_rate > 20:
-                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
-                                   "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
-                                   "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
-                                   "최근매출액": format(last_sales, ",") if last_sales is not None else None,
-                                   "직전매출액": format(before_sales, ",") if before_sales is not None else None,
-                                   "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
-                                   "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
-                                   "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
-                                   "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
-                                   "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
-                                   "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
-                                   "FCF": fcf_last_5 if fcf_last_5 is not None else None,
-                                   "OCF": ocf_last_5 if ocf_last_5 is not None else None,
-                                   "EARN": earn_last_5 if earn_last_5 is not None else None,
-                                   "PL": pl_last_5 if pl_last_5 is not None else None
-                                   }
-                        call = json.loads(requests.get(
-                            "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
-                                k)).content.decode("utf-8"))
-                        best[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
-                        best[k]["PER"] = call["per"]
-                        best[k]["EPS"] = call["eps"]
-                        best[k]["PBR"] = call["pbr"]
-                        best[k]["현재가"] = f'{call["now"]:,}'
-                        best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
-                        best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
-                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and best[k]["PER"] else 0
-                    elif np.sign(last_sales_op_profit_rate) > np.sign(avg_sales_op_profit_rate):
-                        best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
-                                   "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
-                                   "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
-                                   "최근매출액": format(last_sales, ",") if last_sales is not None else None,
-                                   "직전매출액": format(before_sales, ",") if before_sales is not None else None,
-                                   "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
-                                   "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
-                                   "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                   "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
-                                   "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
-                                   "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
-                                   "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
-                                   "FCF": fcf_last_5 if fcf_last_5 is not None else None,
-                                   "OCF": ocf_last_5 if ocf_last_5 is not None else None,
-                                   "EARN": earn_last_5 if earn_last_5 is not None else None,
-                                   "PL": pl_last_5 if pl_last_5 is not None else None}
-                        call = json.loads(requests.get(
-                            "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
-                                k)).content.decode("utf-8"))
-                        best[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
-                        best[k]["PER"] = call["per"]
-                        best[k]["EPS"] = call["eps"]
-                        best[k]["PBR"] = call["pbr"]
-                        best[k]["현재가"] = f'{call["now"]:,}'
-                        best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
-                        best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
-                        best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and best[k]["PER"] else 0
+        currStockInfo = None
+        try:
+            if avg_sales_op_profit_rate and last_sales_op_profit_rate:
+                if last_sales_op_profit_rate > 0 and avg_sales_op_profit_rate > 0 and last_sales_op_profit_rate > avg_sales_op_profit_rate:
+                    # print("here5?")
+                    if avg_sales and last_sales and before_sales and \
+                            avg_net_income and last_net_income and before_net_income and \
+                            last_sales > avg_sales and last_sales > before_sales and \
+                            last_net_income > avg_net_income and last_net_income > before_net_income:
+                        if last_sales_op_profit_rate > 20:
+                            best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                                       "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
+                                       "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
+                                       "최근매출액": format(last_sales, ",") if last_sales is not None else None,
+                                       "직전매출액": format(before_sales, ",") if before_sales is not None else None,
+                                       "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
+                                       "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
+                                       "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
+                                       "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                       "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                       "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                       "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
+                                       "FCF": fcf_last_5 if fcf_last_5 is not None else None,
+                                       "OCF": ocf_last_5 if ocf_last_5 is not None else None,
+                                       "EARN": earn_last_5 if earn_last_5 is not None else None,
+                                       "PL": pl_last_5 if pl_last_5 is not None else None
+                                       }
+                            currStockInfo = best[k]
+                            call = json.loads(requests.get(
+                                "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
+                                    k)).content.decode("utf-8"))
+                            best[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
+                            best[k]["PER"] = call["per"]
+                            best[k]["EPS"] = call["eps"]
+                            best[k]["PBR"] = call["pbr"]
+                            best[k]["현재가"] = f'{call["now"]:,}'
+                            best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
+                                                                                                      data[k][
+                                                                                                          "list_shares"] else 0
+                            best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
+                            best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and best[k]["PER"] else 0
+                        elif np.sign(last_sales_op_profit_rate) > np.sign(avg_sales_op_profit_rate):
+                            best[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                                       "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
+                                       "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
+                                       "최근매출액": format(last_sales, ",") if last_sales is not None else None,
+                                       "직전매출액": format(before_sales, ",") if before_sales is not None else None,
+                                       "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
+                                       "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
+                                       "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
+                                       "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                       "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                       "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                       "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
+                                       "FCF": fcf_last_5 if fcf_last_5 is not None else None,
+                                       "OCF": ocf_last_5 if ocf_last_5 is not None else None,
+                                       "EARN": earn_last_5 if earn_last_5 is not None else None,
+                                       "PL": pl_last_5 if pl_last_5 is not None else None}
+                            currStockInfo = best[k]
+                            call = json.loads(requests.get(
+                                "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
+                                    k)).content.decode("utf-8"))
+                            best[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
+                            best[k]["PER"] = call["per"]
+                            best[k]["EPS"] = call["eps"]
+                            best[k]["PBR"] = call["pbr"]
+                            best[k]["현재가"] = f'{call["now"]:,}'
+                            best[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
+                                                                                                      data[k][
+                                                                                                          "list_shares"] else 0
+                            best[k]["PER2"] = round(call["now"] / best[k]["EPS2"], 0) if best[k]["EPS2"] != 0 else 0
+                            best[k]["예상주가"] = format(int(round(best[k]["EPS2"] * best[k]["PER"], 0)), ",") if best[k]["EPS2"] and best[k]["PER"] else 0
+                        else:
+                            better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                                         "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
+                                         "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
+                                         "최근매출액": format(last_sales, ",") if last_sales is not None else None,
+                                         "직전매출액": format(before_sales, ",") if before_sales is not None else None,
+                                         "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
+                                         "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
+                                         "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
+                                         "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                         "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                         "직전당기순이익": format(before_net_income,
+                                                           ",") if before_net_income is not None else None,
+                                         "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
+                                         "FCF": fcf_last_5 if fcf_last_5 is not None else None,
+                                         "OCF": ocf_last_5 if ocf_last_5 is not None else None,
+                                         "EARN": earn_last_5 if earn_last_5 is not None else None,
+                                         "PL": pl_last_5 if pl_last_5 is not None else None
+                                         }
+                            currStockInfo = better[k]
+                            call = json.loads(requests.get(
+                                "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
+                                    k)).content.decode("utf-8"))
+                            better[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
+                            better[k]["PER"] = call["per"]
+                            better[k]["EPS"] = call["eps"]
+                            better[k]["PBR"] = call["pbr"]
+                            better[k]["현재가"] = f'{call["now"]:,}'
+                            better[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
+                                                                                                      data[k][
+                                                                                                          "list_shares"] else 0
+                            better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
+                            better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
                     else:
-                        better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
-                                     "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
-                                     "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
-                                     "최근매출액": format(last_sales, ",") if last_sales is not None else None,
-                                     "직전매출액": format(before_sales, ",") if before_sales is not None else None,
-                                     "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
-                                     "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
-                                     "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                     "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
-                                     "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
-                                     "직전당기순이익": format(before_net_income,
-                                                       ",") if before_net_income is not None else None,
-                                     "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
-                                     "FCF": fcf_last_5 if fcf_last_5 is not None else None,
-                                     "OCF": ocf_last_5 if ocf_last_5 is not None else None,
-                                     "EARN": earn_last_5 if earn_last_5 is not None else None,
-                                     "PL": pl_last_5 if pl_last_5 is not None else None
-                                     }
-                        call = json.loads(requests.get(
-                            "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
-                                k)).content.decode("utf-8"))
-                        better[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
-                        better[k]["PER"] = call["per"]
-                        better[k]["EPS"] = call["eps"]
-                        better[k]["PBR"] = call["pbr"]
-                        better[k]["현재가"] = f'{call["now"]:,}'
-                        better[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
-                        better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                        better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
+                        if last_sales_op_profit_rate > 15:
+                            better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                                         "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
+                                         "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
+                                         "최근매출액": format(last_sales, ",") if last_sales is not None else None,
+                                         "직전매출액": format(before_sales, ",") if before_sales is not None else None,
+                                         "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
+                                         "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
+                                         "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
+                                         "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                         "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                         "직전당기순이익": format(before_net_income,
+                                                           ",") if before_net_income is not None else None,
+                                         "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
+                                         "FCF": fcf_last_5 if fcf_last_5 is not None else None,
+                                         "OCF": ocf_last_5 if ocf_last_5 is not None else None,
+                                         "EARN": earn_last_5 if earn_last_5 is not None else None,
+                                         "PL": pl_last_5 if pl_last_5 is not None else None
+                                         }
+                            currStockInfo = better[k]
+                            call = json.loads(requests.get(
+                                "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
+                                    k)).content.decode("utf-8"))
+                            better[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
+                            better[k]["PER"] = call["per"]
+                            better[k]["EPS"] = call["eps"]
+                            better[k]["PBR"] = call["pbr"]
+                            better[k]["현재가"] = f'{call["now"]:,}'
+                            better[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
+                                                                                                      data[k][
+                                                                                                          "list_shares"] else 0
+                            better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
+                            better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
+                        else:
+                            # print("here7?")
+                            good[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                                       "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
+                                       "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
+                                       "최근매출액": format(last_sales, ",") if last_sales is not None else None,
+                                       "직전매출액": format(before_sales, ",") if before_sales is not None else None,
+                                       "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
+                                       "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
+                                       "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
+                                       "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                                       "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                                       "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                                       "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
+                                       "FCF": fcf_last_5 if fcf_last_5 is not None else None,
+                                       "OCF": ocf_last_5 if ocf_last_5 is not None else None,
+                                       "EARN": earn_last_5 if earn_last_5 is not None else None,
+                                       "PL": pl_last_5 if pl_last_5 is not None else None
+                                       }
+                            currStockInfo = good[k]
+                            call = json.loads(requests.get(
+                                "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
+                                    k)).content.decode("utf-8"))
+                            good[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
+                            good[k]["PER"] = call["per"]
+                            good[k]["EPS"] = call["eps"]
+                            good[k]["PBR"] = call["pbr"]
+                            good[k]["현재가"] = f'{call["now"]:,}'
+                            good[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
+                                                                                                      data[k][
+                                                                                                          "list_shares"] else 0
+                            good[k]["PER2"] = round(call["now"] / good[k]["EPS2"], 0) if good[k]["EPS2"] != 0 else 0
+                            good[k]["예상주가"] = format(int(round(good[k]["EPS2"] * good[k]["PER"], 0)), ",") if good[k]["EPS2"] and good[k]["PER"] else 0
                 else:
                     if last_sales_op_profit_rate > 15:
                         better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
@@ -2285,14 +2360,14 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                      "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
                                      "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
                                      "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
-                                     "직전당기순이익": format(before_net_income,
-                                                       ",") if before_net_income is not None else None,
+                                     "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
                                      "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
                                      "FCF": fcf_last_5 if fcf_last_5 is not None else None,
                                      "OCF": ocf_last_5 if ocf_last_5 is not None else None,
                                      "EARN": earn_last_5 if earn_last_5 is not None else None,
                                      "PL": pl_last_5 if pl_last_5 is not None else None
                                      }
+                        currStockInfo = better[k]
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
                                 k)).content.decode("utf-8"))
@@ -2302,13 +2377,12 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                         better[k]["PBR"] = call["pbr"]
                         better[k]["현재가"] = f'{call["now"]:,}'
                         better[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
+                                                                                                      data[k][
+                                                                                                          "list_shares"] else 0
                         better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
                         better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
                     else:
-                        # print("here7?")
-                        good[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                        soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
                                    "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
                                    "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
                                    "최근매출액": format(last_sales, ",") if last_sales is not None else None,
@@ -2325,114 +2399,56 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                    "EARN": earn_last_5 if earn_last_5 is not None else None,
                                    "PL": pl_last_5 if pl_last_5 is not None else None
                                    }
+                        currStockInfo = soso[k]
                         call = json.loads(requests.get(
                             "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
                                 k)).content.decode("utf-8"))
-                        good[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
-                        good[k]["PER"] = call["per"]
-                        good[k]["EPS"] = call["eps"]
-                        good[k]["PBR"] = call["pbr"]
-                        good[k]["현재가"] = f'{call["now"]:,}'
-                        good[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
-                        good[k]["PER2"] = round(call["now"] / good[k]["EPS2"], 0) if good[k]["EPS2"] != 0 else 0
-                        good[k]["예상주가"] = format(int(round(good[k]["EPS2"] * good[k]["PER"], 0)), ",") if good[k]["EPS2"] and good[k]["PER"] else 0
+                        soso[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
+                        soso[k]["PER"] = call["per"]
+                        soso[k]["EPS"] = call["eps"]
+                        soso[k]["PBR"] = call["pbr"]
+                        soso[k]["현재가"] = f'{call["now"]:,}'
+                        soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
+                                                                                                      data[k][
+                                                                                                          "list_shares"] else 0
+                        soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
+                        soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k]["PER"] else 0
             else:
-                if last_sales_op_profit_rate > 15:
-                    better[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
-                                 "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
-                                 "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
-                                 "최근매출액": format(last_sales, ",") if last_sales is not None else None,
-                                 "직전매출액": format(before_sales, ",") if before_sales is not None else None,
-                                 "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
-                                 "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
-                                 "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                                 "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
-                                 "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
-                                 "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
-                                 "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
-                                 "FCF": fcf_last_5 if fcf_last_5 is not None else None,
-                                 "OCF": ocf_last_5 if ocf_last_5 is not None else None,
-                                 "EARN": earn_last_5 if earn_last_5 is not None else None,
-                                 "PL": pl_last_5 if pl_last_5 is not None else None
-                                 }
-                    call = json.loads(requests.get(
-                        "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
-                            k)).content.decode("utf-8"))
-                    better[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
-                    better[k]["PER"] = call["per"]
-                    better[k]["EPS"] = call["eps"]
-                    better[k]["PBR"] = call["pbr"]
-                    better[k]["현재가"] = f'{call["now"]:,}'
-                    better[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
-                    better[k]["PER2"] = round(call["now"] / better[k]["EPS2"], 0) if better[k]["EPS2"] != 0 else 0
-                    better[k]["예상주가"] = format(int(round(better[k]["EPS2"] * better[k]["PER"], 0)), ",") if better[k]["EPS2"] and better[k]["PER"] else 0
-                else:
-                    soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
-                               "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
-                               "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
-                               "최근매출액": format(last_sales, ",") if last_sales is not None else None,
-                               "직전매출액": format(before_sales, ",") if before_sales is not None else None,
-                               "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
-                               "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
-                               "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                               "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
-                               "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
-                               "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
-                               "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
-                               "FCF": fcf_last_5 if fcf_last_5 is not None else None,
-                               "OCF": ocf_last_5 if ocf_last_5 is not None else None,
-                               "EARN": earn_last_5 if earn_last_5 is not None else None,
-                               "PL": pl_last_5 if pl_last_5 is not None else None
-                               }
-                    call = json.loads(requests.get(
-                        "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
-                            k)).content.decode("utf-8"))
-                    soso[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
-                    soso[k]["PER"] = call["per"]
-                    soso[k]["EPS"] = call["eps"]
-                    soso[k]["PBR"] = call["pbr"]
-                    soso[k]["현재가"] = f'{call["now"]:,}'
-                    soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
-                    soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
-                    soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k]["PER"] else 0
-        else:
-            soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
-                       "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
-                       "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
-                       "최근매출액": format(last_sales, ",") if last_sales is not None else None,
-                       "직전매출액": format(before_sales, ",") if before_sales is not None else None,
-                       "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
-                       "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
-                       "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
-                       "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
-                       "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
-                       "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
-                       "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
-                       "FCF": fcf_last_5 if fcf_last_5 is not None else None,
-                       "OCF": ocf_last_5 if ocf_last_5 is not None else None,
-                       "EARN": earn_last_5 if earn_last_5 is not None else None,
-                       "PL": pl_last_5 if pl_last_5 is not None else None
-                       }
-            call = json.loads(requests.get(
-                "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
-                    k)).content.decode("utf-8"))
-            soso[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
-            soso[k]["PER"] = call["per"]
-            soso[k]["EPS"] = call["eps"]
-            soso[k]["PBR"] = call["pbr"]
-            soso[k]["현재가"] = f'{call["now"]:,}'
-            soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
-                                                                                                  data[k][
-                                                                                                      "list_shares"] else 0
-            soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
-            soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k]["PER"] else 0
-            # info_lack[k] = {"corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"]}
+                soso[k] = {"stock_code": k, "corp_name": data[k]["corp_name"], "last_report": data[k]["last_report"], "업종": data[k]["category"],
+                           "corp_code": data[k]["corp_code"], "상장주식수": data[k]["list_shares"],
+                           "최근매출액영업이익률": last_sales_op_profit_rate, "평균매출액영업이익률": avg_sales_op_profit_rate,
+                           "최근매출액": format(last_sales, ",") if last_sales is not None else None,
+                           "직전매출액": format(before_sales, ",") if before_sales is not None else None,
+                           "평균매출액": format(avg_sales, ",") if avg_sales is not None else None,
+                           "최근영업이익": format(last_op_profit, ",") if last_op_profit is not None else None,
+                           "직전영업이익": format(before_op_profit, ",") if before_op_profit is not None else None,
+                           "평균영업이익": format(avg_op_profit, ",") if avg_op_profit is not None else None,
+                           "최근당기순이익": format(last_net_income, ",") if last_net_income is not None else None,
+                           "직전당기순이익": format(before_net_income, ",") if before_net_income is not None else None,
+                           "평균당기순이익": format(avg_net_income, ",") if avg_net_income is not None else None,
+                           "FCF": fcf_last_5 if fcf_last_5 is not None else None,
+                           "OCF": ocf_last_5 if ocf_last_5 is not None else None,
+                           "EARN": earn_last_5 if earn_last_5 is not None else None,
+                           "PL": pl_last_5 if pl_last_5 is not None else None
+                           }
+                currStockInfo = soso[k]
+                call = json.loads(requests.get(
+                    "https://api.finance.naver.com/service/itemSummary.nhn?itemcode={}".format(
+                        k)).content.decode("utf-8"))
+                soso[k]["시가총액"] = f'{call["marketSum"] * 1000000:,}'
+                soso[k]["PER"] = call["per"]
+                soso[k]["EPS"] = call["eps"]
+                soso[k]["PBR"] = call["pbr"]
+                soso[k]["현재가"] = f'{call["now"]:,}'
+                soso[k]["EPS2"] = round(last_net_income / data[k]["list_shares"], 0) if last_net_income and \
+                                                                                                      data[k][
+                                                                                                          "list_shares"] else 0
+                soso[k]["PER2"] = round(call["now"] / soso[k]["EPS2"], 0) if soso[k]["EPS2"] != 0 else 0
+                soso[k]["예상주가"] = format(int(round(soso[k]["EPS2"] * soso[k]["PER"], 0)), ",") if soso[k]["EPS2"] and soso[k]["PER"] else 0
+                # info_lack[k] = {"corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"]}
+        except Exception as e:
+            logger.error(e)
+            logger.error(currStockInfo)
     logger.info("{} {} {} {}".format("*" * 100, "BEST", len(best), "*" * 100))
     for key in best.keys():
         logger.info(best[key])
@@ -3256,7 +3272,7 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
         ocf_last_5 = None
         earn_last_5 = None
         pl_last_5 = None
-        last_5_keys = list(data[k]["CF"]["영업활동현금흐름"].keys())[-5:]
+        last_5_keys = list(data[k]["CF"]["영업활동현금흐름"].keys())[-6:]
         for lastkey in last_5_keys:
             if lastkey not in data[k]["CF"]["FCF"].keys() or lastkey not in data[k]["CF"]["영업활동현금흐름"].keys() \
                or lastkey not in data[k]["FS"]["RetainedEarnings"].keys() or lastkey not in data[k]["PL"]["Q"]["누계당기순이익추이"].keys():
