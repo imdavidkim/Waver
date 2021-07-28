@@ -29,8 +29,8 @@ def getConfig():
     django_path = proj_path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
     filename = r'\financeData_{}_{}_{}.{}'
-    # yyyymmdd = str(datetime.now())[:10]
-    yyyymmdd = '2021-07-13'
+    yyyymmdd = str(datetime.now())[:10]
+    # yyyymmdd = '2021-07-13'
     # print(path, filename)
 
 
@@ -824,7 +824,7 @@ def new_find_hidden_pearl():
     # USE_JSON = False
     USE_JSON = True
     stockInfo = detective_db.Stocks.objects.filter(listing='Y')
-    # stockInfo = detective_db.Stocks.objects.filter(code='299900', listing='Y') # 제일파마홀딩스
+    # stockInfo = detective_db.Stocks.objects.filter(code='270660', listing='Y') # 제일파마홀딩스
     # stockInfo = detective_db.Stocks.objects.filter(code='005930', listing='Y') # 삼성전자
     print(align_string('L', 'No.', 10),
           align_string('R', 'Code', 10),
@@ -910,7 +910,12 @@ def new_find_hidden_pearl():
             # # print(data['업종구분'], stock.market_text)
             # if data['업종구분'] != '' and stock.market_text is None:
             #     fnguide.StockMarketTextUpdate(stock.code, marketTxt)
-            marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt1').text.replace(' ', '')  # 업종분류
+            check = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt1')
+            if check:
+                pass
+            else:
+                continue
+            marketTxt = check.text.replace(' ', '')  # 업종분류
             data['업종구분'] = marketTxt.replace('\n', '')
             marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt2').text.replace(' ', '')  # 업종분류
             data['업종구분상세'] = marketTxt.replace('\n', '')
@@ -7758,7 +7763,7 @@ if __name__ == '__main__':
     # messeage_to_telegram()
     # find_hidden_pearl()
     # test_find_hidden_pearl()
-    # new_find_hidden_pearl()
+    new_find_hidden_pearl()
     # msgr.messeage_to_telegram(get_high_ranked_stock())
     # new_get_dateDict()
     # getConfig()
@@ -7776,12 +7781,12 @@ if __name__ == '__main__':
     # print(get_nasdaq_high_ranked_stock())
     # get_nasdaq_high_ranked_stock_with_closeprice()
     # test()
-    t = new_find_hidden_pearl_with_dartpipe()
-    # t = new_find_hidden_pearl_with_dartpipe_single("")
-    # new_find_hidden_pearl_with_dartpipe_test()
-    # t = new_find_hidden_pearl_with_dartpipe_provision(search=False, bgn_dt="20210108")
-    # t = new_find_hidden_pearl_with_dartpipe_provision_test(code="145020", search=False, bgn_dt="20210108")
-    # print(t)
-    send_hidden_pearl_message(t)
+    # t = new_find_hidden_pearl_with_dartpipe()
+    # # t = new_find_hidden_pearl_with_dartpipe_single("")
+    # # new_find_hidden_pearl_with_dartpipe_test()
+    # # t = new_find_hidden_pearl_with_dartpipe_provision(search=False, bgn_dt="20210108")
+    # # t = new_find_hidden_pearl_with_dartpipe_provision_test(code="145020", search=False, bgn_dt="20210108")
+    # # print(t)
+    # send_hidden_pearl_message(t)
     # t = new_hidden_pearl_in_usmarket_test('AIH')
     # get_nasdaq_stock_graph(t)
