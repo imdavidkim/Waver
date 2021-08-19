@@ -900,7 +900,12 @@ def new_find_hidden_pearl():
             # # print(data['업종구분'], stock.market_text)
             # if data['업종구분'] != '' and stock.market_text is None:
             #     fnguide.StockMarketTextUpdate(stock.code, marketTxt)
-            marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt1').text.replace(' ', '')  # 업종분류
+            check = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt1')
+            if check:
+                pass
+            else:
+                continue
+            marketTxt = check.text.replace(' ', '')  # 업종분류
             data['업종구분'] = marketTxt.replace('\n', '')
             marketTxt = fnguide.select_by_attr(soup, 'span', 'class', 'stxt stxt2').text.replace(' ', '')  # 업종분류
             data['업종구분상세'] = marketTxt.replace('\n', '')
@@ -927,7 +932,7 @@ def new_find_hidden_pearl():
                                                          fnguide.get_table_contents(yearly_highlight, 'table tbody tr td'))
                 # if DEBUG: print(columns, items, values)
                 for idx, i in enumerate(items):
-                    if i in ['지배주주순이익', '지배주주지분', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)']:
+                    if i in ['지배주주순이익', '지배주주지분', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)', '부채비율(%)', '영업이익률(%)']:
                         for idx2, yyyymm in enumerate(columns):
                             # print(idx2, yyyymm)
                             # print(yyyymm[:4], dateDict['yyyy'], i, values[idx][idx2])
@@ -1011,7 +1016,7 @@ def new_find_hidden_pearl():
                         # if DEBUG: print(columns, items, values)
                         for idx, i in enumerate(items):
                             if i in ['당기순이익', '자본총계', '자산총계', '매출액', '이자수익', '보험료수익', '순영업수익', '영업수익', '유보율(%)',
-                                     '부채비율(%)', '영업이익(발표기준)']:
+                                     '부채비율(%)', '영업이익(발표기준)', '영업이익률(%)']:
                                 for idx2, yyyymm in enumerate(columns):
                                     # print(idx2, yyyymm)
                                     # print(yyyymm[:4], dateDict['yyyy'], i, values[idx][idx2])
@@ -1282,20 +1287,25 @@ def new_find_hidden_pearl():
             # if treasure[d]['X지배주주순이익'] < 1 or \
             #      treasure[d]['업종구분'].replace('\n', '') in ['코스닥제조', '코스피제조업', '코스피건설업', '코스닥건설'] or \
             #      treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
-            if treasure[d]['ROE'] < 15 or \
-               treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
-               treasure[d]['업종구분'].replace('\n', '') in ['코스피금융업'] or \
-               treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
-               treasure[d]['NPV'] < 0 or \
-               treasure[d]['NPV']/treasure[d]['종가']*100 < 105:
+            # if treasure[d]['ROE'] < 15 or \
+            #    treasure[d]['ROE'] < treasure[d]['요구수익률'] or \
+            #    treasure[d]['업종구분'].replace('\n', '') in ['코스피금융업'] or \
+            #    treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51 or \
+            #    treasure[d]['NPV'] < 0 or \
+            #    treasure[d]['NPV']/treasure[d]['종가']*100 < 105:
+            if treasure[d]['영업이익률(%)'] < 15 or \
+                    treasure[d]['ROE'] < 15 or \
+                    treasure[d]['업종구분'].replace('\n', '').replace('\xa0', "") in ['KSE코스피금융업', 'KOSDAQ코스닥금융',
+                                                                                  'KSE코스피은행', 'KSE코스피증권']:
                 cnt += 1
                 print(align_string('L', cnt, 5),
                       align_string('R', d, 10),
+                      align_string('R', treasure[d]['업종구분'], 10),
                       align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
                       # align_string(',', round(treasure[d]['X지배주주순이익'], 2), 20),
                       align_string(',', round(treasure[d]['요구수익률'], 2), 20),
                       align_string(',', round(treasure[d]['ROE'], 2), 20),
-                      align_string(',', round(treasure[d]['ROS'], 2), 20),
+                      align_string(',', round(treasure[d]['영업이익률(%)'], 2), 20),
                       align_string(',', treasure[d]['12M PER'], 8),
                       align_string(',', treasure[d]['업종 PER'], 8),
                       align_string(',', round(treasure[d]['지배주주지분'], 0), 20),
@@ -1304,19 +1314,21 @@ def new_find_hidden_pearl():
                       align_string(',', treasure[d]['종가'], 10),
                       align_string('R', '' if '확인사항' not in treasure[d].keys() else treasure[d]['확인사항'], 20),
                       )
-                if treasure[d]['ROE'] < 15 or treasure[d]['ROE'] < treasure[d]['요구수익률']:
-                    pass_reason = "[{}][{}]['ROE'] < 15 또는 ['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d, treasure[d]['회사명'], treasure[d]['ROE'], treasure[d]['요구수익률'])
-                elif treasure[d]['업종구분'].replace('\n', '') in ['코스피금융업']:
-                    pass_reason = "[{}][{}][업종구분이 금융] => 업종구분 : {}".format(d, treasure[d]['회사명'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''))
-                elif treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51:
-                    pass_reason = "[{}][{}][지배주주 자산지분 비율이 51% 미만] => 지배주주지분 / 자산총계 : {:.2f}".format(d, treasure[d]['회사명'], treasure[d]['지배주주지분'] / treasure[d]['자산총계'])
-                else:
-                    pass_reason = "[{}][{}]전기지배주주순이익 : {}\n지배주주지분 : {}\n자산총계 : {}\nROE : {:.2f} < 15\n업종구분 : {}\nNPV : {:.2f}\n종가 : {}".format(
-                        d, treasure[d]['회사명'], treasure[d]['X지배주주순이익'], treasure[d]['지배주주지분'], treasure[d]['자산총계'],
-                        treasure[d]['ROE'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''), treasure[d]['NPV'],
-                        treasure[d]['종가'])
-
-                if treasure[d]['ROE'] >= 30 or treasure[d]['NPV']/treasure[d]['종가']*100 > 200:
+                # if treasure[d]['ROE'] < 15 or treasure[d]['ROE'] < treasure[d]['요구수익률']:
+                #     pass_reason = "[{}][{}]['ROE'] < 15 또는 ['ROE'] < ['요구수익률'] => ROE : {} / 요구수익률 : {}".format(d, treasure[d]['회사명'], treasure[d]['ROE'], treasure[d]['요구수익률'])
+                # elif treasure[d]['업종구분'].replace('\n', '') in ['코스피금융업']:
+                #     pass_reason = "[{}][{}][업종구분이 금융] => 업종구분 : {}".format(d, treasure[d]['회사명'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''))
+                # elif treasure[d]['지배주주지분'] / treasure[d]['자산총계'] < 0.51:
+                #     pass_reason = "[{}][{}][지배주주 자산지분 비율이 51% 미만] => 지배주주지분 / 자산총계 : {:.2f}".format(d, treasure[d]['회사명'], treasure[d]['지배주주지분'] / treasure[d]['자산총계'])
+                # else:
+                #     pass_reason = "[{}][{}]전기지배주주순이익 : {}\n지배주주지분 : {}\n자산총계 : {}\nROE : {:.2f} < 15\n업종구분 : {}\nNPV : {:.2f}\n종가 : {}".format(
+                #         d, treasure[d]['회사명'], treasure[d]['X지배주주순이익'], treasure[d]['지배주주지분'], treasure[d]['자산총계'],
+                #         treasure[d]['ROE'], treasure[d]['업종구분'].replace(u'\xa0', '').replace('\n', ''), treasure[d]['NPV'],
+                #         treasure[d]['종가'])
+                #
+                # if treasure[d]['ROE'] >= 30 or treasure[d]['NPV']/treasure[d]['종가']*100 > 200:
+                if treasure[d]['ROE'] >= 30 or treasure[d]['영업이익률(%)'] > 30 or treasure[d]['NPV'] / treasure[d][
+                    '종가'] * 100 > 200:
                     logger.info("[NEED TO CHECK]" + pass_reason)
                 else:
                     logger.error(pass_reason)
@@ -1324,11 +1336,12 @@ def new_find_hidden_pearl():
                 continue
             print(align_string('L', cnt, 5),
                   align_string('R', d, 10),
+                  align_string('R', treasure[d]['업종구분'], 10),
                   align_string('R', treasure[d]['회사명'], 20 - len(treasure[d]['회사명'])),
                   # align_string(',', round(treasure[d]['X지배주주순이익'], 2), 20),
                   align_string(',', round(treasure[d]['요구수익률'], 2), 20),
                   align_string(',', round(treasure[d]['ROE'], 2), 20),
-                  align_string(',', round(treasure[d]['ROS'], 2), 20),
+                  align_string(',', round(treasure[d]['영업이익률(%)'], 2), 20),
                   align_string(',', treasure[d]['12M PER'], 8),
                   align_string(',', treasure[d]['업종 PER'], 8),
                   align_string(',', round(treasure[d]['지배주주지분'], 0), 20),
@@ -2499,7 +2512,7 @@ def new_find_hidden_pearl_with_dartpipe(bgn_dt=None, end_dt=None):
                                      "최근매출액영업이익률": soso[key]["최근매출액영업이익률"], "EPS": soso[key]["EPS"] if soso[key]["EPS"] else 0,
                                      "추정EPS": soso[key]["EPS2"] if soso[key]["EPS2"] else 0,
                                      "괴리율": round((soso[key]["EPS2"] - soso[key]["EPS"]) / soso[key]["EPS"] * 100,
-                                                  2) if soso[key]["EPS"] and soso[key]["EPS2"] else 0, "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"], "EARN": soso[key]["EARN"],
+                                                  2) if soso[key]["EPS"] and soso[key]["EPS"] else 0, "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"], "EARN": soso[key]["EARN"],
                                      "FCF": soso[key]["FCF"], "OCF": soso[key]["OCF"], "PL": soso[key]["PL"],
                                      "최종보고서": soso[key]["last_report"]}
     logger.info(none_list)
@@ -2523,7 +2536,76 @@ def dictionary_add(d):
     print(tmp_dic)
     return tmp_dic
 
+def hidden_pearl_finding_with_regular_report(rcept_no, bgn_dt, end_dt=None):
+    import sys
+    import os
+    import django
+    from OpenDartPipe import pipe
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    import json
+    import numpy as np
+    import requests
+    import logging
 
+    logfile = 'detector'
+    if not os.path.exists('./logs'):
+        os.makedirs('./logs')
+    now = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    logger = logging.getLogger(__name__)
+    formatter = logging.Formatter('[%(asctime)s][%(filename)s:%(lineno)s] >> %(message)s')
+
+    streamHandler = logging.StreamHandler()
+    fileHandler = logging.FileHandler("./logs/{}_{}.log".format(logfile, now))
+
+    streamHandler.setFormatter(formatter)
+    fileHandler.setFormatter(formatter)
+
+    logger.addHandler(streamHandler)
+    logger.addHandler(fileHandler)
+    logger.setLevel(level=logging.INFO)
+
+    # logging
+    # logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
+    # logging.debug("Log started at %s", str(datetime.datetime.now()))
+
+    current_pos = None
+    treasure = {}
+    trash = {}
+    data = {}
+    best = {}
+    better = {}
+    good = {}
+    soso = {}
+    lists = None
+    none_list = []
+    # 날짜 정보 셋팅
+    dateDict = new_get_dateDict()
+    # 종목 정보 셋팅
+    # DEBUG = True
+    DEBUG = False
+    # USE_JSON = False
+    USE_JSON = True
+
+    dart = pipe.Pipe()
+    dart.create()
+    if end_dt:
+        # dart.get_regular_reporting(bgn_dt, end_dt)
+        stockInfo = dart.get_regular_reporting_corp_info(rcept_no, bgn_dt, end_dt)
+    else:
+        # dart.get_regular_reporting(bgn_dt)
+        stockInfo = dart.get_regular_reporting_corp_info(rcept_no, bgn_dt)
+    print(len(stockInfo), stockInfo)
+    for stock in stockInfo:
+        result = new_find_hidden_pearl_with_dartpipe_single(stock["stock_code"])
+        send_hidden_pearl_message(result)
 
 def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
     import sys
@@ -2609,11 +2691,11 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                                     "AverageRate": {"Y": {}, "Q": {}}}
                 # print(dateDict["yyyy2"], dateDict)
                 if bgn_dt is None:
-                    lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:5]
+                    lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:6]
                 elif end_dt is None:
-                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, pblntf_ty='A', req_type=True)["list"][:5]
+                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, pblntf_ty='A', req_type=True)["list"][:6]
                 else:
-                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, end_de=end_dt, pblntf_ty='A', req_type=True)["list"][:5]
+                    lists = dart.get_list(corp_code=code, bgn_de=bgn_dt, end_de=end_dt, pblntf_ty='A', req_type=True)["list"][:6]
                 # lists = dart.get_list(corp_code=code, bgn_de=dateDict["yyyy2"], pblntf_ty='A', req_type=True)["list"][:4]
                 for l in lists:
                     if data[stock.code]["last_report"] is None: data[stock.code]["last_report"] = l["report_nm"]
@@ -3276,7 +3358,7 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
         ocf_last_5 = None
         earn_last_5 = None
         pl_last_5 = None
-        last_5_keys = list(data[k]["CF"]["영업활동현금흐름"].keys())[-6:]
+        last_5_keys = list(data[k]["CF"]["영업활동현금흐름"].keys())[-5:]
         for lastkey in last_5_keys:
             if lastkey not in data[k]["CF"]["FCF"].keys() or lastkey not in data[k]["CF"]["영업활동현금흐름"].keys() \
                or lastkey not in data[k]["FS"]["RetainedEarnings"].keys() or lastkey not in data[k]["PL"]["Q"]["누계당기순이익추이"].keys():
@@ -3596,7 +3678,7 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
             # info_lack[k] = {"corp_name": data[k]["corp_name"], "corp_code": data[k]["corp_code"]}
     logger.info("{} {} {} {}".format("*" * 100, "BEST", len(best), "*" * 100))
     for key in best.keys():
-        logger.info(best[key])
+        # logger.info(best[key])
         # if best[key]["EPS2"] != 0 and best[key]["EPS2"] > best[key]["EPS"] and (best[key]["EPS2"] - best[key]["EPS"])/best[key]["EPS"] * 100 >= 30:
         if "BEST" not in treasure.keys():
             treasure["BEST"] = {}
@@ -3604,35 +3686,35 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                                  "최근매출액영업이익률": best[key]["최근매출액영업이익률"], "EPS": best[key]["EPS"],
                                  "추정EPS": best[key]["EPS2"],
                                  "괴리율": round((best[key]["EPS2"] - best[key]["EPS"]) / best[key]["EPS"] * 100,
-                                              2), "현재가": best[key]["현재가"], "예상주가": best[key]["예상주가"], "EARN": best[key]["EARN"],
+                                              2) if best[key]["EPS2"] and best[key]["EPS"] else 0, "현재가": best[key]["현재가"], "예상주가": best[key]["예상주가"], "EARN": best[key]["EARN"],
                                  "FCF": best[key]["FCF"], "OCF": best[key]["OCF"], "PL": best[key]["PL"], "최종보고서": best[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "BETTER", len(better), "*" * 100))
     for key in better.keys():
-        logger.info(better[key])
+        # logger.info(better[key])
         # if better[key]["EPS2"] != 0 and better[key]["EPS2"] > better[key]["EPS"] and (better[key]["EPS2"] - better[key]["EPS"])/better[key]["EPS"] * 100 >= 30:
         if "BETTER" not in treasure.keys():
             treasure["BETTER"] = {}
         treasure["BETTER"][key] = {"사명": better[key]["corp_name"], "시가총액": better[key]["시가총액"],
                                    "업종": better[key]["업종"], "최근매출액영업이익률": better[key]["최근매출액영업이익률"],
                                    "EPS": better[key]["EPS"], "추정EPS": better[key]["EPS2"], "괴리율": round(
-                (better[key]["EPS2"] - better[key]["EPS"]) / better[key]["EPS"] * 100, 2),
+                (better[key]["EPS2"] - better[key]["EPS"]) / better[key]["EPS"] * 100, 2) if better[key]["EPS2"] and better[key]["EPS"] else None,
                                    "현재가": better[key]["현재가"], "예상주가": better[key]["예상주가"], "EARN": better[key]["EARN"],
                                    "FCF": better[key]["FCF"], "OCF": better[key]["OCF"], "PL": better[key]["PL"], "최종보고서": better[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "GOOD", len(good), "*" * 100))
     for key in good.keys():
-        logger.info(good[key])
+        # logger.info(good[key])
         # if good[key]["EPS2"] != 0 and good[key]["EPS2"] > good[key]["EPS"] and (good[key]["EPS2"] - good[key]["EPS"])/good[key]["EPS"] * 100 >= 30:
         if "GOOD" not in treasure.keys():
             treasure["GOOD"] = {}
         treasure["GOOD"][key] = {"사명": good[key]["corp_name"], "시가총액": good[key]["시가총액"], "업종": good[key]["업종"],
                                  "최근매출액영업이익률": good[key]["최근매출액영업이익률"], "EPS": good[key]["EPS"],
                                  "추정EPS": good[key]["EPS2"],
-                                 "괴리율": round((good[key]["EPS2"] - good[key]["EPS"]) / good[key]["EPS"] * 100, 2),
+                                 "괴리율": round((good[key]["EPS2"] - good[key]["EPS"]) / good[key]["EPS"] * 100, 2) if good[key]["EPS2"] and good[key]["EPS"] else None,
                                  "현재가": good[key]["현재가"], "예상주가": good[key]["예상주가"], "EARN": good[key]["EARN"], "FCF": good[key]["FCF"],
                                  "OCF": good[key]["OCF"], "PL": good[key]["PL"], "최종보고서": good[key]["last_report"]}
     logger.info("{} {} {} {}".format("*" * 100, "CHECK", len(soso), "*" * 100))
     for key in soso.keys():
-        logger.info(soso[key])
+        # logger.info(soso[key])
         # if soso[key]["EPS2"] != 0 and soso[key]["EPS2"] > soso[key]["EPS"] and (soso[key]["EPS2"] - soso[key]["EPS"])/soso[key]["EPS"] * 100 >= 30:
         if "SOSO" not in treasure.keys():
             treasure["SOSO"] = {}
@@ -3640,7 +3722,7 @@ def new_find_hidden_pearl_with_dartpipe_single(code, bgn_dt=None, end_dt=None):
                                  "최근매출액영업이익률": soso[key]["최근매출액영업이익률"], "EPS": soso[key]["EPS"],
                                  "추정EPS": soso[key]["EPS2"],
                                  "괴리율": round((soso[key]["EPS2"] - soso[key]["EPS"]) / soso[key]["EPS"] * 100,
-                                              2), "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"], "EARN": soso[key]["EARN"],
+                                              2) if soso[key]["EPS2"] and soso[key]["EPS"] else None, "현재가": soso[key]["현재가"], "예상주가": soso[key]["예상주가"], "EARN": soso[key]["EARN"],
                                  "FCF": soso[key]["FCF"], "OCF": soso[key]["OCF"], "PL": soso[key]["PL"],
                                  "최종보고서": soso[key]["last_report"]}
     # logger.info(none_list)
@@ -7971,7 +8053,6 @@ def hidden_pearl_in_usmarket_test():
         print(errmsg)
 
 
-
 def new_hidden_pearl_in_usmarket():
     import sys
     import os
@@ -8668,79 +8749,80 @@ if __name__ == '__main__':
     # test()
     # new_find_hidden_pearl_with_dartpipe_test()
     # t = new_find_hidden_pearl_with_dartpipe()
-    t = new_find_hidden_pearl_with_dartpipe_single("059120")
-    codes = [
-        "051910",
-        "011780",
-        "027580",
-        "000300",
-        "049480",
-        "078130",
-        "027580",
-        "074610",
-        "054940",
-        "900250",
-        "154040",
-        "195870",
-        "073110",
-        "136510",
-        "000300",
-        "049550",
-        "121600",
-        "039440",
-        "043360",
-        "017670",
-        "005930",
-        "203650",
-        "131090",
-        "050890",
-        "109080",
-        "056360",
-        "047310",
-        "137400",
-        "006400",
-        "051910",
-        "131390",
-        "054090",
-        "004490",
-        "096770",
-        "322000",
-        "043220",
-        "031390",
-        "002630",
-        "084990",
-        "102940",
-        "080520",
-        "084650",
-        "118000",
-        "038290",
-        "174900",
-        "004800",
-        "018000",
-        "032820",
-        "034020",
-        "075580",
-        "024880",
-        "100130",
-        "044490",
-        "068790",
-        "101170",
-        "100090",
-        "112610",
-        "297090",
-        "314130",
-        "311390",
-        "311690",
-        "187420",
-        "348150",
-        "249420",
-        "063160",
-        "238200",
-        "049960"
-    ]
+    t = new_find_hidden_pearl_with_dartpipe_single("084010")
+    # codes = [
+    #     "051910",
+    #     "011780",
+    #     "027580",
+    #     "000300",
+    #     "049480",
+    #     "078130",
+    #     "027580",
+    #     "074610",
+    #     "054940",
+    #     "900250",
+    #     "154040",
+    #     "195870",
+    #     "073110",
+    #     "136510",
+    #     "000300",
+    #     "049550",
+    #     "121600",
+    #     "039440",
+    #     "043360",
+    #     "017670",
+    #     "005930",
+    #     "203650",
+    #     "131090",
+    #     "050890",
+    #     "109080",
+    #     "056360",
+    #     "047310",
+    #     "137400",
+    #     "006400",
+    #     "051910",
+    #     "131390",
+    #     "054090",
+    #     "004490",
+    #     "096770",
+    #     "322000",
+    #     "043220",
+    #     "031390",
+    #     "002630",
+    #     "084990",
+    #     "102940",
+    #     "080520",
+    #     "084650",
+    #     "118000",
+    #     "038290",
+    #     "174900",
+    #     "004800",
+    #     "018000",
+    #     "032820",
+    #     "034020",
+    #     "075580",
+    #     "024880",
+    #     "100130",
+    #     "044490",
+    #     "068790",
+    #     "101170",
+    #     "100090",
+    #     "112610",
+    #     "297090",
+    #     "314130",
+    #     "311390",
+    #     "311690",
+    #     "187420",
+    #     "348150",
+    #     "249420",
+    #     "063160",
+    #     "238200",
+    #     "049960"
+    # ]
     t = new_find_hidden_pearl_with_dartpipe_multiple(codes)
     # t = new_find_hidden_pearl_with_dartpipe_provision(search=True, bgn_dt="20210115")
     # t = new_find_hidden_pearl_with_dartpipe_provision_test(code="007700", search=False, bgn_dt="20210215")
     # print(t)
     send_hidden_pearl_message(t)
+    # hidden_pearl_finding_with_regular_report(rcept_no="20210812000191", bgn_dt="20210701", end_dt="20210817")
     # new_hidden_pearl_in_usmarket()
