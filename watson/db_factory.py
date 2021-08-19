@@ -437,6 +437,46 @@ def getFreeCapitalIncreaseEventReportingInfo(date):
 
     return result
 
+def getRegularReportingInfo(rcept_no, date, target_date=None):
+    import sys
+    import os
+    import django
+    # sys.path.append(r'E:\Github\Waver\MainBoard')
+    # sys.path.append(r'E:\Github\Waver\MainBoard\MainBoard')
+    getConfig()
+    sys.path.append(django_path)
+    sys.path.append(main_path)
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MainBoard.settings")
+    django.setup()
+    import detective_app.models as detective_db
+    if target_date is None:
+        if rcept_no:
+            result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
+                rcept_dt__lte=target_date).filter(
+                rcept_no__gte=rcept_no).filter(
+                report_nm__contains="보고서").values("rcept_no", "stock_code", "corp_code", "corp_name",
+                                                  "report_nm").exclude(
+                report_nm__contains="정정").order_by("rcept_no").distinct()
+        else:
+            result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
+                rcept_dt__lte=target_date).filter(
+                report_nm__contains="보고서").values("rcept_no", "stock_code", "corp_code", "corp_name", "report_nm").exclude(
+                report_nm__contains="정정").order_by("rcept_no").distinct()
+    else:
+        if rcept_no:
+            result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
+                rcept_no__gte=rcept_no).filter(
+                report_nm__contains="보고서").values("rcept_no", "stock_code", "corp_code", "corp_name",
+                                                  "report_nm").exclude(
+                report_nm__contains="정정").order_by("rcept_no").distinct()
+        else:
+            result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(
+                report_nm__contains="보고서").values("rcept_no", "stock_code", "corp_code", "corp_name", "report_nm").exclude(
+                report_nm__contains="정정").order_by("rcept_no").distinct()
+    # result = detective_db.DartRequestListResult.objects.filter(rcept_dt__gte=date).filter(corp_cls="Y").filter(report_nm__contains="대량보유").values("corp_code").distinct()
+
+    return result
+
 def getProvisionalPerformanceReportingInfo(date, target_date=None):
     import sys
     import os
