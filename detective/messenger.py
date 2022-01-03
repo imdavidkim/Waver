@@ -24,10 +24,11 @@
 
 def getConfig():
     from datetime import datetime
-    import configparser
+    import configparser, os
     global daddy, ggmsg, chart, error, chat_id_kh, chat_id_km, yyyymmdd, free, share
     config = configparser.ConfigParser()
-    config.read(r'D:\Waver\detective\config.ini')
+    # config.read('config.ini')
+    config.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
     daddy = config['TELEGRAM']['DADDY']
     ggmsg = config['TELEGRAM']['GGMSG']
     chart = config['TELEGRAM']['CHART']
@@ -115,12 +116,13 @@ def img_messeage_to_telegram(img_path, dbg=False):
         if not DEBUG:
             sendMessage(chart, chat_id_kh, yyyymmdd)
             sendImage(chart, chat_id_kh, img_path)
-            time.sleep(3)
+            time.sleep(2)
             sendMessage(daddy, chat_id_km, yyyymmdd)
             sendImage(daddy, chat_id_km, img_path)
         else:
-            sendMessage(chart, chat_id_kh, yyyymmdd)
-            sendImage(chart, chat_id_kh, img_path)
+            time.sleep(2)
+            # sendMessage(ggmsg, chat_id_kh, yyyymmdd)
+            sendImage(ggmsg, chat_id_kh, img_path)
 
 
 def img_messeage_to_telegram2(img_path, dbg=False):
@@ -131,14 +133,15 @@ def img_messeage_to_telegram2(img_path, dbg=False):
         if not DEBUG:
             sendMessage(chart, chat_id_kh, yyyymmdd)
             sendImage(chart, chat_id_kh, img_path)
-            time.sleep(3)
+            time.sleep(2)
             sendMessage(daddy, chat_id_km, yyyymmdd)
             sendImage(daddy, chat_id_km, img_path)
         else:
+            time.sleep(2)
             # sendMessage(ggmsg, chat_id_kh, yyyymmdd)
             sendImage(ggmsg, chat_id_kh, img_path)
 
-            
+
 def free_cap_inc_message_to_telegram(txt):
     import time
     getConfig()
