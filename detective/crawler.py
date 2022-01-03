@@ -16,7 +16,7 @@ def getConfig():
     import configparser
     global path, django_path, main_path, dart_auth_key
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read(os.path.join(os.path.dirname(__file__), 'config.ini'))
     path = config['COMMON']['PROJECT_PATH']
     django_path = path + r'\MainBoard'
     main_path = django_path + r'\MainBoard'
@@ -176,10 +176,21 @@ def getNasdaqStockInfo():
     alphabets = string.ascii_uppercase
     targets = {}
     for code in alphabets:
+        #NASDAQ
         url = 'http://eoddata.com/stocklist/NASDAQ/{}.htm'.format(code)
-        print("Processing USStocks information starts with {} => {}".format(code, url))
+        print("Processing USStocks(NASDAQ) information starts with {} => {}".format(code, url))
         response = httpRequest(url)
         targets = stocklistCleansing(targets, response)
+    for code in alphabets:
+        # NYSE
+        url = 'http://eoddata.com/stocklist/NYSE/{}.htm'.format(code)
+        print("Processing USStocks(NYSE) information starts with {} => {}".format(code, url))
+        response = httpRequest(url)
+        targets = stocklistCleansing(targets, response)
+    url = 'https://stockanalysis.com/stocks'
+    res = requests.get(url=url)
+    soup = BeautifulSoup(res.content.decode(encoding='utf-8'), 'lxml')
+    targets = stocklistCleansing2(targets, str(soup.find(id="__NEXT_DATA__").contents[0]))
 
     db.USNasdaqDataInit()
     db.USNasdaqDataStore(targets)
@@ -203,57 +214,66 @@ def getYieldCurveInfo():
 
 def stocklistCleansing(targets, content):
     import detective.fnguide_collector as fnguide
-    retDict = {}
-    soup = BeautifulSoup(content, 'lxml')
-    # print(soup)
+    import json
     stocks = targets
-    usstocks = fnguide.select_by_attr(soup, 'div', 'id', 'ctl00_cph1_divSymbols')  # Snapshot FinancialHighlight
-    dd = usstocks.find_all('tr')
-    for idx, d in enumerate(dd):
-        if idx == 0:
-            # hh = d.find_all('th')
-            # print(idx, len(hh), hh)
-            # for h in hh:
-            #     print(h.text)
-            pass
-        else:
-            ss = d.find_all('td')
-            # [code, name, high, low, close, volume, change, direction, pct, down]
-            if ss[0].text in ['ERI', 'ENT']: continue
-            if 'ETF' in ss[1].text \
-                or 'Ishares' in ss[1].text \
-                or 'Proshares' in ss[1].text \
-                or 'Global X' in ss[1].text \
-                or 'G-X' in ss[1].text \
-                or 'Nasdaq' in ss[1].text \
-                or 'Victoryshares' in ss[1].text \
-                or 'Vanguard' in ss[1].text \
-                or 'Warrents' in ss[1].text \
-                or 'Bulletshares' in ss[1].text \
-                or 'Advisorshares' in ss[1].text \
-                or 'Dividend' in ss[1].text \
-                or ' WT' in ss[1].text \
-                or ' Index' in ss[1].text \
-                or ' Fund' in ss[1].text \
-                or 'Yield' in ss[1].text \
-                or ' Bond' in ss[1].text: continue
-            stocks[ss[0].text] = {'Ticker': ss[0].text
-                                  , 'Security': ss[1].text
-                                  , 'TickerLink': "http://www.nasdaq.com/symbol/{}".format(ss[0].text.lower())
-                                  , 'SecurityLink': None}
-    return stocks
-    # if usstocks:
-    #     header = fnguide.get_table_contents(usstocks, 'tr th')
-    #     datas = fnguide.get_table_contents(usstocks, 'tr td')
-    #     for i in range(0, len(datas) - 1, len(header)):
-    #         retDict[datas[i][:datas[i].find('(')].strip()] = {
-    #             'Security': datas[i][:datas[i].find('(')].strip(),
-    #             'SecurityLink': datas[i][datas[i].find('(') + 1:datas[i].find(')')].strip(),
-    #             'Ticker': datas[i + 1].strip(),
-    #             'TickerLink': 'http://www.nasdaq.com/symbol/{}'.format(datas[i + 1].strip().lower())
-    #         }
-    # return retDict
+    if isinstance(content, bytes):
+        soup = BeautifulSoup(content, 'lxml')
 
+        usstocks = fnguide.select_by_attr(soup, 'div', 'id', 'ctl00_cph1_divSymbols')  # Snapshot FinancialHighlight
+        dd = usstocks.find_all('tr')
+        for idx, d in enumerate(dd):
+            if idx == 0:
+                # hh = d.find_all('th')
+                # print(idx, len(hh), hh)
+                # for h in hh:
+                #     print(h.text)
+                pass
+            else:
+                ss = d.find_all('td')
+                # [code, name, high, low, close, volume, change, direction, pct, down]
+                if ss[0].text in ['ERI', 'ENT']: continue
+                if "-" in ss[0].text or "." in ss[0].text: continue
+                if 'ETF' in ss[1].text \
+                    or 'Ishares' in ss[1].text \
+                    or 'Proshares' in ss[1].text \
+                    or 'Global X' in ss[1].text \
+                    or 'G-X' in ss[1].text \
+                    or 'Nasdaq' in ss[1].text \
+                    or 'Victoryshares' in ss[1].text \
+                    or 'Vanguard' in ss[1].text \
+                    or 'Warrents' in ss[1].text \
+                    or 'Bulletshares' in ss[1].text \
+                    or 'Advisorshares' in ss[1].text \
+                    or 'Dividend' in ss[1].text \
+                    or ' WT' in ss[1].text \
+                    or ' Index' in ss[1].text \
+                    or ' Fund' in ss[1].text \
+                    or 'Yield' in ss[1].text \
+                    or ' Bond' in ss[1].text: continue
+                stocks[ss[0].text] = {'Ticker': ss[0].text
+                                      , 'Security': ss[1].text
+                                      , 'TickerLink': "http://www.nasdaq.com/symbol/{}".format(ss[0].text.lower())
+                                      , 'SecurityLink': None}
+    elif isinstance(content, dict):
+        usstocks = json.loads(content)
+        for ss in usstocks['pageProps']['stocks']:
+            stocks[ss['s']] = {'Ticker': ss['s']
+                               , 'Security': ss['n']
+                               , 'TickerLink': "http://www.nasdaq.com/symbol/{}".format(ss['s'].lower())
+                               , 'SecurityLink': None}
+    return stocks
+
+
+def stocklistCleansing2(targets, content):
+    import json
+    stocks = targets
+    usstocks = json.loads(content)
+    for ss in usstocks['props']['pageProps']['stocks']:
+        stocks[ss['s']] = {'Ticker': ss['s']
+                           , 'Security': ss['n']
+                           , 'TickerLink': "http://www.nasdaq.com/symbol/{}".format(ss['s'].lower())
+                           , 'SecurityLink': None}
+    return stocks
 
 def wikiDataCleansing2(content):
     import detective.fnguide_collector as fnguide
@@ -410,5 +430,5 @@ if __name__ == '__main__':
     # getSnP500StockInfo()
     # getYieldCurveInfo()
     # getNasdaq100StockInfo()
-    # getNasdaqStockInfo()
-    getStockInfoNew()
+    getNasdaqStockInfo()
+    # getStockInfoNew()
