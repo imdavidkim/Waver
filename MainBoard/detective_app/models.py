@@ -117,6 +117,7 @@ class TargetStocks(models.Model):
     return_on_sales = models.FloatField(null=True)
     foreign_holding = models.FloatField(null=True)
     trade_amount = models.FloatField(null=True)
+    market_capital = models.FloatField(null=True)
 
 
 class USTargetStocks(models.Model):
@@ -151,6 +152,7 @@ class USTargetStocks(models.Model):
     return_on_sales = models.FloatField(null=True)
     foreign_holding = models.FloatField(null=True)
     trade_amount = models.FloatField(null=True)
+    market_capital = models.FloatField(null=True)
 
 
 class DartRequestIndex(models.Model):
